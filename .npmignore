@@ -1,4 +1,4 @@
 node_modules
 .eslintrc
 .prettierrc
-dist/*
+src

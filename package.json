@@ -1,13 +1,13 @@
 {
   "name": "sincronia",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "Next-gen file syncer",
   "license": "GPL-3.0",
   "main": "./dist./index.js",
   "author": "Multiple",
   "private": false,
   "scripts": {
-    "install": "tsc"
+    "prepare": "tsc"
   },
   "repository": {
     "type": "git",
