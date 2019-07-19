@@ -13,16 +13,15 @@ const axiosConfig: AxiosRequestConfig = {
 
 const api = axios.create(axiosConfig);
 
-function _update(obj: AxiosRequestConfig) {
-  const { url } = obj;
-  api(obj)
-    .then(resp => console.log("Successfully updated on server ", url))
-    .catch(err => {
-      console.error("The update request failed", err);
-    });
+async function _update(obj: AxiosRequestConfig) {
+  try {
+    let resp = await api(obj);
+  } catch (e) {
+    console.error("The update request failed", e);
+  }
 }
 
-function pushUpdate(requestObj: ServerRequestConfig) {
+async function pushUpdate(requestObj: ServerRequestConfig) {
   if (requestObj && requestObj.data) {
     return _update(requestObj);
   }
@@ -34,9 +33,9 @@ function pushUpdate(requestObj: ServerRequestConfig) {
   return Promise.resolve();
 }
 
-const pushUpdates = (arrOfResourceConfig: ServerRequestConfig[]) => {
-  arrOfResourceConfig.map(pushUpdate);
-};
+async function pushUpdates(arrOfResourceConfig: ServerRequestConfig[]) {
+  await arrOfResourceConfig.map(pushUpdate);
+}
 
 export function getManifestWithFiles(scope: string): Promise<SNAppManifest> {
   return new Promise((resolve, reject) => {

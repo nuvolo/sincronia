@@ -1,6 +1,7 @@
 import { pushUpdate } from "./server";
 import { readFile } from "./PluginManager";
-
+//wait time in milliseconds between chunks on push
+const WAIT_TIME = 500;
 const TABLE_API = "api/now/table";
 
 function _buildEndpoint(target_server: string, payload: SNCDFileContext) {
@@ -10,7 +11,7 @@ function _buildEndpoint(target_server: string, payload: SNCDFileContext) {
 
 async function _getFileContents(filePayload: SNCDFileContext) {
   let result = await readFile(filePayload);
-  console.log(result);
+  //console.log(result);
   return result;
 }
 
@@ -26,23 +27,39 @@ async function _getRequestObj(
   return { url, data, method: "PATCH" };
 }
 
-function pushFiles(target_server: string, filesPayload: SNCDFileContext[]) {
-  filesPayload.map(async payload => {
-    if (payload.sys_id && payload.targetField) {
-      const requestObj: ServerRequestConfig = await _getRequestObj(
-        target_server,
-        payload
-      );
+async function pushFiles(
+  target_server: string,
+  filesPayload: SNCDFileContext[]
+) {
+  let chunks = chunkArr(filesPayload, 10);
+  for (let chunk of chunks) {
+    let results = chunk.map(ctx => {
+      return pushFile(target_server, ctx);
+    });
+    await Promise.all(results);
+    await wait(WAIT_TIME);
+  }
+}
 
-      pushUpdate(requestObj);
-    }
+function wait(ms: number) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, ms);
   });
+}
+
+function chunkArr(arr: any[], num: number) {
+  let chunks = [];
+  for (let i = 0; i < arr.length; i++) {
+    chunks.push(arr.slice(i, i + num));
+    i = i + num;
+  }
+  return chunks;
 }
 
 async function pushFile(target_server: string, fileContext: SNCDFileContext) {
   if (fileContext.sys_id && fileContext.targetField) {
     let requestObj = await _getRequestObj(target_server, fileContext);
-    pushUpdate(requestObj);
+    await pushUpdate(requestObj);
   }
 }
 

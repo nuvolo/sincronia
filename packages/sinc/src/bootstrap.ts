@@ -23,7 +23,8 @@ export async function init() {
             console.error("No server configured for push!") ||
             "";
           if (targetServer) {
-            pushFiles(targetServer, payload);
+            await pushFiles(targetServer, payload);
+            console.log(`${path} pushed to server!`);
           }
         }
       });
@@ -48,7 +49,8 @@ export async function init() {
         console.error("No server configured for push!") ||
         "";
       if (targetServer) {
-        pushFiles(targetServer, filePayload);
+        await pushFiles(targetServer, filePayload);
+        console.log("Push Complete!");
       }
     })
     .command(
@@ -58,7 +60,7 @@ export async function init() {
       args => {
         Manifest.downloadWithFiles(args.scope as string)
           .then(() => {
-            console.log("FINISHED!");
+            console.log("Download Complete!");
           })
           .catch(e => {
             console.error(e);
