@@ -1,6 +1,6 @@
 {
   "name": "@sincronia/prettier-plugin",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Prettier plugin for Sincronia",
   "main": "./dist/index.js",
   "scripts": {
@@ -9,7 +9,7 @@
   "author": "Multiple",
   "license": "GPL-3.0",
   "dependencies": {
-    "@sincronia/types": "^0.0.2",
+    "@sincronia/types": "^0.0.3",
     "prettier": "^1.18.2"
   },
   "devDependencies": {
