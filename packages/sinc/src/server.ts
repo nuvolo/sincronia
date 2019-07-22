@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-
+import { wait, chunkArr } from "./utils";
+import { readFile } from "./PluginManager";
 const axiosConfig: AxiosRequestConfig = {
   withCredentials: true,
   auth: {
@@ -8,10 +9,14 @@ const axiosConfig: AxiosRequestConfig = {
   },
   headers: {
     "Content-Type": "application/json"
-  }
+  },
+  baseURL: `https://${process.env.SN_INSTANCE}/`
 };
 
 const api = axios.create(axiosConfig);
+const WAIT_TIME = 500;
+const CHUNK_SIZE = 10;
+const TABLE_API = "api/now/table";
 
 async function _update(obj: AxiosRequestConfig) {
   try {
@@ -21,7 +26,7 @@ async function _update(obj: AxiosRequestConfig) {
   }
 }
 
-async function pushUpdate(requestObj: ServerRequestConfig) {
+export async function pushUpdate(requestObj: Sinc.ServerRequestConfig) {
   if (requestObj && requestObj.data) {
     return _update(requestObj);
   }
@@ -33,51 +38,90 @@ async function pushUpdate(requestObj: ServerRequestConfig) {
   return Promise.resolve();
 }
 
-async function pushUpdates(arrOfResourceConfig: ServerRequestConfig[]) {
+export async function pushUpdates(
+  arrOfResourceConfig: Sinc.ServerRequestConfig[]
+) {
   await arrOfResourceConfig.map(pushUpdate);
 }
 
-export function getManifestWithFiles(scope: string): Promise<SNAppManifest> {
-  return new Promise((resolve, reject) => {
-    let instance = process.env.SN_INSTANCE;
-    let endpoint = `${instance}/api/x_nuvo_x/cicd/getManifestWithFiles/${scope}`;
-    api
-      .get(endpoint)
-      .then(response => {
-        resolve(response.data.result as SNAppManifest);
-      })
-      .catch(e => {
-        reject(e);
-      });
-  });
-}
-
-function getManifest(scope: string): Promise<SNAppManifest> {
-  return new Promise((resolve, reject) => {
-    let instance = process.env.SN_INSTANCE;
-    let endpoint = `${instance}/api/x_nuvo_x/cicd/getManifest/${scope}`;
-    api
-      .get(endpoint)
-      .then(response => {
-        resolve(response.data.result as SNAppManifest);
-      })
-      .catch(e => {
-        reject(e);
-      });
-  });
-}
-
-async function getMissingFiles(
-  missing: SNCDMissingFileTableMap
-): Promise<SNTableMap> {
-  let instance = process.env.SN_INSTANCE;
-  let endpoint = `${instance}/api/x_nuvo_x/cicd/bulkDownload`;
+export async function getManifestWithFiles(
+  scope: string
+): Promise<SN.AppManifest> {
+  let endpoint = `api/x_nuvo_x/cicd/getManifestWithFiles/${scope}`;
   try {
-    let response = await api.post(endpoint, missing);
-    return response.data.result as SNTableMap;
+    let response = await api.get(endpoint);
+    return response.data.result as SN.AppManifest;
   } catch (e) {
     throw e;
   }
 }
 
-export { pushUpdates, getManifest, pushUpdate, getMissingFiles };
+export async function getManifest(scope: string): Promise<SN.AppManifest> {
+  let endpoint = `api/x_nuvo_x/cicd/getManifest/${scope}`;
+  try {
+    let response = await api.get(endpoint);
+    return response.data.result as SN.AppManifest;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function getMissingFiles(
+  missing: SN.MissingFileTableMap
+): Promise<SN.TableMap> {
+  let instance = process.env.SN_INSTANCE;
+  let endpoint = `api/x_nuvo_x/cicd/bulkDownload`;
+  try {
+    let response = await api.post(endpoint, missing);
+    return response.data.result as SN.TableMap;
+  } catch (e) {
+    throw e;
+  }
+}
+
+function buildFileEndpoint(payload: Sinc.FileContext) {
+  const { tableName, sys_id } = payload;
+  return [TABLE_API, tableName, sys_id].join("/");
+}
+
+async function getFinalFileContents(filePayload: Sinc.FileContext) {
+  let result = await readFile(filePayload);
+  //console.log(result);
+  return result;
+}
+
+async function buildFileRequestObj(
+  target_server: string,
+  filePayload: Sinc.FileContext
+): Promise<Sinc.ServerRequestConfig> {
+  const url = buildFileEndpoint(filePayload);
+  const fileContents = await getFinalFileContents(filePayload);
+  const { targetField } = filePayload;
+  const data: any = {};
+  data[targetField] = fileContents;
+  return { url, data, method: "PATCH" };
+}
+
+export async function pushFiles(
+  target_server: string,
+  filesPayload: Sinc.FileContext[]
+) {
+  let chunks = chunkArr(filesPayload, CHUNK_SIZE);
+  for (let chunk of chunks) {
+    let results = chunk.map(ctx => {
+      return pushFile(target_server, ctx);
+    });
+    await Promise.all(results);
+    await wait(WAIT_TIME);
+  }
+}
+
+export async function pushFile(
+  target_server: string,
+  fileContext: Sinc.FileContext
+) {
+  if (fileContext.sys_id && fileContext.targetField) {
+    let requestObj = await buildFileRequestObj(target_server, fileContext);
+    await pushUpdate(requestObj);
+  }
+}
