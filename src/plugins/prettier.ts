@@ -4,14 +4,18 @@ const run: Sinc.PluginFunc = function(
   content: string,
   options: any
 ): Sinc.PluginResults {
-  let output = "";
-  if (content) {
-    output = prettier.format(content, { parser: "babel" });
+  try {
+    let output = "";
+    if (content) {
+      output = prettier.format(content, { parser: "babel" });
+    }
+    return {
+      success: true,
+      output
+    };
+  } catch (e) {
+    throw e;
   }
-  return {
-    success: true,
-    output
-  };
 };
 
 export { run };

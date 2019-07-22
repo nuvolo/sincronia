@@ -1,6 +1,6 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 import { wait, chunkArr } from "./utils";
-import { readFile } from "./PluginManager";
+import PluginManager from "./PluginManager";
 const axiosConfig: AxiosRequestConfig = {
   withCredentials: true,
   auth: {
@@ -69,7 +69,6 @@ export async function getManifest(scope: string): Promise<SN.AppManifest> {
 export async function getMissingFiles(
   missing: SN.MissingFileTableMap
 ): Promise<SN.TableMap> {
-  let instance = process.env.SN_INSTANCE;
   let endpoint = `api/x_nuvo_x/cicd/bulkDownload`;
   try {
     let response = await api.post(endpoint, missing);
@@ -84,22 +83,20 @@ function buildFileEndpoint(payload: Sinc.FileContext) {
   return [TABLE_API, tableName, sys_id].join("/");
 }
 
-async function getFinalFileContents(filePayload: Sinc.FileContext) {
-  let result = await readFile(filePayload);
-  //console.log(result);
-  return result;
-}
-
 async function buildFileRequestObj(
   target_server: string,
   filePayload: Sinc.FileContext
 ): Promise<Sinc.ServerRequestConfig> {
-  const url = buildFileEndpoint(filePayload);
-  const fileContents = await getFinalFileContents(filePayload);
-  const { targetField } = filePayload;
-  const data: any = {};
-  data[targetField] = fileContents;
-  return { url, data, method: "PATCH" };
+  try {
+    const url = buildFileEndpoint(filePayload);
+    const fileContents = await PluginManager.getFinalFileContents(filePayload);
+    const { targetField } = filePayload;
+    const data: any = {};
+    data[targetField] = fileContents;
+    return { url, data, method: "PATCH" };
+  } catch (e) {
+    throw e;
+  }
 }
 
 export async function pushFiles(
@@ -121,7 +118,11 @@ export async function pushFile(
   fileContext: Sinc.FileContext
 ) {
   if (fileContext.sys_id && fileContext.targetField) {
-    let requestObj = await buildFileRequestObj(target_server, fileContext);
-    await pushUpdate(requestObj);
+    try {
+      let requestObj = await buildFileRequestObj(target_server, fileContext);
+      await pushUpdate(requestObj);
+    } catch (e) {
+      console.error("failed to push file");
+    }
   }
 }

@@ -5,11 +5,15 @@ const run: Sinc.PluginFunc = function(
   content: string,
   options: any
 ): Sinc.PluginResults {
-  let output = ts.transpileModule(content, {}).outputText;
-  return {
-    success: true,
-    output
-  };
+  try {
+    let output = ts.transpileModule(content, {}).outputText;
+    return {
+      success: true,
+      output
+    };
+  } catch (e) {
+    throw e;
+  }
 };
 
 export { run };
