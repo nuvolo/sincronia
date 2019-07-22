@@ -1,23 +1,7 @@
 import { config } from "./config";
 import fs from "fs";
+import path from "path";
 const fsp = fs.promises;
-
-async function _no_config(filePath: string) {
-  return await fsp.readFile(filePath, "utf-8");
-}
-
-async function readFile(context: Sinc.FileContext): Promise<string> {
-  const { filePath } = context;
-
-  try {
-    const contents = await fsp.readFile(filePath, "utf-8");
-    let pm = new PluginManager();
-    await pm.loadPluginConfig();
-    return await pm.processFile(context, contents);
-  } catch (e) {
-    throw e;
-  }
-}
 
 class PluginManager {
   pluginRules: Sinc.PluginRule[];
@@ -26,7 +10,6 @@ class PluginManager {
   }
 
   async loadPluginConfig() {
-    //TODO: Cache the plugin configuration
     let conf = await config;
     if (conf && conf.rules) {
       this.pluginRules = conf.rules;
@@ -54,7 +37,8 @@ class PluginManager {
     try {
       let output = content;
       for (let pConfig of plugins) {
-        let plugin: Sinc.Plugin = await import("./plugins/" + pConfig.name);
+        let pluginPath = path.join(process.cwd(), "node_modules", pConfig.name);
+        let plugin: Sinc.Plugin = await import(pluginPath);
         let results = await plugin.run(context, output, pConfig.options);
         if (!results.success) {
           return {
@@ -79,16 +63,32 @@ class PluginManager {
   ): Promise<string> {
     let plugins = this.determinePlugins(context);
     if (plugins.length > 0) {
-      let pluginResults = await this.runPlugins(plugins, context, content);
-      if (pluginResults.success) {
-        return pluginResults.content;
-      } else {
-        return "";
+      try {
+        let pluginResults = await this.runPlugins(plugins, context, content);
+        if (pluginResults.success) {
+          return pluginResults.content;
+        } else {
+          return "";
+        }
+      } catch (e) {
+        throw e;
       }
     } else {
       return content;
     }
   }
+
+  async getFinalFileContents(context: Sinc.FileContext) {
+    const { filePath } = context;
+
+    try {
+      const contents = await fsp.readFile(filePath, "utf-8");
+      await this.loadPluginConfig();
+      return await this.processFile(context, contents);
+    } catch (e) {
+      throw e;
+    }
+  }
 }
 
-export { readFile, PluginManager };
+export default new PluginManager();
