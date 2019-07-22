@@ -1,0 +1,32 @@
+{
+  "name": "@sincronia/prettier-plugin",
+  "version": "0.0.1",
+  "description": "Prettier plugin for Sincronia",
+  "main": "./dist/index.js",
+  "scripts": {
+    "prepare": "tsc"
+  },
+  "author": "Multiple",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@sincronia/types": "^0.0.1",
+    "prettier": "^1.18.2"
+  },
+  "devDependencies": {
+    "@types/prettier": "^1.18.0",
+    "typescript": "^3.5.3"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nuvolo/sincronia.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nuvolo/sincronia/issues"
+  }
+}
