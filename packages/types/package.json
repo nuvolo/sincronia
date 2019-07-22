@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/nuvolo/sincronia/issues"
   },
-  "homepage": "https://github.com/nuvolo/sincronia#readme"
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/nuvolo/sincronia#readme",
+  "gitHead": "debd471a32f3cd62edc507fa3d2f0c0f1edac7f2"
 }
