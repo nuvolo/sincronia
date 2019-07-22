@@ -1,13 +1,28 @@
 import chokidar from "chokidar";
-export class Watcher {
+import * as Utils from "./utils";
+import { pushFile } from "./server";
+class Watcher {
   watcher?: chokidar.FSWatcher;
   constructor() {
     this.watcher = undefined;
   }
-  startWatching(directory: string, eventMap: { [event: string]: any }) {
+  startWatching(directory: string) {
     this.watcher = chokidar.watch(directory);
-    for (let event in eventMap) {
-      this.watcher.on(event, eventMap[event]);
+    this.watcher.on("change", this.fileChanged);
+  }
+  private async fileChanged(path: string) {
+    try {
+      let payload = await Utils.parseFileNameParams(path);
+      const targetServer =
+        process.env.SN_INSTANCE ||
+        console.error("No server configured for push!") ||
+        "";
+      if (targetServer && payload) {
+        await pushFile(targetServer, payload);
+        console.log(`${path} pushed to server!`);
+      }
+    } catch (e) {
+      console.error(`${path} failed to sync!`);
     }
   }
   stopWatching() {
@@ -16,3 +31,4 @@ export class Watcher {
     }
   }
 }
+export default new Watcher();

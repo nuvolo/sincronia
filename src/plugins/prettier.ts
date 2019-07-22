@@ -1,9 +1,9 @@
 import prettier from "prettier";
-const run: SNCDPluginFunc = function(
-  context: SNCDFileContext,
+const run: Sinc.PluginFunc = function(
+  context: Sinc.FileContext,
   content: string,
   options: any
-): SNCDPluginResults {
+): Sinc.PluginResults {
   let output = "";
   if (content) {
     output = prettier.format(content, { parser: "babel" });

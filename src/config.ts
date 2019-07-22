@@ -2,25 +2,35 @@ import path from "path";
 import fs from "fs";
 const fsp = fs.promises;
 
-const CONFIG_FILE = path.join(process.cwd(), "config.json");
+export const CONFIG_FILE_PATH = path.join(process.cwd(), "sinc.config.json");
+export const MANIFEST_FILE_PATH = path.join(
+  process.cwd(),
+  "sinc.manifest.json"
+);
+const DEFAULT_CONFIG: Sinc.Config = {
+  sourceDirectory: "src",
+  ignoreDirectories: ["node_modules"],
+  rules: []
+};
 
-function _getConfig(): Promise<SNCDConfig | undefined> {
-  return new Promise((resolve, reject) => {
-    fsp
-      .readFile(CONFIG_FILE, "utf-8")
-      .then(data => {
-        resolve(JSON.parse(data));
-      })
-      .catch(e => {
-        console.error(
-          "There was a problem parsing the config file",
-          CONFIG_FILE
-        );
-        reject(e);
-      });
-  });
+async function _getConfig(): Promise<Sinc.Config> {
+  try {
+    let configString = await fsp.readFile(CONFIG_FILE_PATH, "utf-8");
+    return JSON.parse(configString);
+  } catch (e) {
+    console.log("No configuration file found, loading default...");
+    return DEFAULT_CONFIG;
+  }
 }
 
-const config: Promise<SNCDConfig | undefined> = _getConfig();
+async function _getManifest(): Promise<SN.AppManifest | undefined> {
+  try {
+    let manifestString = await fsp.readFile(MANIFEST_FILE_PATH, "utf-8");
+    return JSON.parse(manifestString);
+  } catch (e) {
+    return undefined;
+  }
+}
 
-export { config };
+export const config = _getConfig();
+export const manifest = _getManifest();
