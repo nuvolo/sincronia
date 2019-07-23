@@ -1,8 +1,4 @@
-import "@sincronia/types";
 import prettier from "prettier";
-import fs from "fs";
-const fsp = fs.promises;
-import path from "path";
 const run: Sinc.PluginFunc = async function(
   context: Sinc.FileContext,
   content: string,
@@ -15,6 +11,7 @@ const run: Sinc.PluginFunc = async function(
     if (prettierConfig) {
       opts = Object.assign(opts, prettierConfig);
     }
+    opts = Object.assign(opts, options);
     if (content) {
       output = prettier.format(content, opts);
     }

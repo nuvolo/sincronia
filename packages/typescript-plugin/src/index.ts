@@ -1,4 +1,3 @@
-import "@sincronia/types";
 import * as ts from "typescript";
 import fs from "fs";
 const fsp = fs.promises;

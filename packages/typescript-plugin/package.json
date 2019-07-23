@@ -9,7 +9,6 @@
   "author": "Multiple",
   "license": "GPL-3.0",
   "dependencies": {
-    "@sincronia/types": "^0.0.4-alpha.0",
     "typescript": "^3.5.3"
   },
   "files": [

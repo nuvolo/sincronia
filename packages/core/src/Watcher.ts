@@ -19,7 +19,6 @@ class Watcher {
         "";
       if (targetServer && payload) {
         try {
-          console.log("hi!");
           await pushFile(targetServer, payload);
           console.log(`${path} pushed to server!`);
         } catch (e) {
@@ -28,7 +27,6 @@ class Watcher {
       }
     } catch (e) {
       throw e;
-      console.error(`${path} failed to sync!`);
     }
   }
   stopWatching() {
