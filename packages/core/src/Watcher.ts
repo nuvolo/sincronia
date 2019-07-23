@@ -18,10 +18,16 @@ class Watcher {
         console.error("No server configured for push!") ||
         "";
       if (targetServer && payload) {
-        await pushFile(targetServer, payload);
-        console.log(`${path} pushed to server!`);
+        try {
+          console.log("hi!");
+          await pushFile(targetServer, payload);
+          console.log(`${path} pushed to server!`);
+        } catch (e) {
+          throw e;
+        }
       }
     } catch (e) {
+      throw e;
       console.error(`${path} failed to sync!`);
     }
   }

@@ -90,6 +90,7 @@ async function buildFileRequestObj(
   try {
     const url = buildFileEndpoint(filePayload);
     const fileContents = await PluginManager.getFinalFileContents(filePayload);
+    console.info(fileContents);
     const { targetField } = filePayload;
     const data: any = {};
     data[targetField] = fileContents;
@@ -122,7 +123,8 @@ export async function pushFile(
       let requestObj = await buildFileRequestObj(target_server, fileContext);
       await pushUpdate(requestObj);
     } catch (e) {
-      console.error("failed to push file");
+      console.error(e);
+      throw e;
     }
   }
 }

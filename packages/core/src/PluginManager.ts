@@ -62,9 +62,11 @@ class PluginManager {
     content: string
   ): Promise<string> {
     let plugins = this.determinePlugins(context);
+    console.log(plugins);
     if (plugins.length > 0) {
       try {
         let pluginResults = await this.runPlugins(plugins, context, content);
+        console.log(pluginResults);
         if (pluginResults.success) {
           return pluginResults.content;
         } else {
@@ -80,9 +82,9 @@ class PluginManager {
 
   async getFinalFileContents(context: Sinc.FileContext) {
     const { filePath } = context;
-
     try {
       const contents = await fsp.readFile(filePath, "utf-8");
+      console.log(contents);
       await this.loadPluginConfig();
       return await this.processFile(context, contents);
     } catch (e) {

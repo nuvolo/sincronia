@@ -40,7 +40,9 @@ declare namespace Sinc {
   }
 
   interface PluginFunc {
-    (context: FileContext, content: string, options: any): PluginResults;
+    (context: FileContext, content: string, options: any): Promise<
+      PluginResults
+    >;
   }
 
   interface PluginResults {

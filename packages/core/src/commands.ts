@@ -30,6 +30,7 @@ export async function downloadCommand(args: Sinc.CmdDownloadArgs) {
     await AppManager.downloadWithFiles(args.scope as string);
     console.log("Download Complete!");
   } catch (e) {
-    console.error(e);
+    throw e;
+    //console.error(e);
   }
 }

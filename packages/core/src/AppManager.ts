@@ -110,7 +110,8 @@ class AppManager {
       this.writeManifestFile(newManifest);
       await this.reconcileDifferences(newManifest);
     } catch (e) {
-      console.error(e);
+      throw e;
+      //console.error(e);
     }
   }
 
