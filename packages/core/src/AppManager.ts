@@ -90,6 +90,7 @@ class AppManager {
         .then(async (man: SN.AppManifest) => {
           try {
             this._processManifest(man, skipFileCheck);
+            console.log("Push Complete!");
             resolve();
           } catch (e) {
             reject(e);
@@ -120,7 +121,7 @@ class AppManager {
       let missing = await this.determineMissing(manifest);
       let missingFileMap = await getMissingFiles(missing);
       await this.loadMissingFiles(missingFileMap);
-      console.log("sync complete!");
+      console.log("Sync complete!");
     } catch (e) {
       throw e;
     }
@@ -280,6 +281,7 @@ class AppManager {
       return;
     }
     await pushFiles(targetServer, filePayload);
+    console.log("Push complete!");
   }
 }
 

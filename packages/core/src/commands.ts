@@ -12,7 +12,6 @@ export async function devCommand() {
 export async function refreshCommand() {
   try {
     await AppManager.syncManifest();
-    console.log("Sync Complete!");
   } catch (e) {
     throw e;
   }
@@ -20,7 +19,6 @@ export async function refreshCommand() {
 export async function pushCommand() {
   try {
     await AppManager.pushAllFiles();
-    console.log("Push Complete!");
   } catch (e) {
     throw e;
   }
@@ -28,7 +26,6 @@ export async function pushCommand() {
 export async function downloadCommand(args: Sinc.CmdDownloadArgs) {
   try {
     await AppManager.downloadWithFiles(args.scope as string);
-    console.log("Download Complete!");
   } catch (e) {
     throw e;
     //console.error(e);

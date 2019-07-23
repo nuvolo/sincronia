@@ -2,6 +2,7 @@ import * as ts from "typescript";
 import fs from "fs";
 const fsp = fs.promises;
 import path from "path";
+import stripJsonComments from "strip-json-comments";
 const run: Sinc.PluginFunc = async function(
   context: Sinc.FileContext,
   content: string,
@@ -18,7 +19,7 @@ const run: Sinc.PluginFunc = async function(
     let configObj: ts.TranspileOptions = {};
     if (configPath) {
       let configText = await fsp.readFile(configPath, { encoding: "utf-8" });
-      configObj = JSON.parse(configText);
+      configObj = JSON.parse(stripJsonComments(configText));
     }
     configObj = Object.assign(configObj, options);
     output = ts.transpileModule(content, configObj).outputText;

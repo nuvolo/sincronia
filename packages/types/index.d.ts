@@ -1,4 +1,4 @@
-declare module Sinc {
+declare namespace Sinc {
   interface CmdDownloadArgs {
     scope: string;
   }
@@ -56,7 +56,7 @@ declare module Sinc {
   };
 }
 
-declare module SN {
+declare namespace SN {
   interface AppManifest {
     tables: TableMap;
     scope: string;

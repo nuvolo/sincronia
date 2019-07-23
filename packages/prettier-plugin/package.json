@@ -9,6 +9,7 @@
   "author": "Multiple",
   "license": "GPL-3.0",
   "dependencies": {
+    "@sincronia/types": "^0.0.5",
     "prettier": "^1.18.2"
   },
   "devDependencies": {

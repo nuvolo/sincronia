@@ -9,6 +9,8 @@
   "author": "Multiple",
   "license": "GPL-3.0",
   "dependencies": {
+    "@sincronia/types": "^0.0.5",
+    "strip-json-comments": "^3.0.1",
     "typescript": "^3.5.3"
   },
   "files": [
