@@ -1,6 +1,6 @@
 {
   "name": "@sincronia/typescript-plugin",
-  "version": "0.0.4-alpha.0",
+  "version": "0.0.4",
   "description": "TypeScript plugin for Sincronia",
   "main": "./dist/index.js",
   "scripts": {
