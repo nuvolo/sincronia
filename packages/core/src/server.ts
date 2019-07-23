@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosRequestConfig, AxiosInstance } from "axios";
 import { wait, chunkArr } from "./utils";
 import PluginManager from "./PluginManager";
 const axiosConfig: AxiosRequestConfig = {
@@ -136,5 +136,35 @@ export async function getCurrentScope(): Promise<SN.ScopeObj> {
     return response.data.result;
   } catch (e) {
     throw e;
+  }
+}
+
+export class ServiceNowConnection {
+  config: AxiosRequestConfig;
+  client: AxiosInstance;
+  constructor(instance?: string, user?: string, password?: string) {
+    let serverString = instance || process.env.SN_INSTANCE || "";
+    this.config = {
+      withCredentials: true,
+      auth: {
+        username: user || process.env.SN_USER || "",
+        password: password || process.env.SN_PASSWORD || ""
+      },
+      headers: {
+        "Content-Type": "application/json"
+      },
+      baseURL: `https://${serverString}/`
+    };
+    this.client = axios.create(this.config);
+  }
+  async getAppList(): Promise<SN.App[]> {
+    try {
+      let endpoint = "api/x_nuvo_x/cicd/getAppList";
+      let response = await this.client.get(endpoint);
+      let apps: SN.App[] = response.data.result;
+      return apps;
+    } catch (e) {
+      throw e;
+    }
   }
 }

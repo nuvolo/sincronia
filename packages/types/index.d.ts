@@ -60,6 +60,15 @@ declare namespace Sinc {
     sessionScope: string;
     match: boolean;
   }
+  interface LoginAnswers {
+    instance: string;
+    username: string;
+    password: string;
+  }
+
+  interface AppSelectionAnswer {
+    app: string;
+  }
 }
 
 declare namespace SN {
@@ -119,6 +128,11 @@ declare namespace SN {
   }
   interface ScopeObj {
     scope: string;
+    sys_id: string;
+  }
+  interface App {
+    scope: string;
+    displayName: string;
     sys_id: string;
   }
 }

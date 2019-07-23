@@ -2,7 +2,8 @@ import {
   devCommand,
   refreshCommand,
   pushCommand,
-  downloadCommand
+  downloadCommand,
+  initCommand
 } from "./commands";
 import AppManager from "./AppManager";
 import yargs from "yargs";
@@ -35,6 +36,9 @@ export async function initCommands() {
           downloadCommand(args as Sinc.CmdDownloadArgs);
         }
       )
+      .command("init", "Provisions an initial project for you", {}, () => {
+        initCommand();
+      })
       .help().argv;
   }
 }

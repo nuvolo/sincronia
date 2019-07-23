@@ -2,6 +2,7 @@ import path from "path";
 import { config } from "./config";
 import Watcher from "./Watcher";
 import AppManager from "./AppManager";
+import { startWizard } from "./wizard";
 
 export async function devCommand() {
   const { sourceDirectory } = await config;
@@ -29,5 +30,12 @@ export async function downloadCommand(args: Sinc.CmdDownloadArgs) {
   } catch (e) {
     throw e;
     //console.error(e);
+  }
+}
+export async function initCommand() {
+  try {
+    await startWizard();
+  } catch (e) {
+    throw e;
   }
 }
