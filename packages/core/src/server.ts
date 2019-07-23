@@ -128,3 +128,13 @@ export async function pushFile(
     }
   }
 }
+
+export async function getCurrentScope(): Promise<SN.ScopeObj> {
+  let endpoint = "api/x_nuvo_x/cicd/getCurrentScope";
+  try {
+    let response = await api.get(endpoint);
+    return response.data.result;
+  } catch (e) {
+    throw e;
+  }
+}

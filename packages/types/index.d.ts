@@ -54,6 +54,12 @@ declare namespace Sinc {
     success: boolean;
     content: string;
   };
+
+  interface ScopeCheckResult {
+    manifestScope: string;
+    sessionScope: string;
+    match: boolean;
+  }
 }
 
 declare namespace SN {
@@ -110,6 +116,10 @@ declare namespace SN {
   }
   interface MissingFileRecord {
     [sys_id: string]: File[];
+  }
+  interface ScopeObj {
+    scope: string;
+    sys_id: string;
   }
 }
 

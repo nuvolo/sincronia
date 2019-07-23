@@ -2,7 +2,8 @@ import {
   getManifestWithFiles,
   getManifest,
   getMissingFiles,
-  pushFiles
+  pushFiles,
+  getCurrentScope
 } from "./server";
 import fs from "fs";
 import path from "path";
@@ -282,6 +283,36 @@ class AppManager {
     }
     await pushFiles(targetServer, filePayload);
     console.log("Push complete!");
+  }
+
+  async checkScope(): Promise<Sinc.ScopeCheckResult> {
+    try {
+      let man = await manifest;
+      if (man) {
+        let scopeObj = await getCurrentScope();
+        if (scopeObj.scope === man.scope) {
+          return {
+            match: true,
+            sessionScope: scopeObj.scope,
+            manifestScope: man.scope
+          };
+        } else {
+          return {
+            match: false,
+            sessionScope: scopeObj.scope,
+            manifestScope: man.scope
+          };
+        }
+      }
+      //first time case
+      return {
+        match: true,
+        sessionScope: "",
+        manifestScope: ""
+      };
+    } catch (e) {
+      throw e;
+    }
   }
 }
 
