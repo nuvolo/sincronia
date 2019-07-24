@@ -30,7 +30,7 @@ class AppManager {
     if (!skipFileCheck) {
       let files = await fsp.readdir(parentDir);
       let matchingFiles = files.filter(f => {
-        let reg = new RegExp(file.name + ".*$");
+        let reg = new RegExp(file.name + "\\.*$");
         return reg.test(f);
       });
       exists = matchingFiles.length > 0;
