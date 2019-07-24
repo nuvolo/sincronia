@@ -7,7 +7,7 @@ export const MANIFEST_FILE_PATH = path.join(
   process.cwd(),
   "sinc.manifest.json"
 );
-const DEFAULT_CONFIG: Sinc.Config = {
+export const DEFAULT_CONFIG: Sinc.Config = {
   sourceDirectory: "src",
   ignoreDirectories: ["node_modules"],
   rules: []

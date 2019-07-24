@@ -167,4 +167,14 @@ export class ServiceNowConnection {
       throw e;
     }
   }
+
+  async getManifestWithFiles(scope: string): Promise<SN.AppManifest> {
+    let endpoint = `api/x_nuvo_x/cicd/getManifestWithFiles/${scope}`;
+    try {
+      let response = await api.get(endpoint);
+      return response.data.result as SN.AppManifest;
+    } catch (e) {
+      throw e;
+    }
+  }
 }

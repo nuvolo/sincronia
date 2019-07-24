@@ -67,7 +67,7 @@ class AppManager {
     }
   }
 
-  private async _processManifest(
+  async processManifest(
     manifest: SN.AppManifest,
     skipFileCheckOnFileGeneration?: boolean
   ) {
@@ -90,7 +90,7 @@ class AppManager {
       getManifestWithFiles(scope)
         .then(async (man: SN.AppManifest) => {
           try {
-            this._processManifest(man, skipFileCheck);
+            this.processManifest(man, skipFileCheck);
             console.log("Push Complete!");
             resolve();
           } catch (e) {

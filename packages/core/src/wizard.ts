@@ -1,13 +1,29 @@
 import inquirer from "inquirer";
 import { ServiceNowConnection } from "./server";
+import { CONFIG_FILE_PATH, DEFAULT_CONFIG, manifest } from "./config";
+import AppManager from "./AppManager";
+import fs from "fs";
+const fsp = fs.promises;
+import path from "path";
 
 export async function startWizard() {
   let loginAnswers = await getLoginInfo();
-  let selectedApp = await showAppList(loginAnswers);
-  if (!selectedApp) {
-    return;
+  await setupDotEnv(loginAnswers);
+  let hasConfig = await checkConfig();
+  if (!hasConfig) {
+    console.log("Generating config...");
+    await writeDefaultConfig();
   }
-  console.log(selectedApp);
+  let man = await manifest;
+  if (!man) {
+    let selectedApp = await showAppList(loginAnswers);
+    if (!selectedApp) {
+      return;
+    }
+    console.log("Downloading app...");
+    await downloadApp(loginAnswers, selectedApp);
+  }
+  console.log("done!");
 }
 
 async function getLoginInfo(): Promise<Sinc.LoginAnswers> {
@@ -26,9 +42,45 @@ async function getLoginInfo(): Promise<Sinc.LoginAnswers> {
     {
       type: "password",
       name: "password",
-      message: "What is your username on that instance?"
+      message: "What is your password on that instance?"
     }
   ]);
+}
+
+async function checkConfig(): Promise<boolean> {
+  try {
+    await fsp.access(CONFIG_FILE_PATH, fs.constants.F_OK);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function setupDotEnv(answers: Sinc.LoginAnswers) {
+  let data = `SN_USER=${answers.username}
+SN_PASSWORD=${answers.password}
+SN_INSTANCE=${answers.instance}
+  `;
+  process.env.SN_USER = answers.username;
+  process.env.SN_PASSWORD = answers.password;
+  process.env.SN_INSTANCE = answers.instance;
+  let dotEnvPath = path.join(process.cwd(), ".env");
+  try {
+    await fsp.writeFile(dotEnvPath, data);
+  } catch (e) {
+    throw e;
+  }
+}
+
+async function writeDefaultConfig() {
+  try {
+    await fsp.writeFile(
+      CONFIG_FILE_PATH,
+      JSON.stringify(DEFAULT_CONFIG, null, 2)
+    );
+  } catch (e) {
+    throw e;
+  }
 }
 
 async function showAppList(
@@ -63,4 +115,14 @@ async function showAppList(
     }
   ]);
   return appSelection.app;
+}
+
+async function downloadApp(answers: Sinc.LoginAnswers, scope: string) {
+  let snc = new ServiceNowConnection(
+    answers.instance,
+    answers.username,
+    answers.password
+  );
+  let man = await snc.getManifestWithFiles(scope);
+  await AppManager.processManifest(man);
 }
