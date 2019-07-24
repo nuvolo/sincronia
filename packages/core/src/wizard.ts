@@ -118,11 +118,16 @@ async function showAppList(
 }
 
 async function downloadApp(answers: Sinc.LoginAnswers, scope: string) {
-  let snc = new ServiceNowConnection(
-    answers.instance,
-    answers.username,
-    answers.password
-  );
-  let man = await snc.getManifestWithFiles(scope);
-  await AppManager.processManifest(man);
+  try {
+    let snc = new ServiceNowConnection(
+      answers.instance,
+      answers.username,
+      answers.password
+    );
+    let man = await snc.getManifestWithFiles(scope);
+    await AppManager.processManifest(man);
+  } catch (e) {
+    console.error(e);
+    throw new Error("Failed to download files!");
+  }
 }
