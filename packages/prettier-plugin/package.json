@@ -1,6 +1,6 @@
 {
   "name": "@sincronia/prettier-plugin",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Prettier plugin for Sincronia",
   "main": "./dist/index.js",
   "scripts": {
