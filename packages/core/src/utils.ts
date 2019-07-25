@@ -1,14 +1,16 @@
-import Manifest from "./Manifest";
-import fs from "fs";
+import { manifest } from "./config";
 import path from "path";
-const fsp = fs.promises;
 
 async function _getConfigFromPath(
-  params: SNCDFileSyncParams
-): Promise<SNCDFileContext | undefined> {
+  params: Sinc.FileSyncParams
+): Promise<Sinc.FileContext | undefined> {
   try {
+    let curManifest = await manifest;
+    if (!curManifest) {
+      throw new Error("No Manifest file");
+    }
     const { tableName, name } = params;
-    const { tables, scope } = await Manifest.getManifest();
+    const { tables, scope } = curManifest;
     const { records } = tables[tableName];
     let sys_id = "";
     if (records.hasOwnProperty(name)) {
@@ -20,7 +22,7 @@ async function _getConfigFromPath(
   }
 }
 
-async function _parseFileNameParams(filePath: string) {
+export async function parseFileNameParams(filePath: string) {
   const ext = path.extname(filePath);
   const resourcePath = path.dirname(filePath).split(path.sep);
   const resources = resourcePath.slice(-3);
@@ -36,30 +38,28 @@ async function _parseFileNameParams(filePath: string) {
   });
 }
 
-// async function _parseFileParams(
-//   arr: Promise<SNCDFileContext>[],
-//   filePath: string
-// ): Promise<SNCDFileContext[]> {
-//   let res = await _parseFileNameParams(filePath);
-//   if (res) {
-//     arr.push(res);
-//   }
-//   return arr;
-// }
-
-async function getParsedFilesPayload(arr: string[]) {
-  // const promises = arr.reduce(_parseFileParams, [] as Promise<
-  //   SNCDFileContext
-  // >[]);
+export async function getParsedFilesPayload(arr: string[]) {
   let results = [];
   for (let file of arr) {
-    let res = await _parseFileNameParams(file);
+    let res = await parseFileNameParams(file);
     if (res) {
       results.push(res);
     }
   }
   return results;
-  // return Promise.all(promises);
 }
 
-export { getParsedFilesPayload };
+export function wait(ms: number) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+export function chunkArr(arr: any[], num: number) {
+  let chunks = [];
+  for (let i = 0; i < arr.length; i++) {
+    chunks.push(arr.slice(i, i + num));
+    i = i + num;
+  }
+  return chunks;
+}

@@ -1,32 +1,16 @@
+// import { Sinc } from "@sincronia/types";
 import { config } from "./config";
 import fs from "fs";
+import path from "path";
 const fsp = fs.promises;
 
-async function _no_config(filePath: string) {
-  return await fsp.readFile(filePath, "utf-8");
-}
-
-async function readFile(context: SNCDFileContext): Promise<string> {
-  const { filePath } = context;
-
-  try {
-    const contents = await fsp.readFile(filePath, "utf-8");
-    let pm = new PluginManager();
-    await pm.loadPluginConfig();
-    return await pm.processFile(context, contents);
-  } catch (e) {
-    throw e;
-  }
-}
-
 class PluginManager {
-  pluginRules: SNCDPluginRule[];
+  pluginRules: Sinc.PluginRule[];
   constructor() {
     this.pluginRules = [];
   }
 
   async loadPluginConfig() {
-    //TODO: Cache the plugin configuration
     let conf = await config;
     if (conf && conf.rules) {
       this.pluginRules = conf.rules;
@@ -35,8 +19,8 @@ class PluginManager {
     }
   }
 
-  determinePlugins(context: SNCDFileContext): SNCDPluginConfig[] {
-    let plugins: SNCDPluginConfig[] = [];
+  determinePlugins(context: Sinc.FileContext): Sinc.PluginConfig[] {
+    let plugins: Sinc.PluginConfig[] = [];
     for (let rule of this.pluginRules) {
       let reg = new RegExp(rule.match);
       if (reg.test(context.filePath)) {
@@ -47,14 +31,15 @@ class PluginManager {
   }
 
   async runPlugins(
-    plugins: SNCDPluginConfig[],
-    context: SNCDFileContext,
+    plugins: Sinc.PluginConfig[],
+    context: Sinc.FileContext,
     content: string
-  ): Promise<SNCDTransformResults> {
+  ): Promise<Sinc.TransformResults> {
     try {
       let output = content;
       for (let pConfig of plugins) {
-        let plugin: SNCDPlugin = await import("./plugins/" + pConfig.name);
+        let pluginPath = path.join(process.cwd(), "node_modules", pConfig.name);
+        let plugin: Sinc.Plugin = await import(pluginPath);
         let results = await plugin.run(context, output, pConfig.options);
         if (!results.success) {
           return {
@@ -74,21 +59,36 @@ class PluginManager {
   }
 
   async processFile(
-    context: SNCDFileContext,
+    context: Sinc.FileContext,
     content: string
   ): Promise<string> {
     let plugins = this.determinePlugins(context);
     if (plugins.length > 0) {
-      let pluginResults = await this.runPlugins(plugins, context, content);
-      if (pluginResults.success) {
-        return pluginResults.content;
-      } else {
-        return "";
+      try {
+        let pluginResults = await this.runPlugins(plugins, context, content);
+        if (pluginResults.success) {
+          return pluginResults.content;
+        } else {
+          return "";
+        }
+      } catch (e) {
+        throw e;
       }
     } else {
       return content;
     }
   }
+
+  async getFinalFileContents(context: Sinc.FileContext) {
+    const { filePath } = context;
+    try {
+      const contents = await fsp.readFile(filePath, "utf-8");
+      await this.loadPluginConfig();
+      return await this.processFile(context, contents);
+    } catch (e) {
+      throw e;
+    }
+  }
 }
 
-export { readFile, PluginManager };
+export default new PluginManager();

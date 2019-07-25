@@ -1,46 +1,27 @@
-import { getManifestWithFiles, getManifest, getMissingFiles } from "./server";
+import {
+  getManifestWithFiles,
+  getManifest,
+  getMissingFiles,
+  pushFiles,
+  getCurrentScope
+} from "./server";
 import fs from "fs";
 import path from "path";
-import { config } from "./config";
+import { config, manifest, MANIFEST_FILE_PATH } from "./config";
+import * as Utils from "./utils";
+//import { pushFiles } from "./filePusher";
 
 const fsp = fs.promises;
 
-class Manifest {
-  private _manifest: SNAppManifest;
-  private _manifest_path: string;
-  constructor() {
-    this._manifest = {
-      tables: {},
-      scope: "none"
-    };
-    this._manifest_path = "sn_manifest.json";
+class AppManager {
+  constructor() {}
+
+  private async writeManifestFile(man: SN.AppManifest) {
+    return fsp.writeFile(MANIFEST_FILE_PATH, JSON.stringify(man, null, 2));
   }
 
-  async _loadManifest() {
-    try {
-      const manifest = await fsp.readFile(this._manifest_path, "utf-8");
-      this._manifest = JSON.parse(manifest);
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  async getManifest() {
-    const { scope } = this._manifest;
-    if (scope === "none") {
-      await this._loadManifest();
-    }
-
-    return this._manifest;
-  }
-
-  async writeManifestFile(man: SNAppManifest) {
-    let mPath = path.join(process.cwd(), this._manifest_path);
-    return fsp.writeFile(mPath, JSON.stringify(man, null, 2));
-  }
-
-  async _writeNewFiles(
-    file: SNFile,
+  private async writeNewFiles(
+    file: SN.File,
     parentDir: string,
     content: string,
     skipFileCheck: boolean
@@ -49,7 +30,7 @@ class Manifest {
     if (!skipFileCheck) {
       let files = await fsp.readdir(parentDir);
       let matchingFiles = files.filter(f => {
-        let reg = new RegExp(file.name + ".*$");
+        let reg = new RegExp(file.name + "\\.*$");
         return reg.test(f);
       });
       exists = matchingFiles.length > 0;
@@ -63,7 +44,10 @@ class Manifest {
     }
   }
 
-  async _createNewFiles(manifest: SNAppManifest, skipFileCheck: boolean) {
+  private async createNewFiles(
+    manifest: SN.AppManifest,
+    skipFileCheck: boolean
+  ) {
     const { sourceDirectory = "src" } = (await config) || {};
     const { tables } = manifest;
     const _codeSrcPath = path.join(process.cwd(), sourceDirectory);
@@ -76,15 +60,15 @@ class Manifest {
         await fsp.mkdir(recPath, { recursive: true });
         for (let file of rec.files) {
           const content = file.content || "";
-          await this._writeNewFiles(file, recPath, content, skipFileCheck);
+          await this.writeNewFiles(file, recPath, content, skipFileCheck);
           delete file.content;
         }
       }
     }
   }
 
-  async _processManifest(
-    manifest: SNAppManifest,
+  async processManifest(
+    manifest: SN.AppManifest,
     skipFileCheckOnFileGeneration?: boolean
   ) {
     if (
@@ -94,8 +78,7 @@ class Manifest {
       skipFileCheckOnFileGeneration = false;
     }
     const skipFileCheck = skipFileCheckOnFileGeneration;
-    this._manifest = manifest;
-    await this._createNewFiles(manifest, skipFileCheck);
+    await this.createNewFiles(manifest, skipFileCheck);
     await this.writeManifestFile(manifest);
   }
 
@@ -105,50 +88,51 @@ class Manifest {
   ): Promise<any> {
     return new Promise((resolve, reject) => {
       getManifestWithFiles(scope)
-        .then(async (man: SNAppManifest) => {
+        .then(async (man: SN.AppManifest) => {
           try {
-            this._processManifest(man, skipFileCheck);
+            this.processManifest(man, skipFileCheck);
+            console.log("Push Complete!");
             resolve();
           } catch (e) {
             reject(e);
           }
         })
         .catch(e => {
-          console.error(e);
+          throw e;
         });
     });
   }
   async syncManifest() {
     try {
-      if (this._manifest.scope === "none") {
+      let curManifest = await manifest;
+      if (!curManifest) {
         throw new Error("No manifest file loaded!");
       }
-      // const skipFileCheck = false;
-      // return this.downloadWithFiles(this._manifest.scope, skipFileCheck);
-      let manifest = await getManifest(this._manifest.scope);
-      this._manifest = manifest;
-      this.reconcileDifferences(manifest);
+      let newManifest = await getManifest(curManifest.scope);
+      this.writeManifestFile(newManifest);
+      await this.reconcileDifferences(newManifest);
     } catch (e) {
-      console.error(e);
+      throw e;
+      //console.error(e);
     }
   }
 
-  async reconcileDifferences(manifest: SNAppManifest) {
+  private async reconcileDifferences(manifest: SN.AppManifest) {
     try {
       let missing = await this.determineMissing(manifest);
       let missingFileMap = await getMissingFiles(missing);
       await this.loadMissingFiles(missingFileMap);
-      console.log("sync complete!");
+      console.log("Sync complete!");
     } catch (e) {
       throw e;
     }
   }
 
-  async determineMissing(
-    manifest: SNAppManifest
-  ): Promise<SNCDMissingFileTableMap> {
+  private async determineMissing(
+    manifest: SN.AppManifest
+  ): Promise<SN.MissingFileTableMap> {
     try {
-      let missing: SNCDMissingFileTableMap = {};
+      let missing: SN.MissingFileTableMap = {};
       const { sourceDirectory = "src" } = (await config) || {};
       const _codeSrcPath = path.join(process.cwd(), sourceDirectory);
       const { tables } = manifest;
@@ -192,11 +176,11 @@ class Manifest {
     }
   }
 
-  noteMissingFile(
-    missingObj: SNCDMissingFileTableMap,
-    file: SNFile,
+  private noteMissingFile(
+    missingObj: SN.MissingFileTableMap,
+    file: SN.File,
     tableName: string,
-    record: SNMetaRecord
+    record: SN.MetaRecord
   ) {
     if (!missingObj.hasOwnProperty(tableName)) {
       missingObj[tableName] = {};
@@ -209,9 +193,9 @@ class Manifest {
       type: file.type
     });
   }
-  noteMissingRecord(
-    missingObj: SNCDMissingFileTableMap,
-    record: SNMetaRecord,
+  private noteMissingRecord(
+    missingObj: SN.MissingFileTableMap,
+    record: SN.MetaRecord,
     tableName: string
   ) {
     for (let file of record.files) {
@@ -219,9 +203,9 @@ class Manifest {
     }
   }
 
-  noteMissingTable(
-    missingObj: SNCDMissingFileTableMap,
-    table: SNTableConfig,
+  private noteMissingTable(
+    missingObj: SN.MissingFileTableMap,
+    table: SN.TableConfig,
     tableName: string
   ) {
     for (let recName in table.records) {
@@ -230,7 +214,7 @@ class Manifest {
     }
   }
 
-  async loadMissingFiles(fileMap: SNTableMap) {
+  private async loadMissingFiles(fileMap: SN.TableMap) {
     try {
       const { sourceDirectory = "src" } = (await config) || {};
       const _codeSrcPath = path.join(process.cwd(), sourceDirectory);
@@ -255,6 +239,81 @@ class Manifest {
       throw new Error("failed to load missing files");
     }
   }
+
+  private async loaddir(dirPath: string, list: string[]) {
+    try {
+      let files = await fsp.readdir(dirPath);
+      for (let f of files) {
+        let filep = path.join(dirPath, f);
+        let stats = await fsp.stat(filep);
+        if (stats.isDirectory()) {
+          await this.loaddir(filep, list);
+        } else {
+          list.push(filep);
+        }
+      }
+    } catch (e) {
+      return;
+    }
+  }
+
+  private async parseFileParams(files: string[]) {
+    return await Utils.getParsedFilesPayload(files);
+  }
+
+  private async loadList(): Promise<string[]> {
+    let list: string[] = [];
+    const { sourceDirectory = "src" } = (await config) || {};
+    let subDirectory = path.join(process.cwd(), sourceDirectory);
+    await this.loaddir(subDirectory, list);
+    return list;
+  }
+
+  private async getLocalFilesList() {
+    const files = await this.loadList();
+    return this.parseFileParams(files);
+  }
+
+  async pushAllFiles() {
+    let filePayload = await this.getLocalFilesList();
+    const targetServer = process.env.SN_INSTANCE || "";
+    if (!targetServer) {
+      console.error("No server configured for push!");
+      return;
+    }
+    await pushFiles(targetServer, filePayload);
+    console.log("Push complete!");
+  }
+
+  async checkScope(): Promise<Sinc.ScopeCheckResult> {
+    try {
+      let man = await manifest;
+      if (man) {
+        let scopeObj = await getCurrentScope();
+        if (scopeObj.scope === man.scope) {
+          return {
+            match: true,
+            sessionScope: scopeObj.scope,
+            manifestScope: man.scope
+          };
+        } else {
+          return {
+            match: false,
+            sessionScope: scopeObj.scope,
+            manifestScope: man.scope
+          };
+        }
+      }
+      //first time case
+      return {
+        match: true,
+        sessionScope: "",
+        manifestScope: ""
+      };
+    } catch (e) {
+      throw e;
+    }
+  }
 }
 
-export default new Manifest();
+export default new AppManager();
