@@ -110,13 +110,13 @@ class AppManager {
         this.writeManifestFile(newManifest);
         logger.info("Finding and creating missing files...");
         await this.reconcileDifferences(newManifest);
-        logger.success("Refresh complete!✅");
+        logger.success("Refresh complete! ✅");
       } catch (e) {
-        logger.error("Encountered error while refreshing!❌");
+        logger.error("Encountered error while refreshing! ❌");
         logger.log(e);
       }
     } catch (e) {
-      logger.error("Encountered error while refreshing!❌");
+      logger.error("Encountered error while refreshing! ❌");
       logger.log(e);
     }
   }
