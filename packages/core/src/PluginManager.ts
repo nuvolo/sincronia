@@ -14,8 +14,6 @@ class PluginManager {
     let conf = await config;
     if (conf && conf.rules) {
       this.pluginRules = conf.rules;
-    } else {
-      console.log("No rules detected!");
     }
   }
 
@@ -25,6 +23,8 @@ class PluginManager {
       let reg = new RegExp(rule.match);
       if (reg.test(context.filePath)) {
         plugins = rule.plugins;
+        //only match first rule
+        break;
       }
     }
     return plugins;
