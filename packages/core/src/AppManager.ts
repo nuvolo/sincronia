@@ -10,6 +10,7 @@ import path from "path";
 import { config, manifest, MANIFEST_FILE_PATH } from "./config";
 import * as Utils from "./utils";
 import * as logger from "./logging";
+import inquirer from "inquirer";
 
 const fsp = fs.promises;
 
@@ -87,6 +88,18 @@ class AppManager {
     skipFileCheck?: boolean
   ): Promise<any> {
     try {
+      let answers: { confirmed: boolean } = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "confirmed",
+          message:
+            "Downloading will overwrite manifest and files. Are you sure?",
+          default: false
+        }
+      ]);
+      if (!answers["confirmed"]) {
+        return;
+      }
       logger.info("Downloading manifest and files...");
       let man = await getManifestWithFiles(scope);
       logger.info("Creating local files from manifest...");
@@ -285,6 +298,18 @@ class AppManager {
       return;
     }
     try {
+      let answers: { confirmed: boolean } = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "confirmed",
+          message:
+            "Pushing will overwrite code in your instance. Are you sure?",
+          default: false
+        }
+      ]);
+      if (!answers["confirmed"]) {
+        return;
+      }
       await pushFiles(targetServer, filePayload);
       logger.logMultiFilePush(filePayload, true);
     } catch (e) {
