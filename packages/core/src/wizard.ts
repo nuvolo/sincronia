@@ -25,7 +25,7 @@ export async function startWizard() {
     await downloadApp(loginAnswers, selectedApp);
   }
   logger.success(
-    "You are all set up 👍 Try running npx sinc dev to begin development mode."
+    "You are all set up 👍 Try running 'npx sinc dev' to begin development mode."
   );
 }
 
