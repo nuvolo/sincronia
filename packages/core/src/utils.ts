@@ -15,15 +15,44 @@ async function _getConfigFromPath(
     let sys_id = "";
     if (records.hasOwnProperty(name)) {
       sys_id = records[name].sys_id;
+      if (!fieldExists(records[name], params)) {
+        throw new Error(
+          `${params.targetField} not found in the manifest for ${records[name].name}`
+        );
+      }
+      return Object.assign({}, params, { scope: scope, sys_id: sys_id });
+    } else {
+      throw new Error(`Cannot find record called ${name} in ${tableName}`);
     }
-    return Object.assign({}, params, { scope: scope, sys_id: sys_id });
   } catch (e) {
     return;
   }
 }
 
+function fieldExists(record: SN.MetaRecord, context: Sinc.FileSyncParams) {
+  let matches = record.files.filter(cur => {
+    return cur.name === context.targetField;
+  });
+  return matches.length === 1;
+}
+
+function getExtension(filePath: string) {
+  try {
+    let ext =
+      "." +
+      path
+        .basename(filePath)
+        .split(".")
+        .slice(1)
+        .join(".");
+    return ext;
+  } catch (e) {
+    return "";
+  }
+}
+
 export async function parseFileNameParams(filePath: string) {
-  const ext = path.extname(filePath);
+  const ext = getExtension(filePath);
   const resourcePath = path.dirname(filePath).split(path.sep);
   const resources = resourcePath.slice(-3);
   const targetField = path.basename(filePath, ext);

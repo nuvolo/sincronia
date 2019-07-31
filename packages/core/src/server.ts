@@ -120,7 +120,10 @@ export async function pushFile(
   if (fileContext.sys_id && fileContext.targetField) {
     try {
       let requestObj = await buildFileRequestObj(target_server, fileContext);
-      await pushUpdate(requestObj);
+      let response = await pushUpdate(requestObj);
+      if (response && response.status < 200 && response.status > 299) {
+        throw new Error(response.statusText);
+      }
     } catch (e) {
       throw e;
     }
