@@ -86,20 +86,16 @@ class AppManager {
     scope: string,
     skipFileCheck?: boolean
   ): Promise<any> {
-    return new Promise((resolve, reject) => {
-      getManifestWithFiles(scope)
-        .then(async (man: SN.AppManifest) => {
-          try {
-            this.processManifest(man, skipFileCheck);
-            resolve();
-          } catch (e) {
-            reject(e);
-          }
-        })
-        .catch(e => {
-          throw e;
-        });
-    });
+    try {
+      logger.info("Downloading manifest and files...");
+      let man = await getManifestWithFiles(scope);
+      logger.info("Creating local files from manifest...");
+      await this.processManifest(man, skipFileCheck);
+      logger.success("Download complete ✅");
+    } catch (e) {
+      logger.error("Encountered error while performing download ❌");
+      logger.log(e);
+    }
   }
   async syncManifest() {
     try {
@@ -107,11 +103,21 @@ class AppManager {
       if (!curManifest) {
         throw new Error("No manifest file loaded!");
       }
-      let newManifest = await getManifest(curManifest.scope);
-      this.writeManifestFile(newManifest);
-      await this.reconcileDifferences(newManifest);
+      try {
+        logger.info("Downloading fresh manifest...");
+        let newManifest = await getManifest(curManifest.scope);
+        logger.info("Writing new manifest file...");
+        this.writeManifestFile(newManifest);
+        logger.info("Finding and creating missing files...");
+        await this.reconcileDifferences(newManifest);
+        logger.success("Refresh complete!✅");
+      } catch (e) {
+        logger.error("Encountered error while refreshing!❌");
+        logger.log(e);
+      }
     } catch (e) {
-      throw e;
+      logger.error("Encountered error while refreshing!❌");
+      logger.log(e);
     }
   }
 
@@ -120,7 +126,6 @@ class AppManager {
       let missing = await this.determineMissing(manifest);
       let missingFileMap = await getMissingFiles(missing);
       await this.loadMissingFiles(missingFileMap);
-      console.log("Sync complete!");
     } catch (e) {
       throw e;
     }

@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 const fsp = fs.promises;
+import * as logger from "./logging";
 
 export const CONFIG_FILE_PATH = path.join(process.cwd(), "sinc.config.json");
 export const MANIFEST_FILE_PATH = path.join(
@@ -18,7 +19,7 @@ async function _getConfig(): Promise<Sinc.Config> {
     let configString = await fsp.readFile(CONFIG_FILE_PATH, "utf-8");
     return JSON.parse(configString);
   } catch (e) {
-    console.log("No configuration file found, loading default...");
+    logger.info("No configuration file found, loading default...");
     return DEFAULT_CONFIG;
   }
 }

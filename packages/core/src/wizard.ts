@@ -5,13 +5,14 @@ import AppManager from "./AppManager";
 import fs from "fs";
 const fsp = fs.promises;
 import path from "path";
+import * as logger from "./logging";
 
 export async function startWizard() {
   let loginAnswers = await getLoginInfo();
   await setupDotEnv(loginAnswers);
   let hasConfig = await checkConfig();
   if (!hasConfig) {
-    console.log("Generating config...");
+    logger.info("Generating config...");
     await writeDefaultConfig();
   }
   let man = await manifest;
@@ -20,10 +21,12 @@ export async function startWizard() {
     if (!selectedApp) {
       return;
     }
-    console.log("Downloading app...");
+    logger.info("Downloading app...");
     await downloadApp(loginAnswers, selectedApp);
   }
-  console.log("done!");
+  logger.success(
+    "You are all set up 👍 Try running npx sinc dev to begin development mode."
+  );
 }
 
 async function getLoginInfo(): Promise<Sinc.LoginAnswers> {
@@ -95,7 +98,7 @@ async function showAppList(
   try {
     apps = await snc.getAppList();
   } catch (e) {
-    console.error(
+    logger.error(
       "Failed to get application list. Check to see that your credentials are correct and you have the update set installed on your instance."
     );
     return;
@@ -127,7 +130,7 @@ async function downloadApp(answers: Sinc.LoginAnswers, scope: string) {
     let man = await snc.getManifestWithFiles(scope);
     await AppManager.processManifest(man);
   } catch (e) {
-    console.error(e);
+    logger.log(e);
     throw new Error("Failed to download files!");
   }
 }
