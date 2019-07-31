@@ -90,7 +90,6 @@ async function buildFileRequestObj(
   try {
     const url = buildFileEndpoint(filePayload);
     const fileContents = await PluginManager.getFinalFileContents(filePayload);
-    console.info(fileContents);
     const { targetField } = filePayload;
     const data: any = {};
     data[targetField] = fileContents;

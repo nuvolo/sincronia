@@ -1,6 +1,7 @@
 import chokidar from "chokidar";
 import * as Utils from "./utils";
 import { pushFile } from "./server";
+import * as logger from "./logging";
 class Watcher {
   watcher?: chokidar.FSWatcher;
   constructor() {
@@ -15,14 +16,15 @@ class Watcher {
       let payload = await Utils.parseFileNameParams(path);
       const targetServer =
         process.env.SN_INSTANCE ||
-        console.error("No server configured for push!") ||
+        logger.error("No server configured for push!") ||
         "";
       if (targetServer && payload) {
         try {
           await pushFile(targetServer, payload);
-          console.log(`${path} pushed to server!`);
+          logger.logFilePush(payload, true);
         } catch (e) {
-          throw e;
+          logger.logFilePush(payload, false);
+          logger.error(e);
         }
       }
     } catch (e) {

@@ -9,7 +9,7 @@ import fs from "fs";
 import path from "path";
 import { config, manifest, MANIFEST_FILE_PATH } from "./config";
 import * as Utils from "./utils";
-//import { pushFiles } from "./filePusher";
+import * as logger from "./logging";
 
 const fsp = fs.promises;
 
@@ -91,7 +91,6 @@ class AppManager {
         .then(async (man: SN.AppManifest) => {
           try {
             this.processManifest(man, skipFileCheck);
-            console.log("Push Complete!");
             resolve();
           } catch (e) {
             reject(e);
@@ -113,7 +112,6 @@ class AppManager {
       await this.reconcileDifferences(newManifest);
     } catch (e) {
       throw e;
-      //console.error(e);
     }
   }
 
@@ -278,11 +276,15 @@ class AppManager {
     let filePayload = await this.getLocalFilesList();
     const targetServer = process.env.SN_INSTANCE || "";
     if (!targetServer) {
-      console.error("No server configured for push!");
+      logger.error("No server configured for push!");
       return;
     }
-    await pushFiles(targetServer, filePayload);
-    console.log("Push complete!");
+    try {
+      await pushFiles(targetServer, filePayload);
+      logger.logMultiFilePush(filePayload, true);
+    } catch (e) {
+      logger.logMultiFilePush(filePayload, false, e);
+    }
   }
 
   async checkScope(): Promise<Sinc.ScopeCheckResult> {
