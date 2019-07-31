@@ -3,12 +3,13 @@ import { config } from "./config";
 import Watcher from "./Watcher";
 import AppManager from "./AppManager";
 import { startWizard } from "./wizard";
+import * as logger from "./logging";
 
 export async function devCommand() {
   const { sourceDirectory } = await config;
   const _codeSrcPath = path.join(process.cwd(), sourceDirectory);
   Watcher.startWatching(_codeSrcPath);
-  console.log("Dev mode started!");
+  logger.devModeLog();
 }
 export async function refreshCommand() {
   try {
@@ -29,7 +30,6 @@ export async function downloadCommand(args: Sinc.CmdDownloadArgs) {
     await AppManager.downloadWithFiles(args.scope as string);
   } catch (e) {
     throw e;
-    //console.error(e);
   }
 }
 export async function initCommand() {

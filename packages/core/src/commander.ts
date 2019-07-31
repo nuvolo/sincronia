@@ -7,12 +7,11 @@ import {
 } from "./commands";
 import AppManager from "./AppManager";
 import yargs from "yargs";
+import * as logger from "./logging";
 export async function initCommands() {
   let scopeCheck = await AppManager.checkScope();
   if (!scopeCheck.match) {
-    console.log(
-      `Your user's scope is set to ${scopeCheck.sessionScope} but this project is configured for the ${scopeCheck.manifestScope} scope. Please switch scopes in ServiceNow to continue.`
-    );
+    logger.scopeCheckMessage(scopeCheck);
   } else {
     yargs
       .command(["dev", "d"], "Start Development Mode", {}, devCommand)

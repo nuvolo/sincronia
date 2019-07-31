@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig, AxiosInstance } from "axios";
 import { wait, chunkArr } from "./utils";
 import PluginManager from "./PluginManager";
+import * as logger from "./logging";
 const axiosConfig: AxiosRequestConfig = {
   withCredentials: true,
   auth: {
@@ -20,22 +21,21 @@ const TABLE_API = "api/now/table";
 
 async function _update(obj: AxiosRequestConfig) {
   try {
-    let resp = await api(obj);
+    return await api(obj);
   } catch (e) {
-    console.error("The update request failed", e);
+    throw e;
   }
 }
 
 export async function pushUpdate(requestObj: Sinc.ServerRequestConfig) {
-  if (requestObj && requestObj.data) {
-    return _update(requestObj);
+  try {
+    if (requestObj && requestObj.data) {
+      return _update(requestObj);
+    }
+    logger.error("Attempted to push an empty data object");
+  } catch (e) {
+    throw e;
   }
-
-  console.error(
-    "Attempted to push an empty data object. No persistence for config",
-    requestObj
-  );
-  return Promise.resolve();
 }
 
 export async function pushUpdates(
@@ -90,7 +90,6 @@ async function buildFileRequestObj(
   try {
     const url = buildFileEndpoint(filePayload);
     const fileContents = await PluginManager.getFinalFileContents(filePayload);
-    console.info(fileContents);
     const { targetField } = filePayload;
     const data: any = {};
     data[targetField] = fileContents;
@@ -123,7 +122,6 @@ export async function pushFile(
       let requestObj = await buildFileRequestObj(target_server, fileContext);
       await pushUpdate(requestObj);
     } catch (e) {
-      console.error(e);
       throw e;
     }
   }

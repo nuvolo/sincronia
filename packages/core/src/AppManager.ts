@@ -9,7 +9,8 @@ import fs from "fs";
 import path from "path";
 import { config, manifest, MANIFEST_FILE_PATH } from "./config";
 import * as Utils from "./utils";
-//import { pushFiles } from "./filePusher";
+import * as logger from "./logging";
+import inquirer from "inquirer";
 
 const fsp = fs.promises;
 
@@ -86,21 +87,28 @@ class AppManager {
     scope: string,
     skipFileCheck?: boolean
   ): Promise<any> {
-    return new Promise((resolve, reject) => {
-      getManifestWithFiles(scope)
-        .then(async (man: SN.AppManifest) => {
-          try {
-            this.processManifest(man, skipFileCheck);
-            console.log("Push Complete!");
-            resolve();
-          } catch (e) {
-            reject(e);
-          }
-        })
-        .catch(e => {
-          throw e;
-        });
-    });
+    try {
+      let answers: { confirmed: boolean } = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "confirmed",
+          message:
+            "Downloading will overwrite manifest and files. Are you sure?",
+          default: false
+        }
+      ]);
+      if (!answers["confirmed"]) {
+        return;
+      }
+      logger.info("Downloading manifest and files...");
+      let man = await getManifestWithFiles(scope);
+      logger.info("Creating local files from manifest...");
+      await this.processManifest(man, skipFileCheck);
+      logger.success("Download complete ✅");
+    } catch (e) {
+      logger.error("Encountered error while performing download ❌");
+      logger.log(e);
+    }
   }
   async syncManifest() {
     try {
@@ -108,12 +116,21 @@ class AppManager {
       if (!curManifest) {
         throw new Error("No manifest file loaded!");
       }
-      let newManifest = await getManifest(curManifest.scope);
-      this.writeManifestFile(newManifest);
-      await this.reconcileDifferences(newManifest);
+      try {
+        logger.info("Downloading fresh manifest...");
+        let newManifest = await getManifest(curManifest.scope);
+        logger.info("Writing new manifest file...");
+        this.writeManifestFile(newManifest);
+        logger.info("Finding and creating missing files...");
+        await this.reconcileDifferences(newManifest);
+        logger.success("Refresh complete! ✅");
+      } catch (e) {
+        logger.error("Encountered error while refreshing! ❌");
+        logger.log(e);
+      }
     } catch (e) {
-      throw e;
-      //console.error(e);
+      logger.error("Encountered error while refreshing! ❌");
+      logger.log(e);
     }
   }
 
@@ -122,7 +139,6 @@ class AppManager {
       let missing = await this.determineMissing(manifest);
       let missingFileMap = await getMissingFiles(missing);
       await this.loadMissingFiles(missingFileMap);
-      console.log("Sync complete!");
     } catch (e) {
       throw e;
     }
@@ -278,11 +294,27 @@ class AppManager {
     let filePayload = await this.getLocalFilesList();
     const targetServer = process.env.SN_INSTANCE || "";
     if (!targetServer) {
-      console.error("No server configured for push!");
+      logger.error("No server configured for push!");
       return;
     }
-    await pushFiles(targetServer, filePayload);
-    console.log("Push complete!");
+    try {
+      let answers: { confirmed: boolean } = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "confirmed",
+          message:
+            "Pushing will overwrite code in your instance. Are you sure?",
+          default: false
+        }
+      ]);
+      if (!answers["confirmed"]) {
+        return;
+      }
+      await pushFiles(targetServer, filePayload);
+      logger.logMultiFilePush(filePayload, true);
+    } catch (e) {
+      logger.logMultiFilePush(filePayload, false, e);
+    }
   }
 
   async checkScope(): Promise<Sinc.ScopeCheckResult> {
