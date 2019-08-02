@@ -1,0 +1,33 @@
+{
+  "name": "@sincronia/sn-sanitizer-plugin",
+  "version": "0.0.1",
+  "description": "ServiceNow Sanitizer Plugin",
+  "main": "./dist/index.js",
+  "scripts": {
+    "prepare": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nuvolo/sincronia.git"
+  },
+  "author": "",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/nuvolo/sincronia/issues"
+  },
+  "homepage": "https://github.com/nuvolo/sincronia#readme",
+  "dependencies": {
+    "@babel/core": "^7.5.5",
+    "@babel/types": "^7.5.5",
+    "@types/babel__core": "^7.1.2"
+  },
+  "devDependencies": {
+    "typescript": "^3.5.3"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
