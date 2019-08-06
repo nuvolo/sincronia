@@ -1,5 +1,4 @@
 import * as babel from "@babel/core";
-import sanitizePlugin from "./sanitizer";
 export async function run(
   context: Sinc.FileContext,
   content: string,
@@ -7,9 +6,10 @@ export async function run(
 ): Promise<Sinc.PluginResults> {
   try {
     let output = "";
-    let res = await babel.transformAsync(content, {
-      plugins: [sanitizePlugin]
+    options = Object.assign(options, {
+      filename: `${context.targetField}${context.ext}`
     });
+    let res = await babel.transformAsync(content, options || {});
     if (res && res.code) {
       output = res.code;
     } else {

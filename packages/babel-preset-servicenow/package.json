@@ -1,5 +1,5 @@
 {
-  "name": "@sincronia/sn-sanitizer-plugin",
+  "name": "@sincronia/babel-preset-servicenow",
   "version": "0.0.1",
   "description": "ServiceNow Sanitizer Plugin",
   "main": "./dist/index.js",
