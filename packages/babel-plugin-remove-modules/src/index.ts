@@ -4,6 +4,7 @@ export default function() {
   let count = 0;
   return {
     visitor: {
+      //remove imports
       ImportDeclaration(path) {
         path.remove();
       },

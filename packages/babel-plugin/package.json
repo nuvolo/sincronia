@@ -28,5 +28,6 @@
   },
   "devDependencies": {
     "@types/babel__core": "^7.1.2"
-  }
+  },
+  "gitHead": "c534f54a373388541048f82d5b443a15263b20c1"
 }
