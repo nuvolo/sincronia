@@ -18,11 +18,11 @@
   "homepage": "https://github.com/nuvolo/sincronia#readme",
   "dependencies": {
     "@babel/core": "^7.5.5",
-    "@babel/types": "^7.5.5",
-    "@types/babel__core": "^7.1.2"
+    "@babel/types": "^7.5.5"
   },
   "devDependencies": {
-    "typescript": "^3.5.3"
+    "typescript": "^3.5.3",
+    "@types/babel__core": "^7.1.2"
   },
   "files": [
     "dist"

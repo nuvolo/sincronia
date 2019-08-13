@@ -20,10 +20,20 @@ const run: Sinc.PluginFunc = async function(
       ts.sys.fileExists,
       "tsconfig.json"
     );
+   
     let tsConfig: { compilerOptions: ts.CompilerOptions };
     if (configPath) {
-      let configText = await fsp.readFile(configPath, { encoding: "utf-8" });
-      tsConfig = JSON.parse(stripJsonComments(configText));
+      // let configText = await fsp.readFile(configPath, { encoding: "utf-8" });
+      // tsConfig = JSON.parse(stripJsonComments(configText));
+      let results = ts.readConfigFile(configPath,ts.sys.readFile)
+      if(results.config){
+        tsConfig = results.config;
+      }
+      else{
+        tsConfig = {
+          compilerOptions: {}
+        };
+      }
     } else {
       tsConfig = {
         compilerOptions: {}
