@@ -6,7 +6,29 @@ export default function() {
     visitor: {
       //remove imports
       ImportDeclaration(path) {
+        //get a list of imports
+        let _imports = path.node.specifiers.reduce((acc, cur) => {
+          if (cur.type === "ImportSpecifier") {
+            acc.push(cur.imported.name);
+          }
+          if (cur.type === "ImportDefaultSpecifier") {
+            acc.push(cur.local.name);
+          }
+          return acc;
+        }, [] as string[]);
+        //get module name
+        let mod = path.node.source.value;
+        //rename references to module unless they are local modules
+        for(let i of _imports){
+          if(!isLocal(mod)){
+            path.scope.rename(i,[mod,i].join('.'));
+          }
+        }
         path.remove();
+        function isLocal(moduleName:string){
+          let reg = /\./;
+          return reg.test(moduleName);
+        }
       },
       ExportNamedDeclaration(path) {
         if (path.node.declaration) {
