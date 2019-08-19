@@ -7,7 +7,7 @@ const run: Sinc.PluginFunc = async function(
   try {
     let output = "";
     let prettierConfig = await prettier.resolveConfig(context.filePath);
-    let opts: prettier.Options = { parser: "babel" };
+    let opts: prettier.Options = {filepath:context.filePath};
     if (prettierConfig) {
       opts = Object.assign(opts, prettierConfig);
     }
