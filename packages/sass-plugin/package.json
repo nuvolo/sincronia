@@ -1,14 +1,16 @@
 {
   "name": "@sincronia/sass-plugin",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "SASS plugin for Sincronia",
   "main": "./dist/index.js",
   "scripts": {
     "prepare": "tsc"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "publishConfig": {
-    "access":"public"
+    "access": "public"
   },
   "repository": {
     "type": "git",
