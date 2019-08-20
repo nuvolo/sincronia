@@ -24,6 +24,7 @@
     "node-sass": "^4.12.0"
   },
   "devDependencies": {
+    "@sincronia/types": "0.0.9",
     "@types/node-sass": "^4.11.0"
   }
 }

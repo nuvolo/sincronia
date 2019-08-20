@@ -1,3 +1,4 @@
+import {Sinc} from "@sincronia/types";
 import { PluginItem } from "@babel/core";
 import * as t from "@babel/types";
 export default function() {

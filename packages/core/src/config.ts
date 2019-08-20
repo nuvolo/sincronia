@@ -1,3 +1,4 @@
+import {SN,Sinc} from "@sincronia/types";
 import path from "path";
 import fs from "fs";
 const fsp = fs.promises;

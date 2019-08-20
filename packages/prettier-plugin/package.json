@@ -9,10 +9,10 @@
   "author": "Multiple",
   "license": "GPL-3.0",
   "dependencies": {
-    "@sincronia/types": "^0.0.9",
     "prettier": "^1.18.2"
   },
   "devDependencies": {
+    "@sincronia/types": "0.0.9",
     "@types/prettier": "^1.18.0",
     "typescript": "^3.5.3"
   },

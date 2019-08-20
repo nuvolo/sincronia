@@ -1,3 +1,4 @@
+import {Sinc} from "@sincronia/types";
 import path from "path";
 import { config } from "./config";
 import Watcher from "./Watcher";

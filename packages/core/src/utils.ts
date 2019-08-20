@@ -1,3 +1,4 @@
+import {SN,Sinc} from "@sincronia/types";
 import { manifest } from "./config";
 import path from "path";
 

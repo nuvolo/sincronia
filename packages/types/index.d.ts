@@ -1,4 +1,4 @@
-declare namespace Sinc {
+export module Sinc {
   interface CmdDownloadArgs {
     scope: string;
   }
@@ -71,7 +71,7 @@ declare namespace Sinc {
   }
 }
 
-declare namespace SN {
+export module SN {
   interface AppManifest {
     tables: TableMap;
     scope: string;
@@ -137,4 +137,4 @@ declare namespace SN {
   }
 }
 
-type TSFIXME = any;
+export type TSFIXME = any;

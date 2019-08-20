@@ -1,3 +1,4 @@
+import {SN,Sinc} from "@sincronia/types";
 import axios, { AxiosRequestConfig, AxiosInstance } from "axios";
 import { wait, chunkArr } from "./utils";
 import PluginManager from "./PluginManager";

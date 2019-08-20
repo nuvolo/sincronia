@@ -1,3 +1,4 @@
+import {Sinc} from "@sincronia/types";
 import * as babel from "@babel/core";
 export async function run(
   context: Sinc.FileContext,

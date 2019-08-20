@@ -1,3 +1,4 @@
+import {Sinc} from "@sincronia/types";
 import prettier from "prettier";
 const run: Sinc.PluginFunc = async function(
   context: Sinc.FileContext,
