@@ -1,3 +1,4 @@
+import {Sinc,TSFIXME} from "@sincronia/types";
 import {
   devCommand,
   refreshCommand,

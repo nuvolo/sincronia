@@ -1,4 +1,4 @@
-// import { Sinc } from "@sincronia/types";
+import {Sinc} from "@sincronia/types";
 import { config } from "./config";
 import fs from "fs";
 import path from "path";

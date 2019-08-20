@@ -1,3 +1,4 @@
+import {SN,Sinc} from "@sincronia/types";
 import inquirer from "inquirer";
 import { ServiceNowConnection } from "./server";
 import { CONFIG_FILE_PATH, DEFAULT_CONFIG, manifest } from "./config";

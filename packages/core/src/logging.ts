@@ -1,3 +1,4 @@
+import {Sinc} from "@sincronia/types";
 import chalk from "chalk";
 
 export const log = console.log;

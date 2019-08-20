@@ -21,6 +21,7 @@
     "@babel/types": "^7.5.5"
   },
   "devDependencies": {
+    "@sincronia/types": "0.0.9",
     "@types/babel__core": "^7.1.2"
   },
   "publishConfig": {
