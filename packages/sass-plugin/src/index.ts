@@ -1,3 +1,4 @@
+import {Sinc} from "@sincronia/types";
 import sass from "node-sass";
 const run: Sinc.PluginFunc = async function(
   context: Sinc.FileContext,
