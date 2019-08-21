@@ -1,4 +1,4 @@
-import {Sinc} from "@sincronia/types";
+import { Sinc } from "@sincronia/types";
 import { config } from "./config";
 import fs from "fs";
 import path from "path";
@@ -20,7 +20,7 @@ class PluginManager {
   determinePlugins(context: Sinc.FileContext): Sinc.PluginConfig[] {
     let plugins: Sinc.PluginConfig[] = [];
     for (let rule of this.pluginRules) {
-      let reg = new RegExp(rule.match);
+      let reg = rule.match;
       if (reg.test(context.filePath)) {
         plugins = rule.plugins;
         //only match first rule

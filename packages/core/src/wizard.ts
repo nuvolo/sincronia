@@ -1,7 +1,7 @@
-import {SN,Sinc} from "@sincronia/types";
+import { SN, Sinc } from "@sincronia/types";
 import inquirer from "inquirer";
 import { ServiceNowConnection } from "./server";
-import { CONFIG_FILE_PATH, DEFAULT_CONFIG, manifest } from "./config";
+import { CONFIG_FILE_PATH, DEFAULT_CONFIG_FILE, manifest } from "./config";
 import AppManager from "./AppManager";
 import fs from "fs";
 const fsp = fs.promises;
@@ -78,10 +78,7 @@ SN_INSTANCE=${answers.instance}
 
 async function writeDefaultConfig() {
   try {
-    await fsp.writeFile(
-      CONFIG_FILE_PATH,
-      JSON.stringify(DEFAULT_CONFIG, null, 2)
-    );
+    await fsp.writeFile(CONFIG_FILE_PATH, DEFAULT_CONFIG_FILE);
   } catch (e) {
     throw e;
   }
