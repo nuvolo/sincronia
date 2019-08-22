@@ -114,7 +114,7 @@ export module SN {
     result: Record[];
   }
 
-  type FileType = "js" | "css" | "xml" | "html" | "scss";
+  type FileType = "js" | "css" | "xml" | "html" | "scss" | "txt";
 
   interface TypeMap {
     [type: string]: string;
