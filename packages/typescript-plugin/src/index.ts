@@ -1,8 +1,5 @@
-import {Sinc} from "@sincronia/types";
+import { Sinc } from "@sincronia/types";
 import * as ts from "typescript";
-import fs from "fs";
-const fsp = fs.promises;
-import stripJsonComments from "strip-json-comments";
 const run: Sinc.PluginFunc = async function(
   context: Sinc.FileContext,
   content: string,
@@ -21,16 +18,15 @@ const run: Sinc.PluginFunc = async function(
       ts.sys.fileExists,
       "tsconfig.json"
     );
-   
+
     let tsConfig: { compilerOptions: ts.CompilerOptions };
     if (configPath) {
       // let configText = await fsp.readFile(configPath, { encoding: "utf-8" });
       // tsConfig = JSON.parse(stripJsonComments(configText));
-      let results = ts.readConfigFile(configPath,ts.sys.readFile)
-      if(results.config){
+      let results = ts.readConfigFile(configPath, ts.sys.readFile);
+      if (results.config) {
         tsConfig = results.config;
-      }
-      else{
+      } else {
         tsConfig = {
           compilerOptions: {}
         };
@@ -41,6 +37,10 @@ const run: Sinc.PluginFunc = async function(
       };
     }
     tsConfig.compilerOptions.moduleResolution = ts.ModuleResolutionKind.NodeJs;
+    tsConfig.compilerOptions.lib = tsConfig.compilerOptions.lib
+      ? tsConfig.compilerOptions.lib.map(cur => `lib.${cur}.d.ts`)
+      : undefined;
+    console.log(tsConfig);
     //check the types, if we get errors, throw an error
     let diagnostics = typeCheck(
       [context.filePath],
@@ -109,7 +109,7 @@ const run: Sinc.PluginFunc = async function(
             );
           }
         })
-        .join("");
+        .join("\n");
     }
   } catch (e) {
     throw e;

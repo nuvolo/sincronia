@@ -8,7 +8,7 @@ export module Sinc {
     rules?: PluginRule[];
   }
   interface PluginRule {
-    match: string;
+    match: RegExp;
     plugins: PluginConfig[];
   }
   interface PluginConfig {

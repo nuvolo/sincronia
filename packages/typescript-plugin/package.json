@@ -4,14 +4,15 @@
   "description": "TypeScript plugin for Sincronia",
   "main": "./dist/index.js",
   "scripts": {
-    "prepare": "tsc"
+    "prepare": "npx tsc"
   },
   "author": "Multiple",
   "license": "GPL-3.0",
   "dependencies": {
-    "@sincronia/types": "^0.0.10",
-    "strip-json-comments": "^3.0.1",
     "typescript": "^3.5.3"
+  },
+  "devDependencies": {
+    "@sincronia/types": "^0.0.10"
   },
   "files": [
     "dist"
