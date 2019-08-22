@@ -9,7 +9,12 @@ const run: Sinc.PluginFunc = async function(
   const memFS = new memoryFS();
   let wpOptions = options.webpackConfig as webpack.Configuration;
   wpOptions.entry = context.filePath;
+  //console.log(context);
   wpOptions.output = {
+    library: context.name,
+    libraryTarget: "var",
+    libraryExport: "default",
+    path: "/",
     filename: "bundle.js"
   };
   wpOptions.devtool = false;
@@ -22,18 +27,21 @@ const run: Sinc.PluginFunc = async function(
         return;
       }
       let outputPath = stats.compilation.outputPath;
-      console.log(stats);
-      resolve(memFS.readFileSync("bundle.js"));
+      //console.log(stats);
+      let test = memFS.readdirSync("/");
+      //console.log(test);
+      resolve(memFS.readFileSync("/bundle.js", "utf-8"));
     });
   });
   try {
     let output = await compilePromise;
+    //console.log(output);
     return {
       output,
       success: true
     };
   } catch (e) {
-    throw new Error(e);
+    throw new Error();
   }
 };
 
