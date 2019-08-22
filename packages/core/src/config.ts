@@ -25,7 +25,6 @@ module.exports = {
 
 async function _getConfig(): Promise<Sinc.Config> {
   try {
-    logger.info(CONFIG_FILE_PATH);
     return await import(CONFIG_FILE_PATH);
   } catch (e) {
     logger.info("No configuration file found, loading default...");

@@ -40,7 +40,6 @@ const run: Sinc.PluginFunc = async function(
     tsConfig.compilerOptions.lib = tsConfig.compilerOptions.lib
       ? tsConfig.compilerOptions.lib.map(cur => `lib.${cur}.d.ts`)
       : undefined;
-    console.log(tsConfig);
     //check the types, if we get errors, throw an error
     let diagnostics = typeCheck(
       [context.filePath],
