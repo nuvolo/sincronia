@@ -1,32 +1,52 @@
-import {Sinc} from "@sincronia/types";
-import { PluginItem } from "@babel/core";
+import { Sinc } from "@sincronia/types";
+import { PluginItem, NodePath } from "@babel/core";
 import * as t from "@babel/types";
 export default function() {
+  function shouldProcessImport(path: NodePath<t.ImportDeclaration>) {
+    let n = path.node;
+    if (n.leadingComments && n.leadingComments.length > 0) {
+      let comments = n.leadingComments;
+      for (let c of comments) {
+        let keepComment = /@keepModule/;
+        if (keepComment.test(c.value)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
   let count = 0;
   return {
     visitor: {
       //remove imports
       ImportDeclaration(path) {
+        //determine if we should process this import
+        let shouldProcess = shouldProcessImport(path);
         //get a list of imports
-        let _imports = path.node.specifiers.reduce((acc, cur) => {
-          if (cur.type === "ImportSpecifier") {
-            acc.push(cur.imported.name);
-          }
-          if (cur.type === "ImportDefaultSpecifier") {
-            acc.push(cur.local.name);
-          }
-          return acc;
-        }, [] as string[]);
+        let _imports = path.node.specifiers.reduce(
+          (acc, cur) => {
+            if (cur.type === "ImportSpecifier") {
+              acc.push(cur.imported.name);
+            }
+            if (cur.type === "ImportDefaultSpecifier") {
+              acc.push(cur.local.name);
+            }
+            return acc;
+          },
+          [] as string[]
+        );
         //get module name
         let mod = path.node.source.value;
         //rename references to module unless they are local modules
-        for(let i of _imports){
-          if(!isLocal(mod)){
-            path.scope.rename(i,[mod,i].join('.'));
+        for (let i of _imports) {
+          if (!isLocal(mod) && shouldProcess) {
+            path.scope.rename(i, [mod, i].join("."));
           }
         }
-        path.remove();
-        function isLocal(moduleName:string){
+        if (shouldProcess) {
+          path.remove();
+        }
+        function isLocal(moduleName: string) {
           let reg = /\./;
           return reg.test(moduleName);
         }
