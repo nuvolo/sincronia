@@ -1,8 +1,9 @@
-import {SN,Sinc} from "@sincronia/types";
+import { SN, Sinc } from "@sincronia/types";
 import axios, { AxiosRequestConfig, AxiosInstance } from "axios";
 import { wait, chunkArr } from "./utils";
 import PluginManager from "./PluginManager";
 import * as logger from "./logging";
+import { config } from "./config";
 const axiosConfig: AxiosRequestConfig = {
   withCredentials: true,
   auth: {
@@ -50,7 +51,8 @@ export async function getManifestWithFiles(
 ): Promise<SN.AppManifest> {
   let endpoint = `api/x_nuvo_x/cicd/getManifestWithFiles/${scope}`;
   try {
-    let response = await api.get(endpoint);
+    const { includes, excludes } = await config;
+    let response = await api.post(endpoint, { includes, excludes });
     return response.data.result as SN.AppManifest;
   } catch (e) {
     throw e;
@@ -60,7 +62,8 @@ export async function getManifestWithFiles(
 export async function getManifest(scope: string): Promise<SN.AppManifest> {
   let endpoint = `api/x_nuvo_x/cicd/getManifest/${scope}`;
   try {
-    let response = await api.get(endpoint);
+    const { includes, excludes } = await config;
+    let response = await api.post(endpoint, { includes, excludes });
     return response.data.result as SN.AppManifest;
   } catch (e) {
     throw e;
