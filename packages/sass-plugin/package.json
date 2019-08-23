@@ -1,6 +1,6 @@
 {
   "name": "@sincronia/sass-plugin",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "SASS plugin for Sincronia",
   "main": "./dist/index.js",
   "scripts": {
@@ -26,7 +26,7 @@
     "node-sass": "^4.12.0"
   },
   "devDependencies": {
-    "@sincronia/types": "^0.0.12",
+    "@sincronia/types": "^0.0.13",
     "@types/node-sass": "^4.11.0"
   }
 }
