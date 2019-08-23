@@ -3,7 +3,6 @@ export module Sinc {
     scope: string;
   }
   interface Config {
-    ignoreDirectories: string[];
     sourceDirectory: string;
     rules?: PluginRule[];
     includes?: TablePropMap;
