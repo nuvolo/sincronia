@@ -6,6 +6,17 @@ export module Sinc {
     ignoreDirectories: string[];
     sourceDirectory: string;
     rules?: PluginRule[];
+    includes?: TablePropMap;
+    excludes?: TablePropMap;
+  }
+  interface FieldConfig {
+    type: SN.FileType;
+  }
+  interface FieldMap {
+    [fieldName: string]: FieldConfig;
+  }
+  interface TablePropMap {
+    [table: string]: boolean | FieldMap;
   }
   interface PluginRule {
     match: RegExp;

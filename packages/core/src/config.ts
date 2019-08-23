@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 const fsp = fs.promises;
 import * as logger from "./logging";
+import { includes, excludes } from "./defaultManifestConfig";
 
 export const CONFIG_FILE_PATH = path.join(process.cwd(), "sinc.config.js");
 export const MANIFEST_FILE_PATH = path.join(
@@ -19,13 +20,20 @@ export const DEFAULT_CONFIG_FILE: string = `
 module.exports = {
   sourceDirectory: "src",
   ignoreDirectories: ["node_modules"],
-  rules: []
+  rules: [],
+  excludes:{},
+  includes:{}
 };
 `.trim();
 
 async function _getConfig(): Promise<Sinc.Config> {
   try {
-    return await import(CONFIG_FILE_PATH);
+    let projectConfig: Sinc.Config = await import(CONFIG_FILE_PATH);
+    //merge in includes/excludes
+    let { includes: pIncludes = {}, excludes: pExcludes = {} } = projectConfig;
+    projectConfig.includes = Object.assign(includes, pIncludes);
+    projectConfig.excludes = Object.assign(excludes, pExcludes);
+    return projectConfig;
   } catch (e) {
     logger.info("No configuration file found, loading default...");
     return DEFAULT_CONFIG;
