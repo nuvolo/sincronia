@@ -1,23 +1,28 @@
 import { Sinc } from "@sincronia/types";
 import memoryFS from "memory-fs";
 import webpack from "webpack";
+interface webpackPluginOpts {
+  configGenerator?: (context: Sinc.FileContext) => webpack.Configuration;
+  webpackConfig?: webpack.Configuration;
+}
 const run: Sinc.PluginFunc = async function(
   context: Sinc.FileContext,
   content: string,
-  options: any
+  options: webpackPluginOpts
 ): Promise<Sinc.PluginResults> {
   const memFS = new memoryFS();
-  let wpOptions = options.webpackConfig as webpack.Configuration;
+  let wpOptions: webpack.Configuration = {};
+  if (options.webpackConfig) {
+    Object.assign(wpOptions, options.webpackConfig);
+  }
+  if (options.configGenerator) {
+    wpOptions = Object.assign(wpOptions, options.configGenerator(context));
+  }
   wpOptions.entry = context.filePath;
-  //console.log(context);
   wpOptions.output = {
-    library: context.name,
-    libraryTarget: "var",
-    libraryExport: "default",
     path: "/",
     filename: "bundle.js"
   };
-  wpOptions.devtool = false;
   let compiler = webpack(wpOptions);
   compiler.outputFileSystem = memFS;
   let compilePromise = new Promise<string>((resolve, reject) => {
@@ -26,9 +31,6 @@ const run: Sinc.PluginFunc = async function(
         reject(err);
         return;
       }
-      let outputPath = stats.compilation.outputPath;
-      //console.log(stats);
-      let test = memFS.readdirSync("/");
       //console.log(test);
       resolve(memFS.readFileSync("/bundle.js", "utf-8"));
     });
