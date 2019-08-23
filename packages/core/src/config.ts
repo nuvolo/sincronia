@@ -28,7 +28,7 @@ module.exports = {
 
 async function _getConfig(): Promise<Sinc.Config> {
   try {
-    let projectConfig: Sinc.Config = await import(CONFIG_FILE_PATH);
+    let projectConfig: Sinc.Config = (await import(CONFIG_FILE_PATH)).default;
     //merge in includes/excludes
     let { includes: pIncludes = {}, excludes: pExcludes = {} } = projectConfig;
     projectConfig.includes = Object.assign(includes, pIncludes);
