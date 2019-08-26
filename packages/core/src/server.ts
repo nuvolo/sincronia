@@ -177,7 +177,7 @@ export class ServiceNowConnection {
     let endpoint = `api/x_nuvo_sinc/sinc/getManifestWithFiles/${scope}`;
     try {
       const { includes, excludes } = await config;
-      let response = await api.post(endpoint, { includes, excludes });
+      let response = await this.client.post(endpoint, { includes, excludes });
       return response.data.result as SN.AppManifest;
     } catch (e) {
       throw e;
