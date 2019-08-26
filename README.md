@@ -72,6 +72,18 @@ project_folder/
 
 Records are shown as folders because there are times where there are multiple code files per record. This makes it very important that you **never have records with the exact same display value in the same table!** if you do, then you will notice issues building your files to the right record in ServiceNow.
 
+#### sinc.config.js
+
+This is the configuration file for Sincronia. [Learn More](#configuration)
+
+#### sinc.manifest.json
+
+Keeps track of all ServiceNow files that are watched by Sincronia. **Do not manually modify it**
+
+#### .env
+
+Stores login credentials and and the instance URL. **Do not commit this to git**
+
 ### Asymmetric Source Code
 
 When you download your source code using Sincronia, you are effectively 'taking control' of that code. **Once the code is in your project, you no longer want to edit it directly in ServiceNow!** This is why putting your code into source control is highly recommended. **Anything else besides code, such as tables, configuration of script records, metadata, etc. must still be tracked in ServiceNow and passed along with your preferred method of moving ServiceNow architecture**
