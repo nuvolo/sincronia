@@ -40,7 +40,8 @@ In order to use Sincronia, you will need to install [Node.js](https://nodejs.org
 
 1. Create a folder to store the scoped app code.
 2. Inside the newly created folder, run `npm init` and follow the instructions to set up your node module.
-3. Install `@sincronia/core`
+3. Install [the scoped app](link_here_plz)
+4. Install `@sincronia/core`
 
 ```bash
 npm i -D @sincronia/core
