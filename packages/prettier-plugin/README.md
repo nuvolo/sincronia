@@ -4,6 +4,12 @@
 
 This plugin allows you to run [Prettier](https://prettier.io/) on all supported file types. Supports `.prettierrc` files.
 
+## Installation
+
+```bash
+npm i -D @sincronia/prettier-plugin
+```
+
 ## Options
 
 This plugin takes the exact same options as [.prettierrc](https://prettier.io/docs/en/options.html).

@@ -6,6 +6,12 @@ This plugin allows you to run [Babel](https://babeljs.io/) on your javascript an
 
 Whatever Babel plugins and presets you use, you still need to `npm install` them like usual.
 
+## Installation
+
+```bash
+npm i -D @sincronia/babel-plugin
+```
+
 ## Options
 
 This plugin takes the exact same options as [.babelrc](https://babeljs.io/docs/en/configuration#babelrc).

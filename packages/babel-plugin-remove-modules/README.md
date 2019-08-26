@@ -4,7 +4,15 @@
 
 This [Babel](https://babeljs.io) plugin is for stripping import/export statements from code. It is useful for allowing your source code to reference other files without actually importing them.
 
+## Installation
+
+```bash
+npm i -D @sincronia/babel-plugin-remove-modules
+```
+
 ## Usage
+
+Add this plugin to your `plugins` section of your Babel configuration
 
 ### `import`s
 

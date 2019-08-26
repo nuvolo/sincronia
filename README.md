@@ -40,7 +40,8 @@ In order to use Sincronia, you will need to install [Node.js](https://nodejs.org
 
 1. Create a folder to store the scoped app code.
 2. Inside the newly created folder, run `npm init` and follow the instructions to set up your node module.
-3. Install `@sincronia/core`
+3. Install [the scoped app](link_here_plz)
+4. Install `@sincronia/core`
 
 ```bash
 npm i -D @sincronia/core
@@ -94,7 +95,7 @@ project_folder/
         field_name.extension
 ```
 
-Records are shown as folders because there are times where there are multiple code files per record. This makes it very important that you **never have records with the exact same display value in the same table!** if you do, then you will notice issues building your files to the right record in ServiceNow.
+Records are shown as folders because there are times where there are multiple code files per record. This makes it very important that you **never have records with the exact same display value in the same table!** If you do, then you will notice issues building your files to the right record in ServiceNow.
 
 #### sinc.config.js
 
