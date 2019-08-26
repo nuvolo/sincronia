@@ -1,9 +1,16 @@
 # Sincronia
 
-## Table of Contents
+## Overview
+
+Sincronia is a tool for managing ServiceNow code in a more modern way. It allows you to:
+
+1. Store scoped app code in GitHub in an editable way.🐙 (Looking at you studio source control👀)
+2. Run your code through build pipelines that enable you to use modern development tools such as [TypeScript](https://www.typescriptlang.org/), [Babel](https://babeljs.io/), and [Webpack](https://webpack.js.org/). 🎉
+3. Take control of your development process in ServiceNow! 💪
+
+**Table of Contents**
 
 - [Sincronia](#sincronia)
-  - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
   - [Installation](#installation)
     - [Requirements](#requirements)
@@ -22,14 +29,6 @@
     - [I'm not seeing all my code files! 😡](#im-not-seeing-all-my-code-files-%f0%9f%98%a1)
     - [Plugin Configuration](#plugin-configuration)
   - [Plugin List](#plugin-list)
-
-## Overview
-
-Sincronia is a tool for managing ServiceNow code in a more modern way. It allows you to:
-
-1. Store scoped app code in GitHub in an editable way.🐙 (Looking at you studio source control👀)
-2. Run your code through build pipelines that enable you to use modern development tools such as [TypeScript](https://www.typescriptlang.org/), [Babel](https://babeljs.io/), and [Webpack](https://webpack.js.org/). 🎉
-3. Take control of your development process in ServiceNow! 💪
 
 ## Installation
 
