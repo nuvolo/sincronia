@@ -15,7 +15,6 @@ export default function() {
     }
     return true;
   }
-  let count = 0;
   return {
     visitor: {
       //remove imports
@@ -63,15 +62,10 @@ export default function() {
         if (type === "FunctionDeclaration") {
           //anonymous function
           if (!(path.node.declaration as t.FunctionDeclaration).id) {
-            (path.node.declaration as t.FunctionDeclaration).id = t.identifier(
-              "__ANON__" + count
-            );
-            count++;
+            (path.node
+              .declaration as t.FunctionDeclaration).id = path.scope.generateUidIdentifier();
           }
-          //named function
-          else {
-            path.replaceWith(path.node.declaration);
-          }
+          path.replaceWith(path.node.declaration);
           return;
         }
         if (type === "Identifier") {
@@ -80,13 +74,10 @@ export default function() {
         }
         if (type === "ClassDeclaration") {
           if (!(path.node.declaration as t.ClassDeclaration).id) {
-            (path.node.declaration as t.ClassDeclaration).id = t.identifier(
-              "__ANON__" + count
-            );
-            count++;
-          } else {
-            path.replaceWith(path.node.declaration);
+            (path.node
+              .declaration as t.ClassDeclaration).id = path.scope.generateUidIdentifier();
           }
+          path.replaceWith(path.node.declaration);
           return;
         }
         //fallback remove it
