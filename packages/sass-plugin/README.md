@@ -4,6 +4,12 @@
 
 This plugin allows you to run [Sass](https://sass-lang.com/) on scss/sass files. This enables you to modularize your CSS and also adds some useful features that CSS doesn't normally support such as variables.
 
+## Installation
+
+```bash
+npm i -D @sincronia/sass-plugin
+```
+
 ## Options
 
 No options required.

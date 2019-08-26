@@ -95,7 +95,7 @@ project_folder/
         field_name.extension
 ```
 
-Records are shown as folders because there are times where there are multiple code files per record. This makes it very important that you **never have records with the exact same display value in the same table!** if you do, then you will notice issues building your files to the right record in ServiceNow.
+Records are shown as folders because there are times where there are multiple code files per record. This makes it very important that you **never have records with the exact same display value in the same table!** If you do, then you will notice issues building your files to the right record in ServiceNow.
 
 #### sinc.config.js
 

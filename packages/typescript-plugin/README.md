@@ -4,6 +4,12 @@
 
 This plugin allows you to run the [TypeScript](https://www.typescriptlang.org/) compiler on `.ts` files. Supports `tsconfig.json` files.
 
+## Installation
+
+```bash
+npm i -D @sincronia/typescript-plugin
+```
+
 ## Options
 
 | Key               | Type                         | Default | Description                                                                                                                                                |

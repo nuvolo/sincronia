@@ -5,6 +5,14 @@
 This [Babel](https://babeljs.io) preset is meant to run **absolutely last** of all plugins and presets. Its purpose is to remove or refactor any code that might break ServiceNow's serverside Rhino engine.
 Right now it is fairly simple, but it might be enhanced in the future if more issues are discovered.
 
+## Installation
+
+```bash
+npm i -D @sincronia/babel-preset-servicenow
+```
+
+After the installation is completed, add it to the `presets` section of your Babel configuration.
+
 ## Sanitizer
 
 The sanitizer performs various operations on code to make it safe for ServiceNow

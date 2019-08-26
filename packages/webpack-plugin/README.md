@@ -4,6 +4,12 @@
 
 This plugin allows you to run [Webpack](https://webpack.js.org/) on your desired files. This allows you to build frontend bundles in a more modern way or even potentially bundle server side javascript files.
 
+## Installation
+
+```bash
+npm i -D @sincronia/webpack-plugin
+```
+
 ## Options
 
 | Key               | Type                                                | Default  | Description                                                                                                                                                                                                               |
