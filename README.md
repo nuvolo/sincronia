@@ -1,5 +1,30 @@
 # Sincronia
 
+## Table of Contents
+
+- [Sincronia](#sincronia)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Installation](#installation)
+    - [Requirements](#requirements)
+    - [Instructions](#instructions)
+  - [How does it work?](#how-does-it-work)
+    - [Commands](#commands)
+    - [Workflow](#workflow)
+    - [File Structure](#file-structure)
+      - [sinc.config.js](#sincconfigjs)
+      - [sinc.manifest.json](#sincmanifestjson)
+      - [.env](#env)
+    - [Asymmetric Source Code](#asymmetric-source-code)
+    - [Power of Extensions](#power-of-extensions)
+  - [Configuration](#configuration)
+    - [There are WAY too many files in here! 😱](#there-are-way-too-many-files-in-here-%f0%9f%98%b1)
+    - [I'm not seeing all my code files! 😡](#im-not-seeing-all-my-code-files-%f0%9f%98%a1)
+    - [Plugin Configuration](#plugin-configuration)
+  - [Plugin List](#plugin-list)
+
+## Overview
+
 Sincronia is a tool for managing ServiceNow code in a more modern way. It allows you to:
 
 1. Store scoped app code in GitHub in an editable way.🐙 (Looking at you studio source control👀)
@@ -92,7 +117,7 @@ Modern javascript development workflows are **asymmetric**, meaning that the sou
 
 Sincronia takes advantage of this same principle by allowing you to leverage some of those same tools. This means that you will no longer be able to store your source code directly in ServiceNow, instead you will have a local version of your source code that gets built and the result of that build will be put into ServiceNow.
 
-#### EXAMPLE
+**EXAMPLE**
 
 Let's say I want to develop using TypeScript. Once I have the right plugin configuration for my needs, this Typescript file:
 
@@ -166,7 +191,7 @@ File extensions are typically only one short blurb (e.g. `.js`, `.css`, etc.). W
 
 As long as the main filename stays the same, you can add as many extensions as you want.
 
-#### EXAMPLE
+**EXAMPLE**
 
 `script.js` becomes `script.servicenow.js` or `script.ts` or `script.what.ever.you.want.js`
 
@@ -196,7 +221,7 @@ If you find that your config is getting too large, you can use typical nodejs te
 
 ### There are WAY too many files in here! 😱
 
-#### OR
+**OR**
 
 ### I'm not seeing all my code files! 😡
 
