@@ -2,7 +2,7 @@
 
 Sincronia is a tool for managing ServiceNow code in a more modern way. It allows you to:
 
-1. Store scoped app code in GitHub in an editable way.🐙 (Looking at you studio source control plugin)
+1. Store scoped app code in GitHub in an editable way.🐙 (Looking at you studio source control👀)
 2. Run your code through build pipelines that enable you to use modern development tools such as [TypeScript](https://www.typescriptlang.org/), [Babel](https://babeljs.io/), and [Webpack](https://webpack.js.org/). 🎉
 3. Take control of your development process in ServiceNow! 💪
 
@@ -21,7 +21,6 @@ Sincronia has a few basic commands to help you get the job done
 | `init`             | **none** | Walks you through creating a basic Sincronia project. This is the recommended way to create a Sincronia project from scratch.                               | `npx sinc init`                 |
 | `push`             | **none** | Builds and pushes all files in your local Sincronia project to the ServiceNow instance in your `.env` file                                                  | `npx sinc push`                 |
 | `download [scope]` | **none** | Downloads the specified scoped app, overwriting all local files in the way. **Only use this if you know what you are doing!**                               | `npx sinc download my_test_app` |
-
 
 ### Workflow
 
@@ -51,17 +50,83 @@ Modern javascript development workflows are **asymmetric**, meaning that the sou
 
 Sincronia takes advantage of this same principle by allowing you to leverage some of those same tools. This means that you will no longer be able to store your source code directly in ServiceNow, instead you will have a local version of your source code that gets built and the result of that build will be put into ServiceNow.
 
-EXAMPLE
+#### EXAMPLE
+
+Let's say I want to develop using TypeScript. Once I have the right plugin configuration for my needs, this Typescript file:
+
+```typescript
+// Example/script.ts
+class Example {
+  constructor(message: string) {
+    gs.info(message);
+  }
+  sayHello() {
+    gs.info("Hello, Sincronia!");
+  }
+}
+
+```
+
+becomes
+
+```javascript
+// ServiceNow `Example` script include.
+"use strict";
+
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
+
+function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, descriptor.key, descriptor);
+  }
+}
+
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  return Constructor;
+}
+
+var Example =
+  /*#__PURE__*/
+  (function() {
+    function Example(message) {
+      _classCallCheck(this, Example);
+
+      gs.info(message);
+    }
+
+    _createClass(Example, [
+      {
+        key: "sayHello",
+        value: function sayHello() {
+          gs.info("Hello, Sincronia!");
+        }
+      }
+    ]);
+
+    return Example;
+  })();
+
+```
 
 ### Power of Extensions
 
-File extensions are typically only one short blurb (e.g. `.js`, `.css`, etc.). When you use Sincronia, you may find that you want to treat one `.js` file differently than another. That's where extensions can become more powerful! You could create an extension in your project such as `.server.js` and `.client.js` which you could combine with the [rules](#plugin-configuration) configuration of Sincronia to have *two different build piplines*. You could use Webpack for client scripts and Babel for server scripts! Pretty cool huh?
+File extensions are typically only one short blurb (e.g. `.js`, `.css`, etc.). When you use Sincronia, you may find that you want to treat one `.js` file differently than another. That's where extensions can become more powerful! You could create an extension in your project such as `.server.js` and `.client.js` which you could combine with the [rules](#plugin-configuration) configuration of Sincronia to have *two different build pipelines*. You could use Webpack for client scripts and Babel for server scripts! Pretty cool huh?
 
 As long as the main filename stays the same, you can add as many extensions as you want.
 
 #### EXAMPLE
 
-`script.js` becomes `script.servicenow.js` or `script.ts` or `script.whateveryouwant`
+`script.js` becomes `script.servicenow.js` or `script.ts` or `script.what.ever.you.want.js`
 
 ## Installation
 
@@ -115,13 +180,17 @@ module.exports = {
 }
 ```
 
+If you find that your config is getting too large, you can use typical nodejs techniques for splitting it into smaller modules and loading them into the `sinc.config.js`.
+
 ### There are WAY too many files in here! 😱
 
 #### OR
 
 ### I'm not seeing all my code files! 😡
 
-When you first set up your project, you may notice you may have more files than you want to manage or not enough. This can be easily resolved by tweaking your `includes` and `excludes` section of your `sinc.config.js`. Sincronia attempts to establish sane defaults for these values [here](https://github.com/nuvolo/sincronia/blob/master/packages/core/src/defaultManifestConfig.ts). If you think there is something wrong with the default setup, feel free to submit a pull request! 🐙
+When you first set up your project, you may notice you may have more files than you want to manage or some files are missing. This can be easily resolved by tweaking your `includes` and `excludes` section of your `sinc.config.js`. Sincronia attempts to establish sane defaults for these values [here](https://github.com/nuvolo/sincronia/blob/master/packages/core/src/defaultManifestConfig.ts).
+
+If you think there is something wrong with the default setup, feel free to submit a pull request! 🐙👍
 
 The `excludes` and `includes` sections in your `sinc.config.js` act as additions to that default setting. You can override parts of it or turn parts of it off.
 
@@ -166,7 +235,7 @@ Plugins are where the true 💪 **POWER** 💪 of Sincronia comes from! The `rul
 module.exports = {
   rules:[
     {
-       // The match argument is a regular expression that will match on your desired files
+      // The match argument is a regular expression that will match on your desired files
       // The order matters, so put your most specific rules first!
       // If there is a file that ends in `.secret.ts` it will match here and
       // NO PLUGINS WILL BE RUN
@@ -199,3 +268,11 @@ module.exports = {
 ```
 
 ## Plugin List
+
+| Name                                                                                                                 | Description                                 |
+| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| [@sincronia/babel-plugin](https://github.com/nuvolo/sincronia/blob/master/packages/babel-plugin/README.md)           | Runs Babel on .js/.ts files                 |
+| [@sincronia/prettier-plugin](https://github.com/nuvolo/sincronia/blob/master/packages/prettier-plugin/README.md)     | Prettifies your output files using Prettier |
+| [@sincronia/sass-plugin](https://github.com/nuvolo/sincronia/blob/master/packages/sass-plugin/README.md)             | Runs the Sass compiler on your files        |
+| [@sincronia/typescript-plugin](https://github.com/nuvolo/sincronia/blob/master/packages/typescript-plugin/README.md) | Type checks and compiles TypeScript files   |
+| [@sincronia/webpack-plugin](https://github.com/nuvolo/sincronia/blob/master/packages/webpack-plugin/README.md)       | Creates Webpack bundles with your files     |
