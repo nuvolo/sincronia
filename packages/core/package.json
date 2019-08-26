@@ -1,6 +1,6 @@
 {
   "name": "@sincronia/core",
-  "version": "0.0.20",
+  "version": "0.1.0",
   "description": "Next-gen file syncer",
   "license": "GPL-3.0",
   "main": "./dist./index.js",
@@ -26,7 +26,7 @@
     "@typescript-eslint/parser": "^1.12.0"
   },
   "dependencies": {
-    "@sincronia/types": "^0.0.13",
+    "@sincronia/types": "^0.1.0",
     "axios": "^0.18.0",
     "chalk": "^2.4.2",
     "chokidar": "^3.0.2",
