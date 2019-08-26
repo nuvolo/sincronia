@@ -12,14 +12,12 @@ export const MANIFEST_FILE_PATH = path.join(
 );
 export const DEFAULT_CONFIG: Sinc.Config = {
   sourceDirectory: "src",
-  ignoreDirectories: ["node_modules"],
   rules: []
 };
 
 export const DEFAULT_CONFIG_FILE: string = `
 module.exports = {
   sourceDirectory: "src",
-  ignoreDirectories: ["node_modules"],
   rules: [],
   excludes:{},
   includes:{}
