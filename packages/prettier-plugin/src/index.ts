@@ -1,4 +1,4 @@
-import {Sinc} from "@sincronia/types";
+import { Sinc } from "@sincronia/types";
 import prettier from "prettier";
 const run: Sinc.PluginFunc = async function(
   context: Sinc.FileContext,
@@ -8,7 +8,7 @@ const run: Sinc.PluginFunc = async function(
   try {
     let output = "";
     let prettierConfig = await prettier.resolveConfig(context.filePath);
-    let opts: prettier.Options = {filepath:context.filePath};
+    let opts: prettier.Options = { filepath: context.filePath };
     if (prettierConfig) {
       opts = Object.assign(opts, prettierConfig);
     }

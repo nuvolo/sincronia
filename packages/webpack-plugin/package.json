@@ -30,5 +30,6 @@
     "@sincronia/types": "^0.1.0",
     "@types/memory-fs": "^0.3.2",
     "@types/webpack": "^4.39.0"
-  }
+  },
+  "gitHead": "39a00ff49992565be79bae12508c788ee9f8cc48"
 }
