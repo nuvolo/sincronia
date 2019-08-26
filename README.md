@@ -6,6 +6,36 @@ Sincronia is a tool for managing ServiceNow code in a more modern way. It allows
 2. Run your code through build pipelines that enable you to use modern development tools such as [TypeScript](https://www.typescriptlang.org/), [Babel](https://babeljs.io/), and [Webpack](https://webpack.js.org/). 🎉
 3. Take control of your development process in ServiceNow! 💪
 
+## Installation
+
+### Requirements
+
+In order to use Sincronia, you will need to install [Node.js](https://nodejs.org/en/) version 12.0 or later.
+
+### Instructions
+
+1. Create a folder to store the scoped app code.
+2. Inside the newly created folder, run `npm init` and follow the instructions to set up your node module.
+3. Install `@sincronia/core`
+
+```bash
+npm i -D @sincronia/core
+```
+
+4. Initialize your Sincronia project
+
+```bash
+npx sinc init
+```
+
+5. [Configure your project!](#configuration)
+6. **OPTIONAL BUT HIGHLY RECOMMENDED** Once your project is configured the way you like, you can commit and push it to a git repository for superior tracking and version control! Make sure to create a `.gitignore` file and ignore `node_modules` and `.env` because you **really** don't want those files in your repository.
+7. Start dev mode and start working! Every time you save a file that is tracked by Sincronia, it will be built with your ruleset and the result will be placed in ServiceNow!
+
+```bash
+npx sinc dev
+```
+
 ## How does it work?
 
 Sincronia takes a two-pronged approach to managing your ServiceNow scoped app. Architecture, creation of records, deletion of records, metadata and other ServiceNow objects besides your actual source code will be managed normally. Your *source code itself* will be managed inside of your Sincronia project.
@@ -127,36 +157,6 @@ As long as the main filename stays the same, you can add as many extensions as y
 #### EXAMPLE
 
 `script.js` becomes `script.servicenow.js` or `script.ts` or `script.what.ever.you.want.js`
-
-## Installation
-
-### Requirements
-
-In order to use Sincronia, you will need to install [Node.js](https://nodejs.org/en/) version 12.0 or later.
-
-### Instructions
-
-1. Create a folder to store the scoped app code.
-2. Inside the newly created folder, run `npm init` and follow the instructions to set up your node module.
-3. Install `@sincronia/core`
-
-```bash
-npm i -D @sincronia/core
-```
-
-4. Initialize your Sincronia project
-
-```bash
-npx sinc init
-```
-
-5. [Configure your project!](#configuration)
-6. **OPTIONAL BUT HIGHLY RECOMMENDED** Once your project is configured the way you like, you can commit and push it to a git repository for superior tracking and version control! Make sure to create a `.gitignore` file and ignore `node_modules` and `.env` because you **really** don't want those files in your repository.
-7. Start dev mode and start working! Every time you save a file that is tracked by Sincronia, it will be built with your ruleset and the result will be placed in ServiceNow!
-
-```bash
-npx sinc dev
-```
 
 ## Configuration
 
