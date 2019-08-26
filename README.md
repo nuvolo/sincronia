@@ -1,10 +1,34 @@
 # Sincronia
 
+## Overview
+
 Sincronia is a tool for managing ServiceNow code in a more modern way. It allows you to:
 
 1. Store scoped app code in GitHub in an editable way.🐙 (Looking at you studio source control👀)
 2. Run your code through build pipelines that enable you to use modern development tools such as [TypeScript](https://www.typescriptlang.org/), [Babel](https://babeljs.io/), and [Webpack](https://webpack.js.org/). 🎉
 3. Take control of your development process in ServiceNow! 💪
+
+**Table of Contents**
+
+- [Sincronia](#sincronia)
+  - [Overview](#overview)
+  - [Installation](#installation)
+    - [Requirements](#requirements)
+    - [Instructions](#instructions)
+  - [How does it work?](#how-does-it-work)
+    - [Commands](#commands)
+    - [Workflow](#workflow)
+    - [File Structure](#file-structure)
+      - [sinc.config.js](#sincconfigjs)
+      - [sinc.manifest.json](#sincmanifestjson)
+      - [.env](#env)
+    - [Asymmetric Source Code](#asymmetric-source-code)
+    - [Power of Extensions](#power-of-extensions)
+  - [Configuration](#configuration)
+    - [There are WAY too many files in here! 😱](#there-are-way-too-many-files-in-here-%f0%9f%98%b1)
+    - [I'm not seeing all my code files! 😡](#im-not-seeing-all-my-code-files-%f0%9f%98%a1)
+    - [Plugin Configuration](#plugin-configuration)
+  - [Plugin List](#plugin-list)
 
 ## Installation
 
@@ -72,6 +96,18 @@ project_folder/
 
 Records are shown as folders because there are times where there are multiple code files per record. This makes it very important that you **never have records with the exact same display value in the same table!** if you do, then you will notice issues building your files to the right record in ServiceNow.
 
+#### sinc.config.js
+
+This is the configuration file for Sincronia. [Learn More](#configuration)
+
+#### sinc.manifest.json
+
+Keeps track of all ServiceNow files that are watched by Sincronia. **Do not manually modify it**
+
+#### .env
+
+Stores login credentials and and the instance URL. **Do not commit this to git**
+
 ### Asymmetric Source Code
 
 When you download your source code using Sincronia, you are effectively 'taking control' of that code. **Once the code is in your project, you no longer want to edit it directly in ServiceNow!** This is why putting your code into source control is highly recommended. **Anything else besides code, such as tables, configuration of script records, metadata, etc. must still be tracked in ServiceNow and passed along with your preferred method of moving ServiceNow architecture**
@@ -80,7 +116,7 @@ Modern javascript development workflows are **asymmetric**, meaning that the sou
 
 Sincronia takes advantage of this same principle by allowing you to leverage some of those same tools. This means that you will no longer be able to store your source code directly in ServiceNow, instead you will have a local version of your source code that gets built and the result of that build will be put into ServiceNow.
 
-#### EXAMPLE
+**EXAMPLE**
 
 Let's say I want to develop using TypeScript. Once I have the right plugin configuration for my needs, this Typescript file:
 
@@ -154,7 +190,7 @@ File extensions are typically only one short blurb (e.g. `.js`, `.css`, etc.). W
 
 As long as the main filename stays the same, you can add as many extensions as you want.
 
-#### EXAMPLE
+**EXAMPLE**
 
 `script.js` becomes `script.servicenow.js` or `script.ts` or `script.what.ever.you.want.js`
 
@@ -184,7 +220,7 @@ If you find that your config is getting too large, you can use typical nodejs te
 
 ### There are WAY too many files in here! 😱
 
-#### OR
+**OR**
 
 ### I'm not seeing all my code files! 😡
 
