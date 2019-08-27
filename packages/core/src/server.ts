@@ -57,8 +57,9 @@ export async function getManifestWithFiles(
     if (creds) {
       let client = getBasicAxiosClient(creds);
       response = await client.post(endpoint, { includes, excludes });
+    } else {
+      response = await api.post(endpoint, { includes, excludes });
     }
-    response = await api.post(endpoint, { includes, excludes });
     return response.data.result as SN.AppManifest;
   } catch (e) {
     throw e;
