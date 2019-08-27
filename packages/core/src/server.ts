@@ -47,12 +47,18 @@ export async function pushUpdates(
 }
 
 export async function getManifestWithFiles(
-  scope: string
+  scope: string,
+  creds?: SNInstanceCreds
 ): Promise<SN.AppManifest> {
   let endpoint = `api/x_nuvo_sinc/sinc/getManifestWithFiles/${scope}`;
   try {
-    const { includes, excludes } = await config;
-    let response = await api.post(endpoint, { includes, excludes });
+    const { includes = {}, excludes = {} } = await config;
+    let response;
+    if (creds) {
+      let client = getBasicAxiosClient(creds);
+      response = await client.post(endpoint, { includes, excludes });
+    }
+    response = await api.post(endpoint, { includes, excludes });
     return response.data.result as SN.AppManifest;
   } catch (e) {
     throw e;
@@ -62,7 +68,7 @@ export async function getManifestWithFiles(
 export async function getManifest(scope: string): Promise<SN.AppManifest> {
   let endpoint = `api/x_nuvo_sinc/sinc/getManifest/${scope}`;
   try {
-    const { includes, excludes } = await config;
+    const { includes = {}, excludes = {} } = await config;
     let response = await api.post(endpoint, { includes, excludes });
     return response.data.result as SN.AppManifest;
   } catch (e) {
@@ -144,43 +150,37 @@ export async function getCurrentScope(): Promise<SN.ScopeObj> {
   }
 }
 
-export class ServiceNowConnection {
-  config: AxiosRequestConfig;
-  client: AxiosInstance;
-  constructor(instance?: string, user?: string, password?: string) {
-    let serverString = instance || process.env.SN_INSTANCE || "";
-    this.config = {
-      withCredentials: true,
-      auth: {
-        username: user || process.env.SN_USER || "",
-        password: password || process.env.SN_PASSWORD || ""
-      },
-      headers: {
-        "Content-Type": "application/json"
-      },
-      baseURL: `https://${serverString}/`
-    };
-    this.client = axios.create(this.config);
-  }
-  async getAppList(): Promise<SN.App[]> {
-    try {
-      let endpoint = "api/x_nuvo_sinc/sinc/getAppList";
-      let response = await this.client.get(endpoint);
-      let apps: SN.App[] = response.data.result;
-      return apps;
-    } catch (e) {
-      throw e;
-    }
-  }
+interface SNInstanceCreds {
+  instance: string;
+  user: string;
+  password: string;
+}
 
-  async getManifestWithFiles(scope: string): Promise<SN.AppManifest> {
-    let endpoint = `api/x_nuvo_sinc/sinc/getManifestWithFiles/${scope}`;
-    try {
-      const { includes, excludes } = await config;
-      let response = await this.client.post(endpoint, { includes, excludes });
-      return response.data.result as SN.AppManifest;
-    } catch (e) {
-      throw e;
+export async function getAppList(creds?: SNInstanceCreds): Promise<SN.App[]> {
+  try {
+    let endpoint = "api/x_nuvo_sinc/sinc/getAppList";
+    let response;
+    if (creds) {
+      let client = getBasicAxiosClient(creds);
+      response = await client.get(endpoint);
+    } else {
+      response = await api.get(endpoint);
     }
+    let apps: SN.App[] = response.data.result;
+    return apps;
+  } catch (e) {
+    throw e;
   }
+}
+
+function getBasicAxiosClient(creds: SNInstanceCreds) {
+  let serverString = creds.instance || "NO_INSTANCE";
+  return axios.create({
+    withCredentials: true,
+    auth: {
+      username: creds.user,
+      password: creds.password
+    },
+    baseURL: `https://${serverString}/`
+  });
 }

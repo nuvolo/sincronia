@@ -1,6 +1,6 @@
 import { SN, Sinc } from "@sincronia/types";
 import inquirer from "inquirer";
-import { ServiceNowConnection } from "./server";
+import { getAppList, getManifestWithFiles } from "./server";
 import { CONFIG_FILE_PATH, DEFAULT_CONFIG_FILE, manifest } from "./config";
 import AppManager from "./AppManager";
 import fs from "fs";
@@ -87,14 +87,10 @@ async function writeDefaultConfig() {
 async function showAppList(
   answers: Sinc.LoginAnswers
 ): Promise<string | undefined> {
-  let snc = new ServiceNowConnection(
-    answers.instance,
-    answers.username,
-    answers.password
-  );
+  let { username: user, password, instance } = answers;
   let apps: SN.App[] = [];
   try {
-    apps = await snc.getAppList();
+    apps = await getAppList({ user, password, instance });
   } catch (e) {
     logger.error(
       "Failed to get application list. Check to see that your credentials are correct and you have the update set installed on your instance."
@@ -120,12 +116,8 @@ async function showAppList(
 
 async function downloadApp(answers: Sinc.LoginAnswers, scope: string) {
   try {
-    let snc = new ServiceNowConnection(
-      answers.instance,
-      answers.username,
-      answers.password
-    );
-    let man = await snc.getManifestWithFiles(scope);
+    let { username: user, password, instance } = answers;
+    let man = await getManifestWithFiles(scope, { user, password, instance });
     await AppManager.processManifest(man);
   } catch (e) {
     logger.log(e);
