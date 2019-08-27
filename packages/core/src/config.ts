@@ -13,8 +13,8 @@ export const MANIFEST_FILE_PATH = path.join(
 export const DEFAULT_CONFIG: Sinc.Config = {
   sourceDirectory: "src",
   rules: [],
-  includes: {},
-  excludes: {}
+  includes,
+  excludes
 };
 
 export const DEFAULT_CONFIG_FILE: string = `
