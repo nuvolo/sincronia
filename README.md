@@ -28,6 +28,10 @@ Sincronia is a tool for managing ServiceNow code in a more modern way. It allows
     - [There are WAY too many files in here! 😱](#there-are-way-too-many-files-in-here-%f0%9f%98%b1)
     - [I'm not seeing all my code files! 😡](#im-not-seeing-all-my-code-files-%f0%9f%98%a1)
     - [Plugin Configuration](#plugin-configuration)
+  - [FAQ](#faq)
+    - [How do I Delete Something?](#how-do-i-delete-something)
+    - [How do I Add New Scripts?](#how-do-i-add-new-scripts)
+  - [Examples](#examples)
   - [Plugin List](#plugin-list)
 
 ## Installation
@@ -231,6 +235,8 @@ If you think there is something wrong with the default setup, feel free to submi
 
 The `excludes` and `includes` sections in your `sinc.config.js` act as additions to that default setting. You can override parts of it or turn parts of it off.
 
+Once you have updated your includes and excludes, run `npx sinc refresh` to load the new files and update the manifest. You will have to manually delete any newly excluded tables/fields.
+
 ```javascript
 // sinc.config.js
 module.exports = {
@@ -303,6 +309,29 @@ module.exports = {
   ]
 }
 ```
+
+## FAQ
+
+### How do I Delete Something?
+
+Deleting something in Sincronia is relatively simple. Just follow these steps:
+
+1. Turn off dev mode if you are currently running Sincronia
+2. Delete the record in ServiceNow
+3. Run `npx sinc refresh`
+4. Remove the files from your project
+
+Why is this not automatic? Deleting files can be a dangerous game and it should be a deliberate action!
+
+### How do I Add New Scripts?
+
+1. Turn off dev mode if you are currently running Sincronia
+2. Create the record in ServiceNow
+3. Run `npx sinc refresh` and the files will get created automatically 👍
+
+## Examples
+
+For an example project, we uploaded the [server side code for Sincronia](https://github.com/nuvolo/sincronia-server)! Feel free to contribute to that code if you'd like 🐙
 
 ## Plugin List
 
