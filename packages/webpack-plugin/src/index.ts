@@ -50,7 +50,7 @@ const run: Sinc.PluginFunc = async function(
       success: true
     };
   } catch (e) {
-    throw new Error();
+    throw new Error(e);
   }
   function getWebpackConfigPath() {
     let pathChunks = context.filePath.split(path.sep);
