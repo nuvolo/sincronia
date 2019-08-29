@@ -1,14 +1,12 @@
-import {Sinc} from "@sincronia/types";
-import path from "path";
-import { config } from "./config";
+import { Sinc } from "@sincronia/types";
+import { getSourcePath } from "./config";
 import Watcher from "./Watcher";
 import AppManager from "./AppManager";
 import { startWizard } from "./wizard";
 import * as logger from "./logging";
 
 export async function devCommand() {
-  const { sourceDirectory } = await config;
-  const _codeSrcPath = path.join(process.cwd(), sourceDirectory);
+  const _codeSrcPath = await getSourcePath();
   Watcher.startWatching(_codeSrcPath);
   logger.devModeLog();
 }

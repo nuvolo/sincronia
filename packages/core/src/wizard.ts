@@ -1,11 +1,15 @@
 import { SN, Sinc } from "@sincronia/types";
 import inquirer from "inquirer";
 import { getAppList, getManifestWithFiles } from "./server";
-import { CONFIG_FILE_PATH, DEFAULT_CONFIG_FILE, manifest } from "./config";
+import {
+  DEFAULT_CONFIG_FILE,
+  manifest,
+  getConfigPath,
+  getEnvPath
+} from "./config";
 import AppManager from "./AppManager";
 import fs from "fs";
 const fsp = fs.promises;
-import path from "path";
 import * as logger from "./logging";
 
 export async function startWizard() {
@@ -53,7 +57,11 @@ async function getLoginInfo(): Promise<Sinc.LoginAnswers> {
 
 async function checkConfig(): Promise<boolean> {
   try {
-    await fsp.access(CONFIG_FILE_PATH, fs.constants.F_OK);
+    let pth = await getConfigPath();
+    if (!pth) {
+      return false;
+    }
+    await fsp.access(pth, fs.constants.F_OK);
     return true;
   } catch (e) {
     return false;
@@ -68,7 +76,7 @@ SN_INSTANCE=${answers.instance}
   process.env.SN_USER = answers.username;
   process.env.SN_PASSWORD = answers.password;
   process.env.SN_INSTANCE = answers.instance;
-  let dotEnvPath = path.join(process.cwd(), ".env");
+  let dotEnvPath = await getEnvPath();
   try {
     await fsp.writeFile(dotEnvPath, data);
   } catch (e) {
@@ -78,7 +86,10 @@ SN_INSTANCE=${answers.instance}
 
 async function writeDefaultConfig() {
   try {
-    await fsp.writeFile(CONFIG_FILE_PATH, DEFAULT_CONFIG_FILE);
+    let pth = await getConfigPath();
+    if (pth) {
+      await fsp.writeFile(pth, DEFAULT_CONFIG_FILE);
+    }
   } catch (e) {
     throw e;
   }
