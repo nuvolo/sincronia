@@ -2,6 +2,7 @@ import chokidar from "chokidar";
 import * as Utils from "./utils";
 import { pushFile } from "./server";
 import * as logger from "./logging";
+import { debounce } from "lodash";
 class Watcher {
   watcher?: chokidar.FSWatcher;
   constructor() {
@@ -9,7 +10,7 @@ class Watcher {
   }
   startWatching(directory: string) {
     this.watcher = chokidar.watch(directory);
-    this.watcher.on("change", this.fileChanged);
+    this.watcher.on("change", debounce(this.fileChanged, 150));
   }
   private async fileChanged(path: string) {
     try {
