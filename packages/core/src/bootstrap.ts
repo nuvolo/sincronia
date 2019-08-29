@@ -1,10 +1,12 @@
 import dotenv from "dotenv";
-dotenv.config();
-import * as Commander from "./commander";
-import { config, manifest } from "./config";
+import { config, manifest, getEnvPath } from "./config";
 
 export async function init() {
+  let path = await getEnvPath();
+  dotenv.config({
+    path
+  });
   await config;
   await manifest;
-  Commander.initCommands();
+  (await import("./commander")).initCommands();
 }

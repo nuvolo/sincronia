@@ -1,4 +1,10 @@
-import {SN,Sinc} from "@sincronia/types";
+import { SN, Sinc } from "@sincronia/types";
+import fs from "fs";
+import path from "path";
+import { config, manifest, getManifestPath, getSourcePath } from "./config";
+import * as Utils from "./utils";
+import * as logger from "./logging";
+import inquirer from "inquirer";
 import {
   getManifestWithFiles,
   getManifest,
@@ -6,12 +12,6 @@ import {
   pushFiles,
   getCurrentScope
 } from "./server";
-import fs from "fs";
-import path from "path";
-import { config, manifest, MANIFEST_FILE_PATH } from "./config";
-import * as Utils from "./utils";
-import * as logger from "./logging";
-import inquirer from "inquirer";
 
 const fsp = fs.promises;
 
@@ -19,7 +19,7 @@ class AppManager {
   constructor() {}
 
   private async writeManifestFile(man: SN.AppManifest) {
-    return fsp.writeFile(MANIFEST_FILE_PATH, JSON.stringify(man, null, 2));
+    return fsp.writeFile(await getManifestPath(), JSON.stringify(man, null, 2));
   }
 
   private async writeNewFiles(
@@ -50,9 +50,8 @@ class AppManager {
     manifest: SN.AppManifest,
     skipFileCheck: boolean
   ) {
-    const { sourceDirectory = "src" } = (await config) || {};
     const { tables } = manifest;
-    const _codeSrcPath = path.join(process.cwd(), sourceDirectory);
+    const _codeSrcPath = await getSourcePath();
     for (let tableName in tables) {
       let table = tables[tableName];
       let tableFolder = path.join(_codeSrcPath, tableName);
@@ -150,8 +149,7 @@ class AppManager {
   ): Promise<SN.MissingFileTableMap> {
     try {
       let missing: SN.MissingFileTableMap = {};
-      const { sourceDirectory = "src" } = (await config) || {};
-      const _codeSrcPath = path.join(process.cwd(), sourceDirectory);
+      const _codeSrcPath = await getSourcePath();
       const { tables } = manifest;
       //go through each table
       for (let tableName in tables) {
@@ -233,8 +231,7 @@ class AppManager {
 
   private async loadMissingFiles(fileMap: SN.TableMap) {
     try {
-      const { sourceDirectory = "src" } = (await config) || {};
-      const _codeSrcPath = path.join(process.cwd(), sourceDirectory);
+      const _codeSrcPath = await getSourcePath();
       for (let tableName in fileMap) {
         let tablePath = path.join(_codeSrcPath, tableName);
         let tableConfig = fileMap[tableName];
@@ -280,9 +277,8 @@ class AppManager {
 
   private async loadList(): Promise<string[]> {
     let list: string[] = [];
-    const { sourceDirectory = "src" } = (await config) || {};
-    let subDirectory = path.join(process.cwd(), sourceDirectory);
-    await this.loaddir(subDirectory, list);
+    const sourceDirectory = await getSourcePath();
+    await this.loaddir(sourceDirectory, list);
     return list;
   }
 
