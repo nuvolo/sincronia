@@ -11,6 +11,7 @@ import AppManager from "./AppManager";
 import fs from "fs";
 const fsp = fs.promises;
 import * as logger from "./logging";
+import path from "path";
 
 export async function startWizard() {
   let loginAnswers = await getLoginInfo();
@@ -86,7 +87,8 @@ SN_INSTANCE=${answers.instance}
 
 async function writeDefaultConfig() {
   try {
-    let pth = await getConfigPath();
+    let pth =
+      (await getConfigPath()) || path.join(process.cwd(), "sinc.config.js");
     if (pth) {
       await fsp.writeFile(pth, DEFAULT_CONFIG_FILE);
     }
