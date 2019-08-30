@@ -1,7 +1,6 @@
 import { SN, Sinc } from "@sincronia/types";
 import path from "path";
 import { promises as fsp } from "fs";
-// const fsp = fs.promises;
 import * as logger from "./logging";
 import { includes, excludes } from "./defaultManifestConfig";
 
@@ -40,11 +39,12 @@ async function _getConfig(): Promise<Sinc.Config> {
       projectConfig.excludes = Object.assign(excludes, pExcludes);
       return projectConfig;
     } else {
-      throw new Error("Failed to find config...");
+      logger.warn("Couldn't find config file. Loading default...");
+      return DEFAULT_CONFIG;
     }
   } catch (e) {
     logger.warn(e);
-    logger.warn("Loading default config...");
+    logger.warn("Couldn't find config file. Loading default...");
     return DEFAULT_CONFIG;
   }
 }
