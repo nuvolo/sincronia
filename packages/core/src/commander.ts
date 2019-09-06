@@ -1,4 +1,4 @@
-import {Sinc,TSFIXME} from "@sincronia/types";
+import { Sinc, TSFIXME } from "@sincronia/types";
 import {
   devCommand,
   refreshCommand,
@@ -23,13 +23,15 @@ export async function initCommands() {
         refreshCommand
       )
       .command(
-        ["push"],
+        ["push [target]"],
         "[DESTRUCTIVE] Push all files from current local files to ServiceNow instance.",
         {},
-        pushCommand
+        (args: TSFIXME) => {
+          pushCommand(args as Sinc.PushCmdArgs);
+        }
       )
       .command(
-        "download [scope]",
+        "download <scope>",
         "Downloads a scoped application's files from ServiceNow. Must specify a scope prefix for a scoped app.",
         {},
         (args: TSFIXME) => {

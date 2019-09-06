@@ -2,6 +2,9 @@ export module Sinc {
   interface CmdDownloadArgs {
     scope: string;
   }
+  interface PushCmdArgs {
+    target?: string;
+  }
   interface Config {
     sourceDirectory: string;
     rules?: PluginRule[];

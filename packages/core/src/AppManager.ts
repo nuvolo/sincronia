@@ -254,6 +254,40 @@ class AppManager {
     }
   }
 
+  async pushSpecificFiles(pathString: string) {
+    if (await this.canPush()) {
+      let pathPromises = pathString
+        .split(path.delimiter)
+        .filter(cur => {
+          return cur && cur !== "";
+        })
+        .map(async cur => {
+          let resolvedPath = path.resolve(process.cwd(), cur);
+          let stats = await fsp.stat(resolvedPath);
+          if (stats.isDirectory()) {
+            return await this.loadList(resolvedPath);
+          } else {
+            return [resolvedPath];
+          }
+        });
+      let pathArrays = await Promise.all(pathPromises);
+      let paths = pathArrays.reduce((acc, cur) => {
+        return acc.concat(cur);
+      }, []);
+      try {
+        let fileContexts = await this.parseFileParams(paths);
+        try {
+          await pushFiles(process.env.SN_INSTANCE || "", fileContexts);
+          logger.logMultiFilePush(fileContexts, true);
+        } catch (e) {
+          logger.logMultiFilePush(fileContexts, false, e);
+        }
+      } catch (e) {
+        throw e;
+      }
+    }
+  }
+
   private async loaddir(dirPath: string, list: string[]) {
     try {
       let files = await fsp.readdir(dirPath);
@@ -267,7 +301,7 @@ class AppManager {
         }
       }
     } catch (e) {
-      return;
+      throw e;
     }
   }
 
@@ -275,24 +309,17 @@ class AppManager {
     return await Utils.getParsedFilesPayload(files);
   }
 
-  private async loadList(): Promise<string[]> {
+  private async loadList(directory: string): Promise<string[]> {
     let list: string[] = [];
-    const sourceDirectory = await getSourcePath();
-    await this.loaddir(sourceDirectory, list);
+    await this.loaddir(directory, list);
     return list;
   }
 
-  private async getLocalFilesList() {
-    const files = await this.loadList();
-    return this.parseFileParams(files);
-  }
-
-  async pushAllFiles() {
-    let filePayload = await this.getLocalFilesList();
+  async canPush() {
     const targetServer = process.env.SN_INSTANCE || "";
     if (!targetServer) {
       logger.error("No server configured for push!");
-      return;
+      return false;
     }
     try {
       let answers: { confirmed: boolean } = await inquirer.prompt([
@@ -305,12 +332,19 @@ class AppManager {
         }
       ]);
       if (!answers["confirmed"]) {
-        return;
+        return false;
       }
-      await pushFiles(targetServer, filePayload);
-      logger.logMultiFilePush(filePayload, true);
+      return true;
     } catch (e) {
-      logger.logMultiFilePush(filePayload, false, e);
+      return false;
+    }
+  }
+
+  async pushAllFiles() {
+    try {
+      this.pushSpecificFiles(await getSourcePath());
+    } catch (e) {
+      throw e;
     }
   }
 
