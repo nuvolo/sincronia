@@ -34,6 +34,7 @@ const run: Sinc.PluginFunc = async function(
         compilerOptions: {}
       };
     }
+    tsConfig.compilerOptions.rootDir = undefined;
     tsConfig.compilerOptions.moduleResolution = ts.ModuleResolutionKind.NodeJs;
     tsConfig.compilerOptions.lib = tsConfig.compilerOptions.lib
       ? tsConfig.compilerOptions.lib.map(cur => `lib.${cur}.d.ts`)

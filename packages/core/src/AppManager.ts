@@ -1,4 +1,10 @@
-import {SN,Sinc} from "@sincronia/types";
+import { SN, Sinc } from "@sincronia/types";
+import fs from "fs";
+import path from "path";
+import { config, manifest, getManifestPath, getSourcePath } from "./config";
+import * as Utils from "./utils";
+import * as logger from "./logging";
+import inquirer from "inquirer";
 import {
   getManifestWithFiles,
   getManifest,
@@ -6,12 +12,6 @@ import {
   pushFiles,
   getCurrentScope
 } from "./server";
-import fs from "fs";
-import path from "path";
-import { config, manifest, MANIFEST_FILE_PATH } from "./config";
-import * as Utils from "./utils";
-import * as logger from "./logging";
-import inquirer from "inquirer";
 
 const fsp = fs.promises;
 
@@ -19,7 +19,7 @@ class AppManager {
   constructor() {}
 
   private async writeManifestFile(man: SN.AppManifest) {
-    return fsp.writeFile(MANIFEST_FILE_PATH, JSON.stringify(man, null, 2));
+    return fsp.writeFile(await getManifestPath(), JSON.stringify(man, null, 2));
   }
 
   private async writeNewFiles(
@@ -50,9 +50,8 @@ class AppManager {
     manifest: SN.AppManifest,
     skipFileCheck: boolean
   ) {
-    const { sourceDirectory = "src" } = (await config) || {};
     const { tables } = manifest;
-    const _codeSrcPath = path.join(process.cwd(), sourceDirectory);
+    const _codeSrcPath = await getSourcePath();
     for (let tableName in tables) {
       let table = tables[tableName];
       let tableFolder = path.join(_codeSrcPath, tableName);
@@ -150,8 +149,7 @@ class AppManager {
   ): Promise<SN.MissingFileTableMap> {
     try {
       let missing: SN.MissingFileTableMap = {};
-      const { sourceDirectory = "src" } = (await config) || {};
-      const _codeSrcPath = path.join(process.cwd(), sourceDirectory);
+      const _codeSrcPath = await getSourcePath();
       const { tables } = manifest;
       //go through each table
       for (let tableName in tables) {
@@ -233,8 +231,7 @@ class AppManager {
 
   private async loadMissingFiles(fileMap: SN.TableMap) {
     try {
-      const { sourceDirectory = "src" } = (await config) || {};
-      const _codeSrcPath = path.join(process.cwd(), sourceDirectory);
+      const _codeSrcPath = await getSourcePath();
       for (let tableName in fileMap) {
         let tablePath = path.join(_codeSrcPath, tableName);
         let tableConfig = fileMap[tableName];
@@ -257,6 +254,40 @@ class AppManager {
     }
   }
 
+  async pushSpecificFiles(pathString: string) {
+    if (await this.canPush()) {
+      let pathPromises = pathString
+        .split(path.delimiter)
+        .filter(cur => {
+          return cur && cur !== "";
+        })
+        .map(async cur => {
+          let resolvedPath = path.resolve(process.cwd(), cur);
+          let stats = await fsp.stat(resolvedPath);
+          if (stats.isDirectory()) {
+            return await this.loadList(resolvedPath);
+          } else {
+            return [resolvedPath];
+          }
+        });
+      let pathArrays = await Promise.all(pathPromises);
+      let paths = pathArrays.reduce((acc, cur) => {
+        return acc.concat(cur);
+      }, []);
+      try {
+        let fileContexts = await this.parseFileParams(paths);
+        try {
+          await pushFiles(process.env.SN_INSTANCE || "", fileContexts);
+          logger.logMultiFilePush(fileContexts, true);
+        } catch (e) {
+          logger.logMultiFilePush(fileContexts, false, e);
+        }
+      } catch (e) {
+        throw e;
+      }
+    }
+  }
+
   private async loaddir(dirPath: string, list: string[]) {
     try {
       let files = await fsp.readdir(dirPath);
@@ -270,7 +301,7 @@ class AppManager {
         }
       }
     } catch (e) {
-      return;
+      throw e;
     }
   }
 
@@ -278,25 +309,17 @@ class AppManager {
     return await Utils.getParsedFilesPayload(files);
   }
 
-  private async loadList(): Promise<string[]> {
+  private async loadList(directory: string): Promise<string[]> {
     let list: string[] = [];
-    const { sourceDirectory = "src" } = (await config) || {};
-    let subDirectory = path.join(process.cwd(), sourceDirectory);
-    await this.loaddir(subDirectory, list);
+    await this.loaddir(directory, list);
     return list;
   }
 
-  private async getLocalFilesList() {
-    const files = await this.loadList();
-    return this.parseFileParams(files);
-  }
-
-  async pushAllFiles() {
-    let filePayload = await this.getLocalFilesList();
+  async canPush() {
     const targetServer = process.env.SN_INSTANCE || "";
     if (!targetServer) {
       logger.error("No server configured for push!");
-      return;
+      return false;
     }
     try {
       let answers: { confirmed: boolean } = await inquirer.prompt([
@@ -309,12 +332,19 @@ class AppManager {
         }
       ]);
       if (!answers["confirmed"]) {
-        return;
+        return false;
       }
-      await pushFiles(targetServer, filePayload);
-      logger.logMultiFilePush(filePayload, true);
+      return true;
     } catch (e) {
-      logger.logMultiFilePush(filePayload, false, e);
+      return false;
+    }
+  }
+
+  async pushAllFiles() {
+    try {
+      this.pushSpecificFiles(await getSourcePath());
+    } catch (e) {
+      throw e;
     }
   }
 

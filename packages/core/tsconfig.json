@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "paths": { "@sincronia/types": ["../types"] }
   },
   "extends": "../../tsconfig.json",
   "references": [{ "path": "../types" }]

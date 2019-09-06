@@ -15,7 +15,6 @@ const axiosConfig: AxiosRequestConfig = {
   },
   baseURL: `https://${process.env.SN_INSTANCE}/`
 };
-
 const api = axios.create(axiosConfig);
 const WAIT_TIME = 500;
 const CHUNK_SIZE = 10;
@@ -32,7 +31,7 @@ async function _update(obj: AxiosRequestConfig) {
 export async function pushUpdate(requestObj: Sinc.ServerRequestConfig) {
   try {
     if (requestObj && requestObj.data) {
-      return _update(requestObj);
+      return _update(requestObj as AxiosRequestConfig);
     }
     logger.error("Attempted to push an empty data object");
   } catch (e) {

@@ -1,14 +1,12 @@
-import {Sinc} from "@sincronia/types";
-import path from "path";
-import { config } from "./config";
+import { Sinc } from "@sincronia/types";
+import { getSourcePath } from "./config";
 import Watcher from "./Watcher";
 import AppManager from "./AppManager";
 import { startWizard } from "./wizard";
 import * as logger from "./logging";
 
 export async function devCommand() {
-  const { sourceDirectory } = await config;
-  const _codeSrcPath = path.join(process.cwd(), sourceDirectory);
+  const _codeSrcPath = await getSourcePath();
   Watcher.startWatching(_codeSrcPath);
   logger.devModeLog();
 }
@@ -19,9 +17,13 @@ export async function refreshCommand() {
     throw e;
   }
 }
-export async function pushCommand() {
+export async function pushCommand(args: Sinc.PushCmdArgs) {
   try {
-    await AppManager.pushAllFiles();
+    if (args.target) {
+      await AppManager.pushSpecificFiles(args.target);
+    } else {
+      await AppManager.pushAllFiles();
+    }
   } catch (e) {
     throw e;
   }
