@@ -79,7 +79,7 @@ Sincronia has a few basic commands to help you get the job done
 | `dev`              | `d`      | Starts development mode. Watches files for changes, then builds and pushes them to the corresponding record. Only works on files in the manifest file.      | `npx sinc dev`                  |
 | `init`             | **none** | Walks you through creating a basic Sincronia project. This is the recommended way to create a Sincronia project from scratch.                               | `npx sinc init`                 |
 | `push`             | **none** | Builds and pushes all files in your local Sincronia project to the ServiceNow instance in your `.env` file                                                  | `npx sinc push`                 |
-| `download [scope]` | **none** | Downloads the specified scoped app, overwriting all local files in the way. **Only use this if you know what you are doing!**                               | `npx sinc download my_test_app` |
+| `download <scope>` | **none** | Downloads the specified scoped app, overwriting all local files in the way. **Only use this if you know what you are doing!**                               | `npx sinc download my_test_app` |
 
 ### Workflow
 
