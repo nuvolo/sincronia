@@ -40,6 +40,11 @@ const run: Sinc.PluginFunc = async function(
         reject(err);
         return;
       }
+      if (stats.hasErrors()) {
+        console.error(stats.toString("normal"));
+        reject(new Error("Webpack failed to create the bundle."));
+        return;
+      }
       resolve(memFS.readFileSync("/bundle.js", "utf-8"));
     });
   });
