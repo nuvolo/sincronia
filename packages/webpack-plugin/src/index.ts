@@ -26,7 +26,7 @@ const run: Sinc.PluginFunc = async function(
   if (options.configGenerator) {
     wpOptions = Object.assign(wpOptions, options.configGenerator(context));
   }
-  //override necesary parameters
+  //override necessary parameters
   wpOptions.entry = context.filePath;
   wpOptions.output = {
     path: "/",
