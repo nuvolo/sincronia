@@ -1,13 +1,13 @@
 import { Sinc } from "@sincronia/types";
 import { getSourcePath } from "./config";
-import Watcher from "./Watcher";
+import { startWatching, stopWatching } from "./Watcher";
 import AppManager from "./AppManager";
 import { startWizard } from "./wizard";
 import * as logger from "./logging";
 
 export async function devCommand() {
   const _codeSrcPath = await getSourcePath();
-  Watcher.startWatching(_codeSrcPath);
+  startWatching(_codeSrcPath);
   logger.devModeLog();
 }
 export async function refreshCommand() {

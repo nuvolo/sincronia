@@ -1,4 +1,4 @@
-import {Sinc} from "@sincronia/types";
+import { Sinc } from "@sincronia/types";
 import chalk from "chalk";
 
 export const log = console.log;
@@ -44,6 +44,7 @@ export function logFilePush(
 ) {
   let label = chalk.bold.blue;
   console.log(chalk.underline("File Push Summary"));
+  console.log(label("When:\t"), new Date().toLocaleTimeString());
   console.log(label("Table:\t"), context.tableName);
   console.log(label("Record:\t"), context.name);
   console.log(label("Field:\t"), context.targetField);

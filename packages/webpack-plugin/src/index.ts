@@ -26,7 +26,7 @@ const run: Sinc.PluginFunc = async function(
   if (options.configGenerator) {
     wpOptions = Object.assign(wpOptions, options.configGenerator(context));
   }
-  //override necesary parameters
+  //override necessary parameters
   wpOptions.entry = context.filePath;
   wpOptions.output = {
     path: "/",
@@ -38,6 +38,11 @@ const run: Sinc.PluginFunc = async function(
     compiler.run((err, stats) => {
       if (err) {
         reject(err);
+        return;
+      }
+      if (stats.hasErrors()) {
+        console.error(stats.toString("normal"));
+        reject(new Error("Webpack failed to create the bundle."));
         return;
       }
       resolve(memFS.readFileSync("/bundle.js", "utf-8"));
