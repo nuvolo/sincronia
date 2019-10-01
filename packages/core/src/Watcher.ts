@@ -45,24 +45,6 @@ export function startWatching(directory: string) {
 async function fileChanged(path: string) {
   pushQueue.push(path);
   processQueue();
-  // try {
-  //   let payload = await Utils.parseFileNameParams(path);
-  //   const targetServer =
-  //     process.env.SN_INSTANCE ||
-  //     logger.error("No server configured for push!") ||
-  //     "";
-  //   if (targetServer && payload) {
-  //     try {
-  //       await pushFile(targetServer, payload);
-  //       logger.logFilePush(payload, true);
-  //     } catch (e) {
-  //       logger.logFilePush(payload, false);
-  //       logger.error(e);
-  //     }
-  //   }
-  // } catch (e) {
-  //   throw e;
-  // }
 }
 
 export function stopWatching() {
