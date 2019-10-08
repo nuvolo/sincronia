@@ -1,6 +1,6 @@
 {
   "name": "@sincronia/core",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Next-gen file syncer",
   "license": "GPL-3.0",
   "main": "./dist./index.js",
@@ -44,5 +44,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "39a00ff49992565be79bae12508c788ee9f8cc48"
+  "gitHead": "a7fcba02c388ad529f52dc1aa5d0bd56abae1476"
 }
