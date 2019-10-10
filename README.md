@@ -38,12 +38,18 @@ Sincronia is a tool for managing ServiceNow code in a more modern way. It allows
 
 ### Requirements
 
-In order to use Sincronia, you will need to install [Node.js](https://nodejs.org/en/) version 12.0 or later.
+In order to use Sincronia, you will need:
+
+- [Node.js](https://nodejs.org/en/) version 12.0 or later
+- **If you are on Windows** you will also need :
+  - Windows subsystem for Linux installed (Ubuntu should work fine)
+  - Preferably updated to version 1903+ (Previous versions untested/not working)
+  - (Optional) Preferably Windows Terminal installed for rendering the text from the tool
 
 ### Instructions
 
 1. Create a folder to store the scoped app code.
-2. Inside the newly created folder, run `npm init` and follow the instructions to set up your node module.
+2. In a terminal, run `npm init` inside the newly created folder and follow the instructions to set up your node module.
 3. Import [the scoped app](https://github.com/nuvolo/sincronia-server-scoped-app) from source control into your instance.
 4. Install `@sincronia/core`
 
