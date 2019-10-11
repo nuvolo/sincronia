@@ -1,32 +1,53 @@
 import { Sinc } from "@sincronia/types";
 import { getSourcePath } from "./config";
-import { startWatching, stopWatching } from "./Watcher";
+import { startWatching } from "./Watcher";
 import AppManager from "./AppManager";
 import { startWizard } from "./wizard";
 import * as logger from "./logging";
 
-export async function devCommand() {
-  const _codeSrcPath = await getSourcePath();
-  startWatching(_codeSrcPath);
-  logger.devModeLog();
-}
-export async function refreshCommand() {
+async function scopeCheck(successFunc: () => void) {
   try {
-    await AppManager.syncManifest();
-  } catch (e) {
-    throw e;
-  }
-}
-export async function pushCommand(args: Sinc.PushCmdArgs) {
-  try {
-    if (args.target) {
-      await AppManager.pushSpecificFiles(args.target);
+    const scopeCheck = await AppManager.checkScope();
+    if (!scopeCheck.match) {
+      logger.scopeCheckMessage(scopeCheck);
     } else {
-      await AppManager.pushAllFiles();
+      successFunc();
     }
   } catch (e) {
-    throw e;
+    logger.error(
+      "Failed to check your scope! You may want to make sure your project is configured correctly or run `npx sinc init`"
+    );
   }
+}
+
+export async function devCommand() {
+  scopeCheck(async () => {
+    const _codeSrcPath = await getSourcePath();
+    startWatching(_codeSrcPath);
+    logger.devModeLog();
+  });
+}
+export async function refreshCommand() {
+  scopeCheck(async () => {
+    try {
+      await AppManager.syncManifest();
+    } catch (e) {
+      throw e;
+    }
+  });
+}
+export async function pushCommand(args: Sinc.PushCmdArgs) {
+  scopeCheck(async () => {
+    try {
+      if (args.target) {
+        await AppManager.pushSpecificFiles(args.target);
+      } else {
+        await AppManager.pushAllFiles();
+      }
+    } catch (e) {
+      throw e;
+    }
+  });
 }
 export async function downloadCommand(args: Sinc.CmdDownloadArgs) {
   try {
