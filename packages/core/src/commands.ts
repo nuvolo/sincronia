@@ -39,8 +39,10 @@ export async function refreshCommand() {
 export async function pushCommand(args: Sinc.PushCmdArgs) {
   scopeCheck(async () => {
     try {
-      if (args.target) {
-        await AppManager.pushSpecificFiles(args.target);
+      if (args.target !== undefined) {
+        if (args.target !== "") {
+          await AppManager.pushSpecificFiles(args.target);
+        }
       } else {
         await AppManager.pushAllFiles();
       }
