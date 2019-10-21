@@ -1,0 +1,31 @@
+{
+  "name": "@sincronia/eslint-plugin",
+  "version": "1.0.0",
+  "description": "ESLint plugin for Sincronia",
+  "main": "./dist/index.js",
+  "scripts": {
+    "prepare": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nuvolo/sincronia.git"
+  },
+  "author": "",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/nuvolo/sincronia/issues"
+  },
+  "homepage": "https://github.com/nuvolo/sincronia#readme",
+  "devDependencies": {
+    "@sincronia/types": "^0.1.1",
+    "@types/prettier": "^1.18.0",
+    "eslint": "^6.5.1",
+    "typescript": "^3.5.3"
+  },
+  "dependencies": {
+    "@types/eslint": "^6.1.2"
+  },
+  "files": [
+    "dist"
+  ]
+}
