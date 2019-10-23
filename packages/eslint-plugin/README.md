@@ -1,4 +1,4 @@
-# @sincronia/typescript-plugin
+# @sincronia/eslint-plugin
 
 ## Overview
 
@@ -9,12 +9,11 @@ This plugin allows you to run the [ESLint](https://eslint.org/) checker on files
 ```bash
 npm i -D @sincronia/eslint-plugin
 ```
-                                                                                                |
 
 ### Order of Configurations
 
 1. Load from `sinc.config.js` options.
-2. Check for `.eslintrc.json` file or generate one.
+2. Check for `.eslintrc` file or generate one.
 
 ## Example Usage
 
