@@ -7,7 +7,7 @@ export default function() {
       Identifier(path) {
         //replaces references to __proto__, illegal in SN
         if (path.node.name === "__proto__") {
-          path.node.name = "__proto-sn__";
+          path.node.name = "__proto_sn__";
         }
       },
       //if a reserved word is used as a property, move it to a bracket syntax
