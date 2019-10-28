@@ -8,14 +8,12 @@
   },
   "author": "Multiple",
   "license": "GPL-3.0",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "@sincronia/types": "^0.1.1",
     "@types/eslint": "^6.1.2",
     "@types/prettier": "^1.18.0",
     "typescript": "^3.5.3"
-
   },
   "files": [
     "dist"

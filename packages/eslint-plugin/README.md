@@ -29,5 +29,5 @@ module.exports={
       name:"@sincronia/eslint-plugin",
     ]
   }
-};
+}; 
 ```
