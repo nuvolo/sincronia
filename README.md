@@ -348,3 +348,4 @@ For an example project, we uploaded the [server side code for Sincronia](https:/
 | [@sincronia/sass-plugin](https://github.com/nuvolo/sincronia/blob/master/packages/sass-plugin/README.md)             | Runs the Sass compiler on your files        |
 | [@sincronia/typescript-plugin](https://github.com/nuvolo/sincronia/blob/master/packages/typescript-plugin/README.md) | Type checks and compiles TypeScript files   |
 | [@sincronia/webpack-plugin](https://github.com/nuvolo/sincronia/blob/master/packages/webpack-plugin/README.md)       | Creates Webpack bundles with your files     |
+| [@sincronia/eslint-plugin](https://github.com/nuvolo/sincronia/blob/master/packages/eslint-plugin/README.md)         | Runs ESLint on your files on build          |
