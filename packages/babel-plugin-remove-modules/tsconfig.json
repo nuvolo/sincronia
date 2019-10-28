@@ -1,3 +1,4 @@
+//tsconfig
 {
   "compilerOptions": {
     "outDir": "./dist"
