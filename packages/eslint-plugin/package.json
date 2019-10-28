@@ -1,7 +1,7 @@
 {
-  "name": "@sincronia/prettier-plugin",
-  "version": "0.2.1",
-  "description": "Prettier plugin for Sincronia",
+  "name": "@sincronia/eslint-plugin",
+  "version": "0.0.1",
+  "description": "ESLint plugin for Sincronia",
   "main": "./dist/index.js",
   "scripts": {
     "prepare": "tsc"
@@ -11,6 +11,7 @@
   "dependencies": {},
   "devDependencies": {
     "@sincronia/types": "^0.1.1",
+    "@types/eslint": "^6.1.2",
     "@types/prettier": "^1.18.0",
     "typescript": "^3.5.3"
   },
@@ -27,5 +28,5 @@
   "bugs": {
     "url": "https://github.com/nuvolo/sincronia/issues"
   },
-  "gitHead": "39a00ff49992565be79bae12508c788ee9f8cc48"
+  "homepage": "https://github.com/nuvolo/sincronia#readme"
 }
