@@ -259,7 +259,14 @@ class AppManager {
       let pathPromises = pathString
         .split(path.delimiter)
         .filter(cur => {
-          return cur && cur !== "";
+          //make sure it isn't blank
+          if (cur && cur !== "") {
+            //make sure it exists
+            let resolvedPath = path.resolve(process.cwd(), cur);
+            return fs.existsSync(resolvedPath);
+          } else {
+            return false;
+          }
         })
         .map(async cur => {
           let resolvedPath = path.resolve(process.cwd(), cur);
