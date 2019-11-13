@@ -10,7 +10,19 @@ export module Sinc {
     rules?: PluginRule[];
     includes?: TablePropMap;
     excludes?: TablePropMap;
+    tableOptions: ITableOptionsMap;
   }
+
+  interface ITableOptionsMap {
+    [table: string]: ITableOptions;
+  }
+
+  interface ITableOptions {
+    displayField?: string;
+    differentiatorField?: string;
+    query: string;
+  }
+
   interface FieldConfig {
     type: SN.FileType;
   }
