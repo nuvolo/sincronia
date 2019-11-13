@@ -51,13 +51,17 @@ export async function getManifestWithFiles(
 ): Promise<SN.AppManifest> {
   let endpoint = `api/x_nuvo_sinc/sinc/getManifestWithFiles/${scope}`;
   try {
-    const { includes = {}, excludes = {} } = await config;
+    const { includes = {}, excludes = {}, tableOptions = {} } = await config;
     let response;
     if (creds) {
       let client = getBasicAxiosClient(creds);
-      response = await client.post(endpoint, { includes, excludes });
+      response = await client.post(endpoint, {
+        includes,
+        excludes,
+        tableOptions
+      });
     } else {
-      response = await api.post(endpoint, { includes, excludes });
+      response = await api.post(endpoint, { includes, excludes, tableOptions });
     }
     return response.data.result as SN.AppManifest;
   } catch (e) {
@@ -68,8 +72,12 @@ export async function getManifestWithFiles(
 export async function getManifest(scope: string): Promise<SN.AppManifest> {
   let endpoint = `api/x_nuvo_sinc/sinc/getManifest/${scope}`;
   try {
-    const { includes = {}, excludes = {} } = await config;
-    let response = await api.post(endpoint, { includes, excludes });
+    const { includes = {}, excludes = {}, tableOptions = {} } = await config;
+    let response = await api.post(endpoint, {
+      includes,
+      excludes,
+      tableOptions
+    });
     return response.data.result as SN.AppManifest;
   } catch (e) {
     throw e;
@@ -77,11 +85,13 @@ export async function getManifest(scope: string): Promise<SN.AppManifest> {
 }
 
 export async function getMissingFiles(
-  missing: SN.MissingFileTableMap
+  missingFiles: SN.MissingFileTableMap
 ): Promise<SN.TableMap> {
   let endpoint = `api/x_nuvo_sinc/sinc/bulkDownload`;
   try {
-    let response = await api.post(endpoint, missing);
+    const { tableOptions = {} } = await config;
+    const payload = { missingFiles, tableOptions };
+    let response = await api.post(endpoint, payload);
     return response.data.result as SN.TableMap;
   } catch (e) {
     throw e;

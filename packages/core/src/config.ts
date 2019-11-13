@@ -2,13 +2,14 @@ import { SN, Sinc } from "@sincronia/types";
 import path from "path";
 import { promises as fsp } from "fs";
 import * as logger from "./logging";
-import { includes, excludes } from "./defaultManifestConfig";
+import { includes, excludes, tableOptions } from "./defaultOptions";
 
 export const DEFAULT_CONFIG: Sinc.Config = {
   sourceDirectory: "src",
   rules: [],
   includes,
-  excludes
+  excludes,
+  tableOptions: {}
 };
 
 export const DEFAULT_CONFIG_FILE: string = `
@@ -16,7 +17,8 @@ module.exports = {
   sourceDirectory: "src",
   rules: [],
   excludes:{},
-  includes:{}
+  includes:{},
+  tableOptions:{}
 };
 `.trim();
 
@@ -33,10 +35,12 @@ async function _getConfig(): Promise<Sinc.Config> {
       //merge in includes/excludes
       let {
         includes: pIncludes = {},
-        excludes: pExcludes = {}
+        excludes: pExcludes = {},
+        tableOptions: pTableOptions = {}
       } = projectConfig;
       projectConfig.includes = Object.assign(includes, pIncludes);
       projectConfig.excludes = Object.assign(excludes, pExcludes);
+      projectConfig.tableOptions = Object.assign(tableOptions, pTableOptions);
       return projectConfig;
     } else {
       logger.warn("Couldn't find config file. Loading default...");

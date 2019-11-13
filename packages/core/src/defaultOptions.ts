@@ -36,4 +36,6 @@ let includes: Sinc.TablePropMap = {
   }
 };
 
-export { includes, excludes };
+let tableOptions: Sinc.ITableOptionsMap = {};
+
+export { includes, excludes, tableOptions };
