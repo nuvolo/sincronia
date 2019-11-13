@@ -19,7 +19,7 @@ export module Sinc {
 
   interface ITableOptions {
     displayField?: string;
-    differentiatorField?: string;
+    differentiatorField?: string | string[];
     query: string;
   }
 
