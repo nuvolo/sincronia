@@ -5,8 +5,10 @@
 Sincronia is a tool for managing ServiceNow code in a more modern way. It allows you to:
 
 1. Store scoped app code in GitHub in an editable way.🐙 (Looking at you studio source control👀)
-2. Run your code through build pipelines that enable you to use modern development tools such as [TypeScript](https://www.typescriptlang.org/), [Babel](https://babeljs.io/), and [Webpack](https://webpack.js.org/). 🎉
+2. Run your code through build pipelines that enable you to write modern JavaScript and use modern development tools such as [TypeScript](https://www.typescriptlang.org/), [Babel](https://babeljs.io/), and [Webpack](https://webpack.js.org/). 🎉
 3. Take control of your development process in ServiceNow! 💪
+
+Check out the [tutorial videos](https://www.youtube.com/watch?v=CqdppnM-FvM&list=PL1myMMPgZzOrOeu03YsuNmsDI2k0vadTq)!
 
 **Table of Contents**
 
@@ -73,7 +75,7 @@ npx sinc dev
 
 ## How does it work?
 
-Sincronia takes a two-pronged approach to managing your ServiceNow scoped app. Architecture, creation of records, deletion of records, metadata and other ServiceNow objects besides your actual source code will be managed normally. Your *source code itself* will be managed inside of your Sincronia project.
+Sincronia takes a two-pronged approach to managing your ServiceNow scoped app. Architecture, creation of records, deletion of records, metadata and other ServiceNow objects besides your actual source code will be managed normally. Your _source code itself_ will be managed inside of your Sincronia project.
 
 ### Commands
 
@@ -141,7 +143,6 @@ class Example {
     gs.info("Hello, Sincronia!");
   }
 }
-
 ```
 
 becomes
@@ -192,12 +193,11 @@ var Example =
 
     return Example;
   })();
-
 ```
 
 ### Power of Extensions
 
-File extensions are typically only one short blurb (e.g. `.js`, `.css`, etc.). When you use Sincronia, you may find that you want to treat one `.js` file differently than another. That's where extensions can become more powerful! You could create an extension in your project such as `.server.js` and `.client.js` which you could combine with the [rules](#plugin-configuration) configuration of Sincronia to have *two different build pipelines*. You could use Webpack for client scripts and Babel for server scripts! Pretty cool huh?
+File extensions are typically only one short blurb (e.g. `.js`, `.css`, etc.). When you use Sincronia, you may find that you want to treat one `.js` file differently than another. That's where extensions can become more powerful! You could create an extension in your project such as `.server.js` and `.client.js` which you could combine with the [rules](#plugin-configuration) configuration of Sincronia to have _two different build pipelines_. You could use Webpack for client scripts and Babel for server scripts! Pretty cool huh?
 
 As long as the main filename stays the same, you can add as many extensions as you want.
 
@@ -215,16 +215,16 @@ module.exports = {
   // during development.
   sourceDirectory: "src",
   // This is where you will configure your plugins. You match based on plugins.
-  // Order your rules by MOST SPECIFIC extension first! The first match is the 
+  // Order your rules by MOST SPECIFIC extension first! The first match is the
   // only one that gets executed.
-  rules:[],
+  rules: [],
   // === INCLUDES/EXCLUDES apply on top of the default config! See more below ===
   // Tables/fields to exclude (AKA not download or track) from Sincronia
-  excludes:{},
+  excludes: {},
   // Tables/fields to explicitly include in your Sincronia project.
   // Can override excludes if necessary.
-  includes:{}
-}
+  includes: {}
+};
 ```
 
 If you find that your config is getting too large, you can use typical nodejs techniques for splitting it into smaller modules and loading them into the `sinc.config.js`.
@@ -246,18 +246,18 @@ Once you have updated your includes and excludes, run `npx sinc refresh` to load
 ```javascript
 // sinc.config.js
 module.exports = {
-  excludes:{
+  excludes: {
     // Turns off the default exclusion of the `sys_scope_privilege` table
-    sys_scope_privilege:false,
+    sys_scope_privilege: false,
     // Excludes everything from the `my_cool_table` table
-    my_cool_table:true,
+    my_cool_table: true,
     // Excludes the `cool_script` field specifically from the `new_cool_table` table.
     // Other valid fields will be included.
-    new_cool_table:{
-      cool_script:true
+    new_cool_table: {
+      cool_script: true
     }
   },
-  includes:{
+  includes: {
     // Turns off the default inclusion of the `content_css` table
     content_css: false,
     // Explicitly includes the `sys_report` table. Overrides any excludes on the
@@ -266,13 +266,13 @@ module.exports = {
     // Explicitly pulls in the `neat_script_field` as a `js` file in spite of whatever
     // type of field it might be in ServiceNow. Useful for text fields that
     // represent code.
-    special_code_table:{
-      neat_script_field:{
-        type:"js"
+    special_code_table: {
+      neat_script_field: {
+        type: "js"
       }
     }
   }
-}
+};
 ```
 
 ### Plugin Configuration
@@ -282,38 +282,38 @@ Plugins are where the true 💪 **POWER** 💪 of Sincronia comes from! The `rul
 ```javascript
 // sinc.config.js
 module.exports = {
-  rules:[
+  rules: [
     {
       // The match argument is a regular expression that will match on your desired files
       // The order matters, so put your most specific rules first!
       // If there is a file that ends in `.secret.ts` it will match here and
       // NO PLUGINS WILL BE RUN
-      match:/\.secret\.ts$/,
-      plugins:[]
+      match: /\.secret\.ts$/,
+      plugins: []
     },
     {
-     // If there are just generic TypeScript files that have no other extension, they will
-     // match on this rule instead.
-      match:/\.ts$/,
+      // If there are just generic TypeScript files that have no other extension, they will
+      // match on this rule instead.
+      match: /\.ts$/,
       // List of plugins to run on the matched files. Each plugin will run in order.
       // THE RESULT OF THE PREVIOUS PLUGIN WILL BE PASSED TO THE NEXT PLUGIN so make
       // sure they are in the right order!
-      plugins:[
+      plugins: [
         {
           // The name of the plugin, it is the same as the name of the NPM package of
           // the plugin.
-          name:"@sincronia/typescript-plugin",
+          name: "@sincronia/typescript-plugin",
           // Options to pass to the plugin. This will be defined by the plugin itself.
           // In this case, we are telling the typescript plugin to only type check and
           // not transpile.
-          options:{
-            transpile:false
+          options: {
+            transpile: false
           }
         }
       ]
     }
   ]
-}
+};
 ```
 
 ## FAQ
