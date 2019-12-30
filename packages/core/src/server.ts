@@ -139,15 +139,12 @@ export async function pushFile(
 ) {
   if (fileContext.sys_id && fileContext.targetField) {
     try {
-      console.log("about to prepare request!");
       let requestObj = await buildFileRequestObj(target_server, fileContext);
-      console.log(`About to make request!: ${JSON.stringify(requestObj)}`);
       let response = await pushUpdate(requestObj);
       if (response && response.status < 200 && response.status > 299) {
         throw new Error(response.statusText);
       }
     } catch (e) {
-      console.error("The error was:", e);
       throw e;
     }
   }
