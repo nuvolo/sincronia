@@ -9,7 +9,7 @@
   "author": "Multiple",
   "license": "GPL-3.0",
   "dependencies": {
-    "typescript": "^3.5.3"
+    "typescript": "^3.7.3"
   },
   "devDependencies": {
     "@sincronia/types": "^0.2.1"

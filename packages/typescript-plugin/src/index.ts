@@ -10,6 +10,7 @@ const run: Sinc.PluginFunc = async function(
     transpile?: boolean;
   }
   let pluginOpts = options as TSPluginOptions;
+  console.log("TYPESCRIPT VERSION", ts.version);
   try {
     //try to load tsconifg.json
     let output = "";
