@@ -127,11 +127,11 @@ class AppManager {
         logger.success("Refresh complete! ✅");
       } catch (e) {
         logger.error("Encountered error while refreshing! ❌");
-        logger.error(e);
+        logger.error(e.toString());
       }
     } catch (e) {
       logger.error("Encountered error while refreshing! ❌");
-      logger.error(e);
+      logger.error(e.toString());
     }
   }
 
