@@ -21,14 +21,20 @@ async function scopeCheck(successFunc: () => void) {
   }
 }
 
-export async function devCommand() {
+function setLogLevel(args: Sinc.SharedCmdArgs) {
+  logger.setLogLevel(args.logLevel);
+}
+
+export async function devCommand(args: Sinc.SharedCmdArgs) {
+  setLogLevel(args);
   scopeCheck(async () => {
     const _codeSrcPath = await getSourcePath();
     startWatching(_codeSrcPath);
     devModeLog();
   });
 }
-export async function refreshCommand() {
+export async function refreshCommand(args: Sinc.SharedCmdArgs) {
+  setLogLevel(args);
   scopeCheck(async () => {
     try {
       await AppManager.syncManifest();
@@ -38,6 +44,7 @@ export async function refreshCommand() {
   });
 }
 export async function pushCommand(args: Sinc.PushCmdArgs) {
+  setLogLevel(args);
   scopeCheck(async () => {
     try {
       if (args.target !== undefined) {
@@ -53,13 +60,15 @@ export async function pushCommand(args: Sinc.PushCmdArgs) {
   });
 }
 export async function downloadCommand(args: Sinc.CmdDownloadArgs) {
+  setLogLevel(args);
   try {
     await AppManager.downloadWithFiles(args.scope as string);
   } catch (e) {
     throw e;
   }
 }
-export async function initCommand() {
+export async function initCommand(args: Sinc.SharedCmdArgs) {
+  setLogLevel(args);
   try {
     await startWizard();
   } catch (e) {

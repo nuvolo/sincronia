@@ -1,23 +1,23 @@
 import winston, { format, transports } from "winston";
 import chalk from "chalk";
 
-const defaultOpts: winston.LoggerOptions = {
-  format: format.printf(info => {
-    return `${info.message}`;
-  }),
-  transports: [new transports.Console()]
-};
-
 class SincLogger {
-  logger: winston.Logger;
+  private logger: winston.Logger;
   constructor() {
-    this.logger = winston.createLogger(defaultOpts);
+    this.logger = winston.createLogger(this.genLoggerOpts());
   }
   setLogLevel(level: string) {
-    this.logger = winston.createLogger({
-      ...defaultOpts,
-      level
-    });
+    this.logger = winston.createLogger(this.genLoggerOpts(level));
+  }
+
+  private genLoggerOpts(level: string = "info"): winston.LoggerOptions {
+    return {
+      format: format.printf(info => {
+        return `${info.message}`;
+      }),
+      level,
+      transports: [new transports.Console()]
+    };
   }
 
   info(text: string) {
@@ -36,7 +36,19 @@ class SincLogger {
     this.logger.info(chalk.green(text));
   }
 
-  getLogger() {
+  verbose(text: string) {
+    this.logger.verbose(text);
+  }
+
+  debug(text: string) {
+    this.logger.debug(text);
+  }
+
+  silly(text: string) {
+    this.logger.silly(text);
+  }
+
+  getInternalLogger() {
     return this.logger;
   }
 }

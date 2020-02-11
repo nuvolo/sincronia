@@ -58,7 +58,7 @@ export function logMultiFilePush(
   if (success) {
     let fileNum = chalk.bold.blue(files.length + "");
     let message = chalk.green(`${fileNum} files successfully pushed to server`);
-    logger.getLogger().info(message);
+    logger.info(message);
   } else {
     logger.error("Failed to push files to server");
     if (err) {
