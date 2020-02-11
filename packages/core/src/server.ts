@@ -2,7 +2,7 @@ import { SN, Sinc } from "@sincronia/types";
 import axios, { AxiosRequestConfig, AxiosInstance } from "axios";
 import { wait, chunkArr } from "./utils";
 import PluginManager from "./PluginManager";
-import * as logger from "./logging";
+import { logger } from "./Logger";
 import { config } from "./config";
 const axiosConfig: AxiosRequestConfig = {
   withCredentials: true,

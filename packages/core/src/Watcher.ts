@@ -1,7 +1,8 @@
 import chokidar from "chokidar";
 import * as Utils from "./utils";
 import { pushFile } from "./server";
-import * as logger from "./logging";
+import { logger } from "./Logger";
+import { logFilePush } from "./logMessages";
 import { debounce } from "lodash";
 const DEBOUNCE_MS = 300;
 let pushQueue: string[] = [];
@@ -23,10 +24,10 @@ const processQueue = debounce(() => {
           if (targetServer && payload) {
             pushFile(targetServer, payload)
               .then(() => {
-                logger.logFilePush(payload, true);
+                logFilePush(payload, true);
               })
               .catch(() => {
-                logger.logFilePush(payload, false);
+                logFilePush(payload, false);
               });
           }
         })

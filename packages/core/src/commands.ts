@@ -3,13 +3,14 @@ import { getSourcePath } from "./config";
 import { startWatching } from "./Watcher";
 import AppManager from "./AppManager";
 import { startWizard } from "./wizard";
-import * as logger from "./logging";
+import { logger } from "./Logger";
+import { scopeCheckMessage, devModeLog } from "./logMessages";
 
 async function scopeCheck(successFunc: () => void) {
   try {
     const scopeCheck = await AppManager.checkScope();
     if (!scopeCheck.match) {
-      logger.scopeCheckMessage(scopeCheck);
+      scopeCheckMessage(scopeCheck);
     } else {
       successFunc();
     }
@@ -24,7 +25,7 @@ export async function devCommand() {
   scopeCheck(async () => {
     const _codeSrcPath = await getSourcePath();
     startWatching(_codeSrcPath);
-    logger.devModeLog();
+    devModeLog();
   });
 }
 export async function refreshCommand() {
