@@ -4,6 +4,8 @@ import { wait, chunkArr } from "./utils";
 import PluginManager from "./PluginManager";
 import { logger } from "./Logger";
 import { config } from "./config";
+import ProgressBar from "progress";
+
 const axiosConfig: AxiosRequestConfig = {
   withCredentials: true,
   auth: {
@@ -124,12 +126,29 @@ export async function pushFiles(
   filesPayload: Sinc.FileContext[]
 ) {
   const resultSet: boolean[] = [];
+  let progBar: ProgressBar | undefined;
+  if (logger.getLogLevel() === "info") {
+    progBar = new ProgressBar(":bar :current/:total (:percent)", {
+      total: filesPayload.length,
+      width: 60
+    });
+  }
   let chunks = chunkArr(filesPayload, CHUNK_SIZE);
   logger.silly(`${chunks.length} chunks of ${CHUNK_SIZE}`);
   for (let chunk of chunks) {
     let resultsPromises = chunk.map(ctx => {
       const pushPromise = pushFile(target_server, ctx);
-      pushPromise.then(result => {});
+      pushPromise
+        .then(() => {
+          if (progBar) {
+            progBar.tick();
+          }
+        })
+        .catch(() => {
+          if (progBar) {
+            progBar.tick();
+          }
+        });
       return pushPromise;
     });
     const results = await Promise.all(resultsPromises);
