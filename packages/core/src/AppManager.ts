@@ -282,8 +282,10 @@ class AppManager {
       let paths = pathArrays.reduce((acc, cur) => {
         return acc.concat(cur);
       }, []);
+      logger.info(`Attempting to push ${paths.length} files...`);
       try {
         let fileContexts = await this.parseFileParams(paths);
+        logger.debug(`${fileContexts.length} contexts retrieved...`);
         try {
           await pushFiles(process.env.SN_INSTANCE || "", fileContexts);
           logMultiFilePush(fileContexts, true);

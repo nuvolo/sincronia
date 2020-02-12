@@ -10,6 +10,10 @@ class SincLogger {
     this.logger = winston.createLogger(this.genLoggerOpts(level));
   }
 
+  getLogLevel() {
+    return this.logger.level;
+  }
+
   private genLoggerOpts(level: string = "info"): winston.LoggerOptions {
     return {
       format: format.printf(info => {
