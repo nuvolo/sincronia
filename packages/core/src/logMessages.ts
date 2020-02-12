@@ -53,10 +53,13 @@ export function logFilePush(
 export function logMultiFilePush(
   files: Sinc.FileContext[],
   success: boolean,
+  resultSet: boolean[],
   err?: Error
 ) {
   if (success) {
-    let fileNum = chalk.bold.blue(files.length + "");
+    let fileNum = chalk.bold.blue(
+      resultSet.filter(result => result).length + ""
+    );
     let message = chalk.green(`${fileNum} files successfully pushed to server`);
     logger.info(message);
   } else {

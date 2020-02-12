@@ -282,15 +282,23 @@ class AppManager {
       let paths = pathArrays.reduce((acc, cur) => {
         return acc.concat(cur);
       }, []);
-      logger.info(`Attempting to push ${paths.length} files...`);
+      logger.silly(`${paths.length} paths found...`);
+      logger.silly(JSON.stringify(paths, null, 2));
       try {
         let fileContexts = await this.parseFileParams(paths);
-        logger.debug(`${fileContexts.length} contexts retrieved...`);
+        logger.info(`${fileContexts.length} files to push...`);
+        logger.silly(
+          JSON.stringify(fileContexts.map(ctx => ctx.filePath), null, 2)
+        );
+
         try {
-          await pushFiles(process.env.SN_INSTANCE || "", fileContexts);
-          logMultiFilePush(fileContexts, true);
+          const resultSet = await pushFiles(
+            process.env.SN_INSTANCE || "",
+            fileContexts
+          );
+          logMultiFilePush(fileContexts, true, resultSet);
         } catch (e) {
-          logMultiFilePush(fileContexts, false, e);
+          logMultiFilePush(fileContexts, false, [], e);
         }
       } catch (e) {
         throw e;

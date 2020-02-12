@@ -123,20 +123,26 @@ export async function pushFiles(
   target_server: string,
   filesPayload: Sinc.FileContext[]
 ) {
+  const resultSet: boolean[] = [];
   let chunks = chunkArr(filesPayload, CHUNK_SIZE);
+  logger.silly(`${chunks.length} chunks of ${CHUNK_SIZE}`);
   for (let chunk of chunks) {
-    let results = chunk.map(ctx => {
-      return pushFile(target_server, ctx);
+    let resultsPromises = chunk.map(ctx => {
+      const pushPromise = pushFile(target_server, ctx);
+      pushPromise.then(result => {});
+      return pushPromise;
     });
-    await Promise.all(results);
+    const results = await Promise.all(resultsPromises);
+    resultSet.push(...results);
     await wait(WAIT_TIME);
   }
+  return resultSet;
 }
 
 export async function pushFile(
   target_server: string,
   fileContext: Sinc.FileContext
-) {
+): Promise<boolean> {
   const fileSummary = `${fileContext.tableName}/${fileContext.name}(${fileContext.sys_id})`;
   if (fileContext.sys_id && fileContext.targetField) {
     try {
@@ -146,20 +152,30 @@ export async function pushFile(
       if (response) {
         if (response.status === 404) {
           logger.error(`Could not find ${fileSummary} on the server.`);
-          return;
+          return false;
         }
         if (response.status < 200 && response.status > 299) {
           logger.error(
             `Failed to push ${fileSummary}. Recieved an unexpected response (${response.status})`
           );
           logger.debug(JSON.stringify(response, null, 2));
+          return false;
         }
+        logger.debug(`${fileSummary} pushed successfully!`);
+        return true;
       }
+      logger.error(`No response object ${fileSummary}`);
+      return false;
     } catch (e) {
       logger.error(`Failed to push ${fileSummary}`);
-      logger.debug(e);
+      console.error(e);
+      return false;
     }
   }
+  logger.error(
+    `Failed to push ${fileSummary}, missing either a target field or sys_id`
+  );
+  return false;
 }
 
 export async function getCurrentScope(): Promise<SN.ScopeObj> {
