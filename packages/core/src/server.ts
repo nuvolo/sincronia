@@ -137,15 +137,27 @@ export async function pushFile(
   target_server: string,
   fileContext: Sinc.FileContext
 ) {
+  const fileSummary = `${fileContext.tableName}/${fileContext.name}(${fileContext.sys_id})`;
   if (fileContext.sys_id && fileContext.targetField) {
     try {
       let requestObj = await buildFileRequestObj(target_server, fileContext);
       let response = await pushUpdate(requestObj);
-      if (response && response.status < 200 && response.status > 299) {
-        throw new Error(response.statusText);
+      logger.debug(`Attempting to push ${fileSummary}`);
+      if (response) {
+        if (response.status === 404) {
+          logger.error(`Could not find ${fileSummary} on the server.`);
+          return;
+        }
+        if (response.status < 200 && response.status > 299) {
+          logger.error(
+            `Failed to push ${fileSummary}. Recieved an unexpected response (${response.status})`
+          );
+          logger.debug(JSON.stringify(response, null, 2));
+        }
       }
     } catch (e) {
-      throw e;
+      logger.error(`Failed to push ${fileSummary}`);
+      logger.debug(e);
     }
   }
 }
