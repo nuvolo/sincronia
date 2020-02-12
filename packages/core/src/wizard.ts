@@ -10,7 +10,7 @@ import {
 import AppManager from "./AppManager";
 import fs from "fs";
 const fsp = fs.promises;
-import * as logger from "./logging";
+import { logger } from "./Logger";
 import path from "path";
 
 export async function startWizard() {
@@ -133,7 +133,7 @@ async function downloadApp(answers: Sinc.LoginAnswers, scope: string) {
     let man = await getManifestWithFiles(scope, { user, password, instance });
     await AppManager.processManifest(man);
   } catch (e) {
-    logger.log(e);
+    logger.error(e.toString());
     throw new Error("Failed to download files!");
   }
 }

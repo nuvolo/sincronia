@@ -1,8 +1,12 @@
 export module Sinc {
-  interface CmdDownloadArgs {
+  interface SharedCmdArgs {
+    logLevel: string;
+  }
+
+  interface CmdDownloadArgs extends SharedCmdArgs {
     scope: string;
   }
-  interface PushCmdArgs {
+  interface PushCmdArgs extends SharedCmdArgs {
     target?: string;
   }
   interface Config {
