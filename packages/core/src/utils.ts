@@ -85,11 +85,17 @@ export function wait(ms: number) {
   });
 }
 
-export function chunkArr(arr: any[], num: number) {
-  let chunks = [];
-  for (let i = 0; i < arr.length; i++) {
-    chunks.push(arr.slice(i, i + num));
-    i = i + num;
+export function chunkArr(
+  arr: Sinc.FileContext[],
+  chunkSize: number
+): Sinc.FileContext[][] {
+  const numChunks = Math.ceil(arr.length / chunkSize);
+  const chunks: Sinc.FileContext[][] = [];
+  for (let i = 0; i < numChunks; i++) {
+    const rangeBegin = i * chunkSize;
+    const rangeEnd =
+      rangeBegin + chunkSize > arr.length ? arr.length : rangeBegin + chunkSize;
+    chunks.push(arr.slice(rangeBegin, rangeEnd));
   }
   return chunks;
 }

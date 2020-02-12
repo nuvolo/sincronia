@@ -1,7 +1,7 @@
 import { SN, Sinc } from "@sincronia/types";
 import path from "path";
 import { promises as fsp } from "fs";
-import * as logger from "./logging";
+import { logger } from "./Logger";
 import { includes, excludes, tableOptions } from "./defaultOptions";
 
 export const DEFAULT_CONFIG: Sinc.Config = {

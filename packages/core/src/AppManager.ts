@@ -3,7 +3,8 @@ import fs from "fs";
 import path from "path";
 import { config, manifest, getManifestPath, getSourcePath } from "./config";
 import * as Utils from "./utils";
-import * as logger from "./logging";
+import { logger } from "./Logger";
+import { logMultiFilePush } from "./logMessages";
 import inquirer from "inquirer";
 import {
   getManifestWithFiles,
@@ -107,7 +108,7 @@ class AppManager {
       logger.success("Download complete ✅");
     } catch (e) {
       logger.error("Encountered error while performing download ❌");
-      logger.log(e);
+      logger.error(e.toString());
     }
   }
   async syncManifest() {
@@ -126,11 +127,11 @@ class AppManager {
         logger.success("Refresh complete! ✅");
       } catch (e) {
         logger.error("Encountered error while refreshing! ❌");
-        logger.log(e);
+        logger.error(e.toString());
       }
     } catch (e) {
       logger.error("Encountered error while refreshing! ❌");
-      logger.log(e);
+      logger.error(e.toString());
     }
   }
 
@@ -281,13 +282,23 @@ class AppManager {
       let paths = pathArrays.reduce((acc, cur) => {
         return acc.concat(cur);
       }, []);
+      logger.silly(`${paths.length} paths found...`);
+      logger.silly(JSON.stringify(paths, null, 2));
       try {
         let fileContexts = await this.parseFileParams(paths);
+        logger.info(`${fileContexts.length} files to push...`);
+        logger.silly(
+          JSON.stringify(fileContexts.map(ctx => ctx.filePath), null, 2)
+        );
+
         try {
-          await pushFiles(process.env.SN_INSTANCE || "", fileContexts);
-          logger.logMultiFilePush(fileContexts, true);
+          const resultSet = await pushFiles(
+            process.env.SN_INSTANCE || "",
+            fileContexts
+          );
+          logMultiFilePush(fileContexts, true, resultSet);
         } catch (e) {
-          logger.logMultiFilePush(fileContexts, false, e);
+          logMultiFilePush(fileContexts, false, [], e);
         }
       } catch (e) {
         throw e;
