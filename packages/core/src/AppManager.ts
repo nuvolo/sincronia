@@ -11,7 +11,9 @@ import {
   getManifest,
   getMissingFiles,
   pushFiles,
-  getCurrentScope
+  getCurrentScope,
+  getScopeId,
+  swapServerScope
 } from "./server";
 
 const fsp = fs.promises;
@@ -366,7 +368,7 @@ class AppManager {
     }
   }
 
-  async checkScope(): Promise<Sinc.ScopeCheckResult> {
+  async checkScope(swapScope: boolean): Promise<Sinc.ScopeCheckResult> {
     try {
       let man = await manifest;
       if (man) {
@@ -375,6 +377,13 @@ class AppManager {
           return {
             match: true,
             sessionScope: scopeObj.scope,
+            manifestScope: man.scope
+          };
+        } else if (swapScope) {
+          const swappedScopeObj = await this.swapScope(man.scope);
+          return {
+            match: swappedScopeObj.scope === man.scope,
+            sessionScope: swappedScopeObj.scope,
             manifestScope: man.scope
           };
         } else {
@@ -391,6 +400,17 @@ class AppManager {
         sessionScope: "",
         manifestScope: ""
       };
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  private async swapScope(currentScope: string): Promise<SN.ScopeObj> {
+    try {
+      const scopeId = await getScopeId(currentScope);
+      await swapServerScope(scopeId);
+      const scopeObj = await getCurrentScope();
+      return scopeObj;
     } catch (e) {
       throw e;
     }

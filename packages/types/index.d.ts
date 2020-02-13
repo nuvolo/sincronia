@@ -8,6 +8,9 @@ export module Sinc {
   }
   interface PushCmdArgs extends SharedCmdArgs {
     target?: string;
+    diff: string;
+    scopeSwap: boolean;
+    ci: boolean;
   }
   interface Config {
     sourceDirectory: string;
