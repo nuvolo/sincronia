@@ -26,8 +26,8 @@ export async function initCommands() {
       ["push [target]"],
       "[DESTRUCTIVE] Push all files from current local files to ServiceNow instance.",
       cmdArgs => {
-        cmdArgs.options(sharedOptions);
         cmdArgs.options({
+          ...sharedOptions,
           diff: {
             alias: "d",
             type: "string",
