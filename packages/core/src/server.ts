@@ -245,8 +245,7 @@ function getBasicAxiosClient(creds: SNInstanceCreds) {
 export async function swapServerScope(scopeId: string): Promise<void> {
   try {
     const endpoint = "change_current_app.do";
-    const queryStr = `?app_id=${scopeId}`;
-    let response = await api.get(`${endpoint}${queryStr}`);
+    let response = await api.get(endpoint, { params: { app_id: scopeId } });
     return response.data.result.sys_ud;
   } catch (e) {
     throw e;
@@ -256,9 +255,13 @@ export async function swapServerScope(scopeId: string): Promise<void> {
 export async function getScopeId(scopeName: string): Promise<string> {
   try {
     const endpoint = "api/now/table/sys_scope";
-    const queryStr = `?sysparms_query=scope=${scopeName}&sysparms_fields=sys_id`;
-    let response = await api.get(`${endpoint}${queryStr}`);
-    return response.data.result.sys_ud;
+    let response = await api.get(endpoint, {
+      params: {
+        sysparms_query: `scope=${scopeName}`,
+        sysparms_fields: "sys_id"
+      }
+    });
+    return response.data.result.sys_id;
   } catch (e) {
     throw e;
   }
