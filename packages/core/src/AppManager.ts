@@ -1,5 +1,6 @@
 import { SN, Sinc } from "@sincronia/types";
 import fs from "fs";
+import * as cp from "child_process";
 import path from "path";
 import { config, manifest, getManifestPath, getSourcePath } from "./config";
 import * as Utils from "./utils";
@@ -11,7 +12,9 @@ import {
   getManifest,
   getMissingFiles,
   pushFiles,
-  getCurrentScope
+  getCurrentScope,
+  getScopeId,
+  swapServerScope
 } from "./server";
 
 const fsp = fs.promises;
@@ -255,8 +258,8 @@ class AppManager {
     }
   }
 
-  async pushSpecificFiles(pathString: string) {
-    if (await this.canPush()) {
+  async pushSpecificFiles(skipPrompt: boolean, pathString: string) {
+    if (skipPrompt || (await this.canPush())) {
       let pathPromises = pathString
         .split(path.delimiter)
         .filter(cur => {
@@ -358,15 +361,15 @@ class AppManager {
     }
   }
 
-  async pushAllFiles() {
+  async pushAllFiles(skipPrompt: boolean) {
     try {
-      this.pushSpecificFiles(await getSourcePath());
+      this.pushSpecificFiles(skipPrompt, await getSourcePath());
     } catch (e) {
       throw e;
     }
   }
 
-  async checkScope(): Promise<Sinc.ScopeCheckResult> {
+  async checkScope(swapScope: boolean): Promise<Sinc.ScopeCheckResult> {
     try {
       let man = await manifest;
       if (man) {
@@ -375,6 +378,13 @@ class AppManager {
           return {
             match: true,
             sessionScope: scopeObj.scope,
+            manifestScope: man.scope
+          };
+        } else if (swapScope) {
+          const swappedScopeObj = await this.swapScope(man.scope);
+          return {
+            match: swappedScopeObj.scope === man.scope,
+            sessionScope: swappedScopeObj.scope,
             manifestScope: man.scope
           };
         } else {
@@ -394,6 +404,74 @@ class AppManager {
     } catch (e) {
       throw e;
     }
+  }
+
+  private async swapScope(currentScope: string): Promise<SN.ScopeObj> {
+    try {
+      const scopeId = await getScopeId(currentScope);
+      await swapServerScope(scopeId);
+      const scopeObj = await getCurrentScope();
+      return scopeObj;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  gitDiff(target: string): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      const cmdStr = `git diff --name-status ${target}...`;
+      cp.exec(cmdStr, (err, stdout, stderr) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.formatGitFiles(stdout.trim()));
+        }
+      });
+    });
+  }
+
+  private async formatGitFiles(gitFiles: string) {
+    const baseRepoPath = await this.getRepoRootDir();
+    const workspaceDir = process.cwd();
+    const fileSplit = gitFiles.split(/\r?\n/);
+    const fileArray: string[] = [];
+    fileSplit.forEach(diffFile => {
+      if (diffFile !== "") {
+        const modCode = diffFile.charAt(0);
+
+        if (modCode !== "D") {
+          const filePath = diffFile.substr(1, diffFile.length - 1).trim();
+
+          if (this.isValidScope(filePath, workspaceDir, baseRepoPath)) {
+            logger.info(diffFile);
+            const absFilePath = path.resolve(baseRepoPath, filePath);
+            fileArray.push(absFilePath);
+          }
+        }
+      }
+    });
+    return fileArray.join(path.delimiter);
+  }
+
+  private getRepoRootDir(): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      cp.exec("git rev-parse --show-toplevel", (err, stdout, stderr) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(stdout.trim());
+        }
+      });
+    });
+  }
+
+  private isValidScope(
+    file: string,
+    scope: string,
+    baseRepoPath: string
+  ): boolean {
+    const relativePath = path.relative(baseRepoPath, scope);
+    return file.startsWith(relativePath) ? true : false;
   }
 }
 

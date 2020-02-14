@@ -25,7 +25,30 @@ export async function initCommands() {
     .command(
       ["push [target]"],
       "[DESTRUCTIVE] Push all files from current local files to ServiceNow instance.",
-      sharedOptions,
+      cmdArgs => {
+        cmdArgs.options({
+          ...sharedOptions,
+          diff: {
+            alias: "d",
+            type: "string",
+            default: "",
+            describe: "Specify branch to do git diff against"
+          },
+          scopeSwap: {
+            alias: "ss",
+            type: "boolean",
+            default: false,
+            describe:
+              "Will auto-swap to the correct scope for the files being pushed"
+          },
+          ci: {
+            type: "boolean",
+            default: false,
+            describe: "Will skip confirmation prompts during the push process"
+          }
+        });
+        return cmdArgs;
+      },
       (args: TSFIXME) => {
         pushCommand(args as Sinc.PushCmdArgs);
       }
