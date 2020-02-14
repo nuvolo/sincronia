@@ -42,6 +42,7 @@ export async function refreshCommand() {
   });
 }
 export async function pushCommand(args: Sinc.PushCmdArgs) {
+  setLogLevel(args);
   scopeCheck(args.scopeSwap, async () => {
     try {
       if (args.target !== undefined) {
