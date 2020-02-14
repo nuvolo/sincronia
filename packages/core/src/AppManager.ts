@@ -381,10 +381,12 @@ class AppManager {
             manifestScope: man.scope
           };
         } else if (swapScope) {
-          const swappedScopeObj = await this.swapScope(man.scope);
+          await this.swapScope(man.scope);
+          // getCurrentScope cannot be trusted when changing the scope programatically
+          // assuming it swapped correctly and if not let ServiceNow complain about it and throw error.
           return {
-            match: swappedScopeObj.scope === man.scope,
-            sessionScope: swappedScopeObj.scope,
+            match: true,
+            sessionScope: man.scope,
             manifestScope: man.scope
           };
         } else {
@@ -406,12 +408,10 @@ class AppManager {
     }
   }
 
-  private async swapScope(currentScope: string): Promise<SN.ScopeObj> {
+  private async swapScope(currentScope: string): Promise<void> {
     try {
       const scopeId = await getScopeId(currentScope);
       await swapServerScope(scopeId);
-      const scopeObj = await getCurrentScope();
-      return scopeObj;
     } catch (e) {
       throw e;
     }

@@ -245,7 +245,7 @@ function getBasicAxiosClient(creds: SNInstanceCreds) {
 export async function swapServerScope(scopeId: string): Promise<void> {
   try {
     const endpoint = "change_current_app.do";
-    let response = await api.get(endpoint, { params: { app_id: scopeId } });
+    await api.get(endpoint, { params: { app_id: scopeId } });
   } catch (e) {
     throw e;
   }
