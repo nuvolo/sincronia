@@ -6,7 +6,10 @@ import { startWizard } from "./wizard";
 import { logger } from "./Logger";
 import { scopeCheckMessage, devModeLog } from "./logMessages";
 
-async function scopeCheck(swapScopes: boolean, successFunc: () => void) {
+async function scopeCheck(
+  successFunc: () => void,
+  swapScopes: boolean = false
+) {
   try {
     const scopeCheck = await AppManager.checkScope(swapScopes);
     if (!scopeCheck.match) {
@@ -26,14 +29,14 @@ function setLogLevel(args: Sinc.SharedCmdArgs) {
 }
 
 export async function devCommand() {
-  scopeCheck(false, async () => {
+  scopeCheck(async () => {
     const _codeSrcPath = await getSourcePath();
     startWatching(_codeSrcPath);
     devModeLog();
   });
 }
 export async function refreshCommand() {
-  scopeCheck(false, async () => {
+  scopeCheck(async () => {
     try {
       await AppManager.syncManifest();
     } catch (e) {
@@ -43,7 +46,7 @@ export async function refreshCommand() {
 }
 export async function pushCommand(args: Sinc.PushCmdArgs) {
   setLogLevel(args);
-  scopeCheck(args.scopeSwap, async () => {
+  scopeCheck(async () => {
     try {
       if (args.target !== undefined) {
         if (args.target !== "") {
@@ -58,7 +61,7 @@ export async function pushCommand(args: Sinc.PushCmdArgs) {
     } catch (e) {
       throw e;
     }
-  });
+  }, args.scopeSwap);
 }
 export async function downloadCommand(args: Sinc.CmdDownloadArgs) {
   setLogLevel(args);
