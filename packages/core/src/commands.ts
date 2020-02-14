@@ -21,6 +21,10 @@ async function scopeCheck(swapScopes: boolean, successFunc: () => void) {
   }
 }
 
+function setLogLevel(args: Sinc.SharedCmdArgs) {
+  logger.setLogLevel(args.logLevel);
+}
+
 export async function devCommand() {
   scopeCheck(false, async () => {
     const _codeSrcPath = await getSourcePath();
@@ -38,22 +42,22 @@ export async function refreshCommand() {
   });
 }
 export async function pushCommand(args: Sinc.PushCmdArgs) {
-  const filePushFunc = async () => {
+  scopeCheck(args.scopeSwap, async () => {
     try {
       if (args.target !== undefined) {
         if (args.target !== "") {
-          await AppManager.pushSpecificFiles(args.target);
+          await AppManager.pushSpecificFiles(args.ci, args.target);
         }
-      } else if (args.diff) {
+      } else if (args.diff !== "") {
+        const files = await AppManager.gitDiff(args.diff);
+        await AppManager.pushSpecificFiles(args.ci, files);
       } else {
-        await AppManager.pushAllFiles();
+        await AppManager.pushAllFiles(args.ci);
       }
     } catch (e) {
       throw e;
     }
-  };
-
-  scopeCheck(args.scopeSwap, filePushFunc);
+  });
 }
 export async function downloadCommand(args: Sinc.CmdDownloadArgs) {
   setLogLevel(args);
