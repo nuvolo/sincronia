@@ -246,7 +246,6 @@ export async function swapServerScope(scopeId: string): Promise<void> {
   try {
     const endpoint = "change_current_app.do";
     let response = await api.get(endpoint, { params: { app_id: scopeId } });
-    return response.data.result.sys_id;
   } catch (e) {
     throw e;
   }
