@@ -246,7 +246,7 @@ export async function swapServerScope(scopeId: string): Promise<void> {
   try {
     const endpoint = "change_current_app.do";
     let response = await api.get(endpoint, { params: { app_id: scopeId } });
-    return response.data.result.sys_ud;
+    return response.data.result.sys_id;
   } catch (e) {
     throw e;
   }
@@ -257,11 +257,11 @@ export async function getScopeId(scopeName: string): Promise<string> {
     const endpoint = "api/now/table/sys_scope";
     let response = await api.get(endpoint, {
       params: {
-        sysparms_query: `scope=${scopeName}`,
-        sysparms_fields: "sys_id"
+        sysparm_query: `scope=${scopeName}`,
+        sysparm_fields: "sys_id"
       }
     });
-    return response.data.result.sys_id;
+    return response.data.result[0].sys_id;
   } catch (e) {
     throw e;
   }
