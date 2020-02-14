@@ -434,21 +434,18 @@ class AppManager {
     const baseRepoPath = await this.getRepoRootDir();
     const workspaceDir = process.cwd();
     const fileSplit = gitFiles.split(/\r?\n/);
-    const fileArray = fileSplit.map(diffFile => {
+    const fileArray: string[] = [];
+    fileSplit.forEach(diffFile => {
       if (diffFile !== "") {
         const modCode = diffFile.charAt(0);
 
-        if (modCode === "D") {
-          return;
-        } else {
+        if (modCode !== "D") {
           const filePath = diffFile.substr(1, diffFile.length - 1).trim();
 
           if (this.isValidScope(filePath, workspaceDir, baseRepoPath)) {
             logger.info(diffFile);
             const absFilePath = path.resolve(baseRepoPath, filePath);
-            return absFilePath;
-          } else {
-            return;
+            fileArray.push(absFilePath);
           }
         }
       }
