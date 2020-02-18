@@ -16,6 +16,7 @@ import {
   getScopeId,
   swapServerScope
 } from "./server";
+import { PATH_DELIMITER } from "./constants";
 
 const fsp = fs.promises;
 
@@ -261,7 +262,7 @@ class AppManager {
   async pushSpecificFiles(skipPrompt: boolean, pathString: string) {
     if (skipPrompt || (await this.canPush())) {
       let pathPromises = pathString
-        .split(path.delimiter)
+        .split(PATH_DELIMITER)
         .filter(cur => {
           //make sure it isn't blank
           if (cur && cur !== "") {
@@ -450,7 +451,7 @@ class AppManager {
         }
       }
     });
-    return fileArray.join(path.delimiter);
+    return fileArray.join(PATH_DELIMITER);
   }
 
   private getRepoRootDir(): Promise<string> {

@@ -23,8 +23,8 @@ const processQueue = debounce(() => {
             "";
           if (targetServer && payload) {
             pushFile(targetServer, payload)
-              .then(() => {
-                logFilePush(payload, true);
+              .then(result => {
+                logFilePush(payload, result);
               })
               .catch(() => {
                 logFilePush(payload, false);
