@@ -1,6 +1,6 @@
 {
   "name": "@sincronia/core",
-  "version": "0.3.6",
+  "version": "0.3.7-alpha.1",
   "description": "Next-gen file syncer",
   "license": "GPL-3.0",
   "main": "./dist./index.js",
