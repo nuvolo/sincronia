@@ -259,7 +259,7 @@ class AppManager {
     }
   }
 
-  async pushSpecificFiles(skipPrompt: boolean, pathString: string) {
+  async pushSpecificFiles(pathString: string, skipPrompt: boolean = false) {
     if (skipPrompt || (await this.canPush())) {
       let pathPromises = pathString
         .split(PATH_DELIMITER)
@@ -362,9 +362,9 @@ class AppManager {
     }
   }
 
-  async pushAllFiles(skipPrompt: boolean) {
+  async pushAllFiles(skipPrompt: boolean = false) {
     try {
-      this.pushSpecificFiles(skipPrompt, await getSourcePath());
+      this.pushSpecificFiles(await getSourcePath(), skipPrompt);
     } catch (e) {
       throw e;
     }

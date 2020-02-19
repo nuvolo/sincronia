@@ -244,9 +244,9 @@ function getBasicAxiosClient(creds: SNInstanceCreds) {
 
 export async function swapServerScope(scopeId: string): Promise<void> {
   try {
-    const endpoint = "change_current_app.do";
-    let response = await api.get(endpoint, { params: { app_id: scopeId } });
-    return response.data.result.sys_ud;
+    const userSysId = await getUserSysId(process.env.SN_USER as string);
+    const curAppUserPrefId = await getCurrentAppUserPrefSysId(userSysId);
+    await updateCurrentAppUserPref(scopeId, curAppUserPrefId);
   } catch (e) {
     throw e;
   }
@@ -257,12 +257,60 @@ export async function getScopeId(scopeName: string): Promise<string> {
     const endpoint = "api/now/table/sys_scope";
     let response = await api.get(endpoint, {
       params: {
-        sysparms_query: `scope=${scopeName}`,
-        sysparms_fields: "sys_id"
+        sysparm_query: `scope=${scopeName}`,
+        sysparm_fields: "sys_id"
       }
     });
-    return response.data.result.sys_id;
+    return response.data.result[0].sys_id;
   } catch (e) {
+    throw e;
+  }
+}
+
+export async function getUserSysId(userName: string): Promise<string> {
+  try {
+    const endpoint = "api/now/table/sys_user";
+    let response = await api.get(endpoint, {
+      params: {
+        sysparm_query: `user_name=${userName}`,
+        sysparm_fields: "sys_id"
+      }
+    });
+    return response.data.result[0].sys_id;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function getCurrentAppUserPrefSysId(
+  userSysId: string
+): Promise<string> {
+  try {
+    const endpoint = `api/now/table/sys_user_preference`;
+    //sysparm_query=user=${userSysId}&name=apps.current_app
+    let response = await api.get(endpoint, {
+      params: {
+        // Does not return any results if the query is encoded *shrug
+        sysparm_query: `user=${userSysId}^name=apps.current_app`,
+        sysparm_fields: "sys_id"
+      }
+    });
+    logger.info(JSON.stringify(response.data));
+    return response.data.result[0].sys_id;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function updateCurrentAppUserPref(
+  appSysId: string,
+  userPrefSysId: string
+): Promise<void> {
+  try {
+    const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
+    await api.put(endpoint, { value: appSysId });
+  } catch (e) {
+    logger.error(e);
     throw e;
   }
 }
