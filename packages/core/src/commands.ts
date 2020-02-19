@@ -50,11 +50,11 @@ export async function pushCommand(args: Sinc.PushCmdArgs) {
     try {
       if (args.target !== undefined) {
         if (args.target !== "") {
-          await AppManager.pushSpecificFiles(args.ci, args.target);
+          await AppManager.pushSpecificFiles(args.target, args.ci);
         }
       } else if (args.diff !== "") {
         const files = await AppManager.gitDiff(args.diff);
-        await AppManager.pushSpecificFiles(args.ci, files);
+        await AppManager.pushSpecificFiles(files, args.ci);
       } else {
         await AppManager.pushAllFiles(args.ci);
       }
