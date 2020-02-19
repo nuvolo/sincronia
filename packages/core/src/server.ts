@@ -293,7 +293,6 @@ export async function getCurrentAppUserPrefSysId(
         sysparm_fields: "sys_id"
       }
     });
-    logger.info(JSON.stringify(response.data));
     return response.data.result[0].sys_id;
   } catch (e) {
     throw e;
