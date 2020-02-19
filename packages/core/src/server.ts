@@ -287,10 +287,8 @@ export async function getCurrentAppUserPrefSysId(
 ): Promise<string> {
   try {
     const endpoint = `api/now/table/sys_user_preference`;
-    //sysparm_query=user=${userSysId}&name=apps.current_app
     let response = await api.get(endpoint, {
       params: {
-        // Does not return any results if the query is encoded *shrug
         sysparm_query: `user=${userSysId}^name=apps.current_app`,
         sysparm_fields: "sys_id"
       }
