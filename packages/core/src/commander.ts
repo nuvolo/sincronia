@@ -41,6 +41,13 @@ export async function initCommands() {
             describe:
               "Will auto-swap to the correct scope for the files being pushed"
           },
+          updateSet: {
+            alias: "us",
+            type: "string",
+            default: "",
+            describe:
+              "Will create a new update set with the provided anme to store all changes into"
+          },
           ci: {
             type: "boolean",
             default: false,

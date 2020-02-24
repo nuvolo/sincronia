@@ -14,7 +14,12 @@ import {
   pushFiles,
   getCurrentScope,
   getScopeId,
-  swapServerScope
+  swapServerScope,
+  createUpdateSet,
+  getCurrentUpdateSetUserPref,
+  getCurrentAppUserPrefSysId,
+  getUserSysId,
+  updateCurrentUpdateSetUserPref
 } from "./server";
 import { PATH_DELIMITER } from "./constants";
 
@@ -473,6 +478,21 @@ class AppManager {
   ): boolean {
     const relativePath = path.relative(baseRepoPath, scope);
     return file.startsWith(relativePath) ? true : false;
+  }
+
+  async createAndAssignUpdateSet(updateSetName: string = "") {
+    if (updateSetName !== "") {
+      const updateSetSysId = await createUpdateSet(updateSetName);
+      const userSysId = await getUserSysId();
+      const curUpdateSetUserPrefId = await getCurrentUpdateSetUserPref(
+        userSysId
+      );
+
+      await updateCurrentUpdateSetUserPref(
+        updateSetSysId,
+        curUpdateSetUserPrefId
+      );
+    }
   }
 }
 

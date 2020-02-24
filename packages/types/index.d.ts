@@ -10,6 +10,7 @@ export module Sinc {
     target?: string;
     diff: string;
     scopeSwap: boolean;
+    updateSet: string;
     ci: boolean;
   }
   interface Config {
