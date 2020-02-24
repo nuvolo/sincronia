@@ -358,7 +358,7 @@ export async function createUpdateSet(updateSetName: string): Promise<string> {
     const response = await api.post(endpoint, {
       name: updateSetName
     });
-    return response.data.sys_id;
+    return response.data.result.sys_id;
   } catch (e) {
     logger.error(e);
     throw e;

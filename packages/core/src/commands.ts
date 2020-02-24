@@ -49,7 +49,7 @@ export async function pushCommand(args: Sinc.PushCmdArgs) {
   setLogLevel(args);
   scopeCheck(async () => {
     try {
-      AppManager.createAndAssignUpdateSet(args.updateSet);
+      await AppManager.createAndAssignUpdateSet(args.updateSet, args.ci);
 
       if (args.target !== undefined) {
         if (args.target !== "") {

@@ -480,18 +480,54 @@ class AppManager {
     return file.startsWith(relativePath) ? true : false;
   }
 
-  async createAndAssignUpdateSet(updateSetName: string = "") {
+  async createAndAssignUpdateSet(
+    updateSetName: string = "",
+    skipPrompt: boolean = false
+  ) {
     if (updateSetName !== "") {
-      const updateSetSysId = await createUpdateSet(updateSetName);
-      const userSysId = await getUserSysId();
-      const curUpdateSetUserPrefId = await getCurrentUpdateSetUserPref(
-        userSysId
-      );
+      if (await this.promptForNewUpdateSet(updateSetName, skipPrompt)) {
+        const updateSetSysId = await createUpdateSet(updateSetName);
 
-      await updateCurrentUpdateSetUserPref(
-        updateSetSysId,
-        curUpdateSetUserPrefId
-      );
+        logger.debug(
+          `New Update Set Created(${updateSetName}) sys_id:${updateSetSysId}`
+        );
+
+        const userSysId = await getUserSysId();
+
+        const curUpdateSetUserPrefId = await getCurrentUpdateSetUserPref(
+          userSysId
+        );
+
+        await updateCurrentUpdateSetUserPref(
+          updateSetSysId,
+          curUpdateSetUserPrefId
+        );
+      } else {
+        process.exit(0);
+      }
+    }
+  }
+
+  private async promptForNewUpdateSet(
+    updateSetName: string,
+    skipPrompt: boolean = false
+  ): Promise<boolean> {
+    try {
+      if (skipPrompt) return true;
+      let answers: { confirmed: boolean } = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "confirmed",
+          message: `A new Update Set "${updateSetName}" will be created for these pushed changes. Do you want to proceed?`,
+          default: false
+        }
+      ]);
+      if (!answers["confirmed"]) {
+        return false;
+      }
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 }
