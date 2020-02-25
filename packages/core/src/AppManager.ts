@@ -480,10 +480,16 @@ class AppManager {
     return file.startsWith(relativePath) ? true : false;
   }
 
+  /**
+   * Creates a new update set and assigns it to the current user.
+   * @param updateSetName - does not create update set if value is blank
+   * @param skipPrompt - will not prompt user to verify update set name
+   *
+   */
   async createAndAssignUpdateSet(
     updateSetName: string = "",
     skipPrompt: boolean = false
-  ) {
+  ): Promise<void> {
     if (updateSetName !== "") {
       if (await this.promptForNewUpdateSet(updateSetName, skipPrompt)) {
         const updateSetSysId = await createUpdateSet(updateSetName);

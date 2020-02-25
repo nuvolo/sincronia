@@ -49,6 +49,7 @@ export async function pushCommand(args: Sinc.PushCmdArgs) {
   setLogLevel(args);
   scopeCheck(async () => {
     try {
+      // Does not create update set if updateSetName is blank
       await AppManager.createAndAssignUpdateSet(args.updateSet, args.ci);
 
       if (args.target !== undefined) {
