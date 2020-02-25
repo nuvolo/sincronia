@@ -14,7 +14,12 @@ import {
   pushFiles,
   getCurrentScope,
   getScopeId,
-  swapServerScope
+  swapServerScope,
+  createUpdateSet,
+  getCurrentUpdateSetUserPref,
+  getCurrentAppUserPrefSysId,
+  getUserSysId,
+  updateCurrentUpdateSetUserPref
 } from "./server";
 import { PATH_DELIMITER } from "./constants";
 
@@ -473,6 +478,63 @@ class AppManager {
   ): boolean {
     const relativePath = path.relative(baseRepoPath, scope);
     return file.startsWith(relativePath) ? true : false;
+  }
+
+  /**
+   * Creates a new update set and assigns it to the current user.
+   * @param updateSetName - does not create update set if value is blank
+   * @param skipPrompt - will not prompt user to verify update set name
+   *
+   */
+  async createAndAssignUpdateSet(
+    updateSetName: string = "",
+    skipPrompt: boolean = false
+  ): Promise<void> {
+    if (updateSetName !== "") {
+      if (await this.promptForNewUpdateSet(updateSetName, skipPrompt)) {
+        const updateSetSysId = await createUpdateSet(updateSetName);
+
+        logger.debug(
+          `New Update Set Created(${updateSetName}) sys_id:${updateSetSysId}`
+        );
+
+        const userSysId = await getUserSysId();
+
+        const curUpdateSetUserPrefId = await getCurrentUpdateSetUserPref(
+          userSysId
+        );
+
+        await updateCurrentUpdateSetUserPref(
+          updateSetSysId,
+          curUpdateSetUserPrefId
+        );
+      } else {
+        process.exit(0);
+      }
+    }
+  }
+
+  private async promptForNewUpdateSet(
+    updateSetName: string,
+    skipPrompt: boolean = false
+  ): Promise<boolean> {
+    try {
+      if (skipPrompt) return true;
+      let answers: { confirmed: boolean } = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "confirmed",
+          message: `A new Update Set "${updateSetName}" will be created for these pushed changes. Do you want to proceed?`,
+          default: false
+        }
+      ]);
+      if (!answers["confirmed"]) {
+        return false;
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }
 

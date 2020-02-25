@@ -8,7 +8,8 @@ import { scopeCheckMessage, devModeLog } from "./logMessages";
 
 async function scopeCheck(
   successFunc: () => void,
-  swapScopes: boolean = false
+  swapScopes: boolean = false,
+  updateSet: string = ""
 ) {
   try {
     const scopeCheck = await AppManager.checkScope(swapScopes);
@@ -48,6 +49,9 @@ export async function pushCommand(args: Sinc.PushCmdArgs) {
   setLogLevel(args);
   scopeCheck(async () => {
     try {
+      // Does not create update set if updateSetName is blank
+      await AppManager.createAndAssignUpdateSet(args.updateSet, args.ci);
+
       if (args.target !== undefined) {
         if (args.target !== "") {
           await AppManager.pushSpecificFiles(args.target, args.ci);

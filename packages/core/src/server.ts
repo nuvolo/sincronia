@@ -242,12 +242,16 @@ function getBasicAxiosClient(creds: SNInstanceCreds) {
   });
 }
 
-export async function swapServerScope(scopeId: string): Promise<void> {
+export async function swapServerScope(
+  scopeId: string,
+  updateSetName: string = ""
+): Promise<void> {
   try {
-    const userSysId = await getUserSysId(process.env.SN_USER as string);
+    const userSysId = await getUserSysId();
     const curAppUserPrefId = await getCurrentAppUserPrefSysId(userSysId);
     await updateCurrentAppUserPref(scopeId, curAppUserPrefId);
   } catch (e) {
+    logger.error(e);
     throw e;
   }
 }
@@ -263,11 +267,14 @@ export async function getScopeId(scopeName: string): Promise<string> {
     });
     return response.data.result[0].sys_id;
   } catch (e) {
+    logger.error(e);
     throw e;
   }
 }
 
-export async function getUserSysId(userName: string): Promise<string> {
+export async function getUserSysId(
+  userName: string = process.env.SN_USER as string
+): Promise<string> {
   try {
     const endpoint = "api/now/table/sys_user";
     let response = await api.get(endpoint, {
@@ -278,6 +285,7 @@ export async function getUserSysId(userName: string): Promise<string> {
     });
     return response.data.result[0].sys_id;
   } catch (e) {
+    logger.error(e);
     throw e;
   }
 }
@@ -295,6 +303,7 @@ export async function getCurrentAppUserPrefSysId(
     });
     return response.data.result[0].sys_id;
   } catch (e) {
+    logger.error(e);
     throw e;
   }
 }
@@ -306,6 +315,50 @@ export async function updateCurrentAppUserPref(
   try {
     const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
     await api.put(endpoint, { value: appSysId });
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+}
+
+export async function getCurrentUpdateSetUserPref(
+  userSysId: string
+): Promise<string> {
+  try {
+    const endpoint = `api/now/table/sys_user_preference`;
+    let response = await api.get(endpoint, {
+      params: {
+        sysparm_query: `user=${userSysId}^name=sys_update_set`,
+        sysparm_fields: "sys_id"
+      }
+    });
+    return response.data.result[0].sys_id;
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+}
+
+export async function updateCurrentUpdateSetUserPref(
+  updateSetSysId: string,
+  userPrefSysId: string
+): Promise<void> {
+  try {
+    const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
+    await api.put(endpoint, { value: updateSetSysId });
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+}
+
+export async function createUpdateSet(updateSetName: string): Promise<string> {
+  try {
+    const endpoint = `api/now/table/sys_update_set`;
+    const response = await api.post(endpoint, {
+      name: updateSetName
+    });
+    return response.data.result.sys_id;
   } catch (e) {
     logger.error(e);
     throw e;
