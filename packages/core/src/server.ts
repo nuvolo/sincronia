@@ -249,7 +249,12 @@ export async function swapServerScope(
   try {
     const userSysId = await getUserSysId();
     const curAppUserPrefId = await getCurrentAppUserPrefSysId(userSysId);
-    await updateCurrentAppUserPref(scopeId, curAppUserPrefId);
+    // If not user pref record exists, create it.
+    if (curAppUserPrefId !== "") {
+      await updateCurrentAppUserPref(scopeId, curAppUserPrefId);
+    } else {
+      await createCurrentAppUserPref(scopeId, userSysId);
+    }
   } catch (e) {
     logger.error(e);
     throw e;
@@ -265,6 +270,7 @@ export async function getScopeId(scopeName: string): Promise<string> {
         sysparm_fields: "sys_id"
       }
     });
+    logger.debug(`getScopeId.response = ${JSON.stringify(response.data)}`);
     return response.data.result[0].sys_id;
   } catch (e) {
     logger.error(e);
@@ -301,7 +307,14 @@ export async function getCurrentAppUserPrefSysId(
         sysparm_fields: "sys_id"
       }
     });
-    return response.data.result[0].sys_id;
+    logger.debug(
+      `getCurrentAppUserPrefSysId.response = ${JSON.stringify(response.data)}`
+    );
+    if (response.data.result.length > 0) {
+      return response.data.result[0].sys_id;
+    } else {
+      return "";
+    }
   } catch (e) {
     logger.error(e);
     throw e;
@@ -315,6 +328,24 @@ export async function updateCurrentAppUserPref(
   try {
     const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
     await api.put(endpoint, { value: appSysId });
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+}
+
+export async function createCurrentAppUserPref(
+  appSysId: string,
+  userSysId: string
+): Promise<void> {
+  try {
+    const endpoint = `api/now/table/sys_user_preference`;
+    await api.post(endpoint, {
+      value: appSysId,
+      name: "apps.current_app",
+      type: "string",
+      user: userSysId
+    });
   } catch (e) {
     logger.error(e);
     throw e;
@@ -346,6 +377,24 @@ export async function updateCurrentUpdateSetUserPref(
   try {
     const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
     await api.put(endpoint, { value: updateSetSysId });
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+}
+
+export async function createCurrentUpdateSetUserPref(
+  updateSetSysId: string,
+  userSysId: string
+): Promise<void> {
+  try {
+    const endpoint = `api/now/table/sys_user_preference`;
+    await api.put(endpoint, {
+      value: updateSetSysId,
+      name: "sys_update_set",
+      type: "string",
+      user: userSysId
+    });
   } catch (e) {
     logger.error(e);
     throw e;
