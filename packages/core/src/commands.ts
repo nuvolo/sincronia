@@ -8,13 +8,14 @@ import { scopeCheckMessage, devModeLog } from "./logMessages";
 
 async function scopeCheck(
   successFunc: () => void,
-  swapScopes: boolean = false,
-  updateSet: string = ""
+  swapScopes: boolean = false
 ) {
   try {
     const scopeCheck = await AppManager.checkScope(swapScopes);
     if (!scopeCheck.match) {
       scopeCheckMessage(scopeCheck);
+      // Throw exception to register this as an error
+      throw {};
     } else {
       successFunc();
     }
@@ -22,6 +23,8 @@ async function scopeCheck(
     logger.error(
       "Failed to check your scope! You may want to make sure your project is configured correctly or run `npx sinc init`"
     );
+    // Throw exception to register this as an error
+    throw e;
   }
 }
 
