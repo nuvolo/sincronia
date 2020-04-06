@@ -15,7 +15,7 @@ async function scopeCheck(
     if (!scopeCheck.match) {
       scopeCheckMessage(scopeCheck);
       // Throw exception to register this as an error
-      throw {};
+      throw new Error();
     } else {
       successFunc();
     }
