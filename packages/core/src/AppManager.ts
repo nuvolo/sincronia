@@ -19,7 +19,8 @@ import {
   getCurrentUpdateSetUserPref,
   getCurrentAppUserPrefSysId,
   getUserSysId,
-  updateCurrentUpdateSetUserPref
+  updateCurrentUpdateSetUserPref,
+  createCurrentUpdateSetUserPref
 } from "./server";
 import { PATH_DELIMITER } from "./constants";
 
@@ -504,10 +505,14 @@ class AppManager {
           userSysId
         );
 
-        await updateCurrentUpdateSetUserPref(
-          updateSetSysId,
-          curUpdateSetUserPrefId
-        );
+        if (curUpdateSetUserPrefId !== "") {
+          await updateCurrentUpdateSetUserPref(
+            updateSetSysId,
+            curUpdateSetUserPrefId
+          );
+        } else {
+          await createCurrentUpdateSetUserPref(updateSetSysId, userSysId);
+        }
       } else {
         process.exit(0);
       }
