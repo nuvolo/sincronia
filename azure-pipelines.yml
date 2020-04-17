@@ -18,7 +18,8 @@ steps:
 
 - script: |
     npm install -g lerna
-  displayName: 'install lerna'
+    npm install -g typescript
+  displayName: 'install lerna, typescript'
 
 - script: |
     lerna bootstrap
