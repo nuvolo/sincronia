@@ -17,5 +17,9 @@ steps:
   displayName: 'Install Node.js'
 
 - script: |
+    npm install -g lerna
+  displayName: 'install lerna'
+
+- script: |
     lerna bootstrap
-  displayName: 'npm install and build'
+  displayName: 'lerna bootstrap'
