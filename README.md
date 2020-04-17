@@ -1,5 +1,5 @@
 # Sincronia
-
+[![Build Status](https://dev.azure.com/nuvoengineering/sincronia/_apis/build/status/nuvolo.sincronia?branchName=dev)](https://dev.azure.com/nuvoengineering/sincronia/_build/latest?definitionId=15&branchName=dev)
 ## Overview
 
 Sincronia is a tool for managing ServiceNow code in a more modern way. It allows you to:
