@@ -1,0 +1,20 @@
+trigger:
+- dev
+
+pool:
+  vmImage: 'macOs-latest'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '12.x'
+  displayName: 'Install Node.js'
+
+- script: |
+    npm install -g lerna
+    npm install -g typescript
+  displayName: 'install lerna, typescript'
+
+- script: |
+    lerna bootstrap
+  displayName: 'lerna bootstrap'
