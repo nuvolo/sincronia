@@ -32,10 +32,6 @@ async function _update(obj: AxiosRequestConfig) {
   }
 }
 
-async function timeout(ms: number): Promise<void> {
-  return new Promise(r => setTimeout(r, ms));
-}
-
 export async function pushUpdate(requestObj: Sinc.ServerRequestConfig) {
   try {
     if (requestObj && requestObj.data) {
@@ -198,7 +194,7 @@ export async function pushFile(
       logger.error(`Failed to push ${fileSummary}`);
       if (retries < NETWORK_RETRIES) {
         logger.info(`Retrying to push ${fileSummary}. Retries: ${retries + 1}`);
-        await timeout(NETWORK_TIMEOUT);
+        await wait(NETWORK_TIMEOUT);
         return await pushFile(target_server, fileContext, retries + 1);
       } else {
         logger.info(`Maximum retries reached for ${fileSummary}`);
