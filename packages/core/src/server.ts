@@ -22,6 +22,7 @@ const WAIT_TIME = 500;
 const CHUNK_SIZE = 10;
 const NETWORK_RETRIES = 3;
 const TABLE_API = "api/now/table";
+const NETWORK_TIMEOUT = 3000;
 
 async function _update(obj: AxiosRequestConfig) {
   try {
@@ -29,6 +30,10 @@ async function _update(obj: AxiosRequestConfig) {
   } catch (e) {
     throw e;
   }
+}
+
+async function timeout(ms: number): Promise<void> {
+  return new Promise(r => setTimeout(r, ms));
 }
 
 export async function pushUpdate(requestObj: Sinc.ServerRequestConfig) {
@@ -193,6 +198,7 @@ export async function pushFile(
       logger.error(`Failed to push ${fileSummary}`);
       if (retries < NETWORK_RETRIES) {
         logger.info(`Retrying to push ${fileSummary}. Retries: ${retries + 1}`);
+        await timeout(NETWORK_TIMEOUT);
         return await pushFile(target_server, fileContext, retries + 1);
       } else {
         logger.info(`Maximum retries reached for ${fileSummary}`);
