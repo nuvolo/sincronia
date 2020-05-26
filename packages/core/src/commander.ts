@@ -4,7 +4,8 @@ import {
   refreshCommand,
   pushCommand,
   downloadCommand,
-  initCommand
+  initCommand,
+  buildCommand
 } from "./commands";
 import yargs from "yargs";
 export async function initCommands() {
@@ -73,6 +74,12 @@ export async function initCommands() {
       "Provisions an initial project for you",
       sharedOptions,
       initCommand
+    )
+    .command(
+      "build",
+      "Build application files locally",
+      sharedOptions,
+      buildCommand
     )
     .help().argv;
 }

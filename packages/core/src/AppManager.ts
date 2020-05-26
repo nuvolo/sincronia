@@ -2,10 +2,16 @@ import { SN, Sinc } from "@sincronia/types";
 import fs from "fs";
 import * as cp from "child_process";
 import path from "path";
-import { config, manifest, getManifestPath, getSourcePath } from "./config";
+import {
+  config,
+  manifest,
+  getManifestPath,
+  getSourcePath,
+  getBuildPath
+} from "./config";
 import * as Utils from "./utils";
 import { logger } from "./Logger";
-import { logMultiFilePush } from "./logMessages";
+import { logMultiFilePush, logMultiFileBuild } from "./logMessages";
 import inquirer from "inquirer";
 import {
   getManifestWithFiles,
@@ -23,6 +29,8 @@ import {
   createCurrentUpdateSetUserPref
 } from "./server";
 import { PATH_DELIMITER } from "./constants";
+import PluginManager from "./PluginManager";
+import ProgressBar from "progress";
 
 const fsp = fs.promises;
 
@@ -265,42 +273,46 @@ class AppManager {
     }
   }
 
+  private async getFilePaths(pathString: string) {
+    let pathPromises = pathString
+      .split(PATH_DELIMITER)
+      .filter(cur => {
+        //make sure it isn't blank
+        if (cur && cur !== "") {
+          //make sure it exists
+          let resolvedPath = path.resolve(process.cwd(), cur);
+          return fs.existsSync(resolvedPath);
+        } else {
+          return false;
+        }
+      })
+      .map(async cur => {
+        let resolvedPath = path.resolve(process.cwd(), cur);
+        let stats = await fsp.stat(resolvedPath);
+        if (stats.isDirectory()) {
+          return await this.loadList(resolvedPath);
+        } else {
+          return [resolvedPath];
+        }
+      });
+    let pathArrays = await Promise.all(pathPromises);
+    let paths = pathArrays.reduce((acc, cur) => {
+      return acc.concat(cur);
+    }, []);
+    logger.silly(`${paths.length} paths found...`);
+    logger.silly(JSON.stringify(paths, null, 2));
+    return paths;
+  }
+
   async pushSpecificFiles(pathString: string, skipPrompt: boolean = false) {
     if (skipPrompt || (await this.canPush())) {
-      let pathPromises = pathString
-        .split(PATH_DELIMITER)
-        .filter(cur => {
-          //make sure it isn't blank
-          if (cur && cur !== "") {
-            //make sure it exists
-            let resolvedPath = path.resolve(process.cwd(), cur);
-            return fs.existsSync(resolvedPath);
-          } else {
-            return false;
-          }
-        })
-        .map(async cur => {
-          let resolvedPath = path.resolve(process.cwd(), cur);
-          let stats = await fsp.stat(resolvedPath);
-          if (stats.isDirectory()) {
-            return await this.loadList(resolvedPath);
-          } else {
-            return [resolvedPath];
-          }
-        });
-      let pathArrays = await Promise.all(pathPromises);
-      let paths = pathArrays.reduce((acc, cur) => {
-        return acc.concat(cur);
-      }, []);
-      logger.silly(`${paths.length} paths found...`);
-      logger.silly(JSON.stringify(paths, null, 2));
+      let paths = await this.getFilePaths(pathString);
       try {
         let fileContexts = await this.parseFileParams(paths);
         logger.info(`${fileContexts.length} files to push...`);
         logger.silly(
           JSON.stringify(fileContexts.map(ctx => ctx.filePath), null, 2)
         );
-
         try {
           const resultSet = await pushFiles(
             process.env.SN_INSTANCE || "",
@@ -371,6 +383,82 @@ class AppManager {
   async pushAllFiles(skipPrompt: boolean = false) {
     try {
       this.pushSpecificFiles(await getSourcePath(), skipPrompt);
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async buildFile(
+    filePayload: Sinc.FileContext,
+    source: string,
+    build: string
+  ) {
+    const { filePath, targetField } = filePayload;
+    const fileContents = await PluginManager.getFinalFileContents(filePayload);
+
+    let ext = "js";
+    if (targetField === "css") ext = "css";
+    if (targetField === "html") ext = "html";
+    let pathArr = path
+      .join(build, path.relative(source, filePath))
+      .split(".")
+      .slice(0, -1);
+    pathArr.push(ext);
+
+    const newPath = pathArr.join(".");
+    const folderPath = path.dirname(newPath);
+    try {
+      await fsp.access(folderPath, fs.constants.F_OK);
+    } catch (e) {
+      await fsp.mkdir(folderPath, { recursive: true });
+    }
+    try {
+      await fsp.writeFile(newPath, fileContents);
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async buildFiles() {
+    const resultSet: boolean[] = [];
+
+    try {
+      let source = await getSourcePath();
+      let build = await getBuildPath();
+      let paths = await this.getFilePaths(source);
+      logger.info(`Building ${paths.length} files`);
+      let fileContexts = await this.parseFileParams(paths);
+
+      let progBar: ProgressBar | undefined;
+      if (logger.getLogLevel() === "info") {
+        progBar = new ProgressBar(":bar :current/:total (:percent)", {
+          total: fileContexts.length,
+          width: 60
+        });
+      }
+      try {
+        let resultsPromises = fileContexts.map(ctx => {
+          const pushPromise = this.buildFile(ctx, source, build);
+          pushPromise
+            .then(() => {
+              if (progBar) {
+                progBar.tick();
+              }
+            })
+            .catch(e => {
+              if (progBar) {
+                progBar.tick();
+              }
+              return false;
+            });
+          return true;
+        });
+        const results = await Promise.all(resultsPromises);
+        resultSet.push(...results);
+        logMultiFileBuild(fileContexts, true, resultSet);
+      } catch (e) {
+        logMultiFileBuild(fileContexts, false, [], e);
+      }
     } catch (e) {
       throw e;
     }

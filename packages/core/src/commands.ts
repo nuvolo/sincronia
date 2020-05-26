@@ -86,3 +86,12 @@ export async function initCommand(args: Sinc.SharedCmdArgs) {
     throw e;
   }
 }
+
+export async function buildCommand(args: Sinc.SharedCmdArgs) {
+  setLogLevel(args);
+  try {
+    await AppManager.buildFiles();
+  } catch (e) {
+    throw e;
+  }
+}

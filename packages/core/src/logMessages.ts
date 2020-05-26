@@ -71,6 +71,27 @@ export function logMultiFilePush(
   spacer();
 }
 
+export function logMultiFileBuild(
+  files: Sinc.FileContext[],
+  success: boolean,
+  resultSet: boolean[],
+  err?: Error
+) {
+  if (success) {
+    let fileNum = chalk.bold.blue(
+      resultSet.filter(result => result).length + ""
+    );
+    let message = chalk.green(`${fileNum} files successfully built`);
+    logger.info(message);
+  } else {
+    logger.error("Failed to build files");
+    if (err) {
+      logger.error(parseError(err));
+    }
+  }
+  spacer();
+}
+
 function spacer() {
   logger.info("");
 }

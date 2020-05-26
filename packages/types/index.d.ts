@@ -15,6 +15,7 @@ export module Sinc {
   }
   interface Config {
     sourceDirectory: string;
+    buildDirectory: string;
     rules?: PluginRule[];
     includes?: TablePropMap;
     excludes?: TablePropMap;
