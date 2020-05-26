@@ -107,11 +107,15 @@ function buildFileEndpoint(payload: Sinc.FileContext) {
 
 async function buildFileRequestObj(
   target_server: string,
-  filePayload: Sinc.FileContext
+  filePayload: Sinc.FileContext,
+  processFile: boolean = true
 ): Promise<Sinc.ServerRequestConfig> {
   try {
     const url = buildFileEndpoint(filePayload);
-    const fileContents = await PluginManager.getFinalFileContents(filePayload);
+    const fileContents = await PluginManager.getFinalFileContents(
+      filePayload,
+      processFile
+    );
     const { targetField } = filePayload;
     const data: any = {};
     data[targetField] = fileContents;
@@ -123,7 +127,8 @@ async function buildFileRequestObj(
 
 export async function pushFiles(
   target_server: string,
-  filesPayload: Sinc.FileContext[]
+  filesPayload: Sinc.FileContext[],
+  processFile: boolean = true
 ) {
   const resultSet: boolean[] = [];
   let progBar: ProgressBar | undefined;
@@ -137,7 +142,7 @@ export async function pushFiles(
   logger.silly(`${chunks.length} chunks of ${CHUNK_SIZE}`);
   for (let chunk of chunks) {
     let resultsPromises = chunk.map(ctx => {
-      const pushPromise = pushFile(target_server, ctx);
+      const pushPromise = pushFile(target_server, ctx, processFile);
       pushPromise
         .then(() => {
           if (progBar) {
@@ -160,12 +165,17 @@ export async function pushFiles(
 
 export async function pushFile(
   target_server: string,
-  fileContext: Sinc.FileContext
+  fileContext: Sinc.FileContext,
+  processFile: boolean = true
 ): Promise<boolean> {
   const fileSummary = `${fileContext.tableName}/${fileContext.name}(${fileContext.sys_id})`;
   if (fileContext.sys_id && fileContext.targetField) {
     try {
-      let requestObj = await buildFileRequestObj(target_server, fileContext);
+      let requestObj = await buildFileRequestObj(
+        target_server,
+        fileContext,
+        processFile
+      );
       let response = await pushUpdate(requestObj);
       logger.debug(`Attempting to push ${fileSummary}`);
       if (response) {
@@ -195,6 +205,13 @@ export async function pushFile(
     `Failed to push ${fileSummary}, missing either a target field or sys_id`
   );
   return false;
+}
+
+export async function deployFiles(
+  target_server: string,
+  filesPayload: Sinc.FileContext[]
+) {
+  return await pushFiles(target_server, filesPayload, false);
 }
 
 export async function getCurrentScope(): Promise<SN.ScopeObj> {

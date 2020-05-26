@@ -95,3 +95,12 @@ export async function buildCommand(args: Sinc.SharedCmdArgs) {
     throw e;
   }
 }
+
+export async function deployCommand(args: Sinc.SharedCmdArgs) {
+  setLogLevel(args);
+  try {
+    await AppManager.deployFiles();
+  } catch (e) {
+    throw e;
+  }
+}
