@@ -266,7 +266,7 @@ class AppManager {
   }
 
   async pushSpecificFiles(pathString: string, skipPrompt: boolean = false) {
-    if (skipPrompt || (await this.canPush())) {
+    try {
       let pathPromises = pathString
         .split(PATH_DELIMITER)
         .filter(cur => {
@@ -294,13 +294,12 @@ class AppManager {
       }, []);
       logger.silly(`${paths.length} paths found...`);
       logger.silly(JSON.stringify(paths, null, 2));
-      try {
-        let fileContexts = await this.parseFileParams(paths);
-        logger.info(`${fileContexts.length} files to push...`);
-        logger.silly(
-          JSON.stringify(fileContexts.map(ctx => ctx.filePath), null, 2)
-        );
-
+      let fileContexts = await this.parseFileParams(paths);
+      logger.info(`${fileContexts.length} files to push...`);
+      logger.silly(
+        JSON.stringify(fileContexts.map(ctx => ctx.filePath), null, 2)
+      );
+      if (skipPrompt || (await this.canPush())) {
         try {
           const resultSet = await pushFiles(
             process.env.SN_INSTANCE || "",
@@ -310,9 +309,9 @@ class AppManager {
         } catch (e) {
           logMultiFilePush(fileContexts, false, [], e);
         }
-      } catch (e) {
-        throw e;
       }
+    } catch (e) {
+      throw e;
     }
   }
 
