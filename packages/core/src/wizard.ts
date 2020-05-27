@@ -15,24 +15,33 @@ import path from "path";
 
 export async function startWizard() {
   let loginAnswers = await getLoginInfo();
-  await setupDotEnv(loginAnswers);
-  let hasConfig = await checkConfig();
-  if (!hasConfig) {
-    logger.info("Generating config...");
-    await writeDefaultConfig();
-  }
-  let man = await manifest;
-  if (!man) {
-    let selectedApp = await showAppList(loginAnswers);
-    if (!selectedApp) {
-      return;
+  try {
+    let { username: user, password, instance } = loginAnswers;
+    let apps = await getAppList({ user, password, instance });
+    await setupDotEnv(loginAnswers);
+    let hasConfig = await checkConfig();
+    if (!hasConfig) {
+      logger.info("Generating config...");
+      await writeDefaultConfig();
     }
-    logger.info("Downloading app...");
-    await downloadApp(loginAnswers, selectedApp);
+    let man = await manifest;
+    if (!man) {
+      let selectedApp = await showAppList(apps);
+      if (!selectedApp) {
+        return;
+      }
+      logger.info("Downloading app...");
+      await downloadApp(loginAnswers, selectedApp);
+    }
+    logger.success(
+      "You are all set up 👍 Try running 'npx sinc dev' to begin development mode."
+    );
+  } catch (e) {
+    logger.error(
+      "Failed to setup application. Check to see that your credentials are correct and you have the update set installed on your instance."
+    );
+    return;
   }
-  logger.success(
-    "You are all set up 👍 Try running 'npx sinc dev' to begin development mode."
-  );
 }
 
 async function getLoginInfo(): Promise<Sinc.LoginAnswers> {
@@ -97,19 +106,7 @@ async function writeDefaultConfig() {
   }
 }
 
-async function showAppList(
-  answers: Sinc.LoginAnswers
-): Promise<string | undefined> {
-  let { username: user, password, instance } = answers;
-  let apps: SN.App[] = [];
-  try {
-    apps = await getAppList({ user, password, instance });
-  } catch (e) {
-    logger.error(
-      "Failed to get application list. Check to see that your credentials are correct and you have the update set installed on your instance."
-    );
-    return;
-  }
+async function showAppList(apps: SN.App[]): Promise<string | undefined> {
   let appSelection: Sinc.AppSelectionAnswer = await inquirer.prompt([
     {
       type: "list",
