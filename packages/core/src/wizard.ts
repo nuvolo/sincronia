@@ -26,7 +26,7 @@ export async function startWizard() {
     }
     let man = await manifest;
     if (!man) {
-      let selectedApp = await showAppList(loginAnswers, apps);
+      let selectedApp = await showAppList(apps);
       if (!selectedApp) {
         return;
       }
@@ -106,21 +106,7 @@ async function writeDefaultConfig() {
   }
 }
 
-async function showAppList(
-  answers: Sinc.LoginAnswers,
-  apps?: SN.App[]
-): Promise<string | undefined> {
-  let { username: user, password, instance } = answers;
-  if (!apps) {
-    try {
-      apps = await getAppList({ user, password, instance });
-    } catch (e) {
-      logger.error(
-        "Failed to get application list. Check to see that your credentials are correct and you have the update set installed on your instance."
-      );
-      return;
-    }
-  }
+async function showAppList(apps: SN.App[]): Promise<string | undefined> {
   let appSelection: Sinc.AppSelectionAnswer = await inquirer.prompt([
     {
       type: "list",
