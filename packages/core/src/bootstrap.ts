@@ -1,12 +1,15 @@
 import dotenv from "dotenv";
-import { config, manifest, getEnvPath } from "./config";
+import { loadStartupFiles } from "./config";
 
 export async function init() {
-  let path = await getEnvPath();
+  try {
+    await loadStartupFiles();
+  } catch (e) {
+    console.log(e);
+  }
+  let path = (await import("./config")).env_path;
   dotenv.config({
     path
   });
-  await config;
-  await manifest;
   (await import("./commander")).initCommands();
 }

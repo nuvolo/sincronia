@@ -22,16 +22,60 @@ module.exports = {
 };
 `.trim();
 
-const config_path = getConfigPath();
-const root_dir = getRootDir();
-export const config = _getConfig();
-export const manifest = _getManifest();
+export let root_dir: string;
+export let config: Sinc.Config;
+export let manifest: SN.AppManifest;
+export let config_path: string;
+export let source_path: string;
+export let env_path: string;
+export let manifest_path: string;
+
+export async function loadStartupFiles() {
+  //Ordered due to config dependencies within promises
+  await _getConfigPath()
+    .then(_config_path => {
+      if (_config_path) config_path = _config_path;
+      else logger.error("Error loading config path");
+    })
+    .then(_getRootDir)
+    .then(_root_dir => {
+      if (_root_dir) root_dir = _root_dir;
+      else logger.error("Error loading root directory");
+    })
+    .then(_getConfig)
+    .then(_config => {
+      if (_config) config = _config;
+      else logger.error("Error loading config file");
+    })
+    .then(_getEnvPath)
+    .then(_env_path => {
+      if (_env_path) env_path = _env_path;
+      else logger.error("Error loading env path");
+    })
+    .then(_getSourcePath)
+    .then(_source_path => {
+      if (_source_path) source_path = _source_path;
+      else logger.error("Error loading source path");
+    })
+    .then(_getManifestPath)
+    .then(_manifest_path => {
+      if (_manifest_path) manifest_path = _manifest_path;
+      else logger.error("Error loading manifest path");
+    })
+    .then(_getManifest)
+    .then(_manifest => {
+      if (_manifest) manifest = _manifest;
+      else logger.error("Error loading manifest");
+    })
+    .catch(e => {
+      throw e;
+    });
+}
 
 async function _getConfig(): Promise<Sinc.Config> {
   try {
-    let configPath = await config_path;
-    if (configPath) {
-      let projectConfig: Sinc.Config = (await import(configPath)).default;
+    if (config_path) {
+      let projectConfig: Sinc.Config = (await import(config_path)).default;
       //merge in includes/excludes
       let {
         includes: pIncludes = {},
@@ -55,14 +99,14 @@ async function _getConfig(): Promise<Sinc.Config> {
 
 async function _getManifest(): Promise<SN.AppManifest | undefined> {
   try {
-    let manifestString = await fsp.readFile(await getManifestPath(), "utf-8");
+    let manifestString = await fsp.readFile(manifest_path, "utf-8");
     return JSON.parse(manifestString);
   } catch (e) {
     return undefined;
   }
 }
 
-export async function getConfigPath(pth?: string): Promise<string | false> {
+async function _getConfigPath(pth?: string): Promise<string | false> {
   if (!pth) {
     pth = process.cwd();
   }
@@ -74,31 +118,31 @@ export async function getConfigPath(pth?: string): Promise<string | false> {
     if (isRoot(pth)) {
       return false;
     }
-    return getConfigPath(path.dirname(pth));
+    return _getConfigPath(path.dirname(pth));
   }
   function isRoot(pth: string) {
     return path.parse(pth).root === pth;
   }
 }
 
-export async function getSourcePath() {
-  let rootDir = await root_dir;
-  let { sourceDirectory = "src" } = await config;
+async function _getSourcePath() {
+  let rootDir = root_dir;
+  let { sourceDirectory = "src" } = config;
   return path.join(rootDir, sourceDirectory);
 }
 
-export async function getEnvPath() {
-  let rootDir = await root_dir;
+async function _getEnvPath() {
+  let rootDir = root_dir;
   return path.join(rootDir, ".env");
 }
 
-export async function getManifestPath() {
-  let rootDir = await root_dir;
+async function _getManifestPath() {
+  let rootDir = root_dir;
   return path.join(rootDir, "sinc.manifest.json");
 }
 
-export async function getRootDir() {
-  let configPath = await config_path;
+async function _getRootDir() {
+  let configPath = config_path;
   let rootDir;
   if (configPath) {
     rootDir = path.dirname(configPath);

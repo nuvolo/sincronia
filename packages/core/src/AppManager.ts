@@ -2,7 +2,7 @@ import { SN, Sinc } from "@sincronia/types";
 import fs from "fs";
 import * as cp from "child_process";
 import path from "path";
-import { config, manifest, getManifestPath, getSourcePath } from "./config";
+import { config, manifest, manifest_path, source_path } from "./config";
 import * as Utils from "./utils";
 import { logger } from "./Logger";
 import { logMultiFilePush } from "./logMessages";
@@ -30,7 +30,7 @@ class AppManager {
   constructor() {}
 
   private async writeManifestFile(man: SN.AppManifest) {
-    return fsp.writeFile(await getManifestPath(), JSON.stringify(man, null, 2));
+    return fsp.writeFile(manifest_path, JSON.stringify(man, null, 2));
   }
 
   private async writeNewFiles(
@@ -62,10 +62,9 @@ class AppManager {
     skipFileCheck: boolean
   ) {
     const { tables } = manifest;
-    const _codeSrcPath = await getSourcePath();
     for (let tableName in tables) {
       let table = tables[tableName];
-      let tableFolder = path.join(_codeSrcPath, tableName);
+      let tableFolder = path.join(source_path, tableName);
       for (let recKey in table.records) {
         const rec = table.records[recKey];
         let recPath = path.join(tableFolder, rec.name);
@@ -160,12 +159,11 @@ class AppManager {
   ): Promise<SN.MissingFileTableMap> {
     try {
       let missing: SN.MissingFileTableMap = {};
-      const _codeSrcPath = await getSourcePath();
       const { tables } = manifest;
       //go through each table
       for (let tableName in tables) {
         let table = tables[tableName];
-        let tablePath = path.join(_codeSrcPath, tableName);
+        let tablePath = path.join(source_path, tableName);
         try {
           await fsp.access(tablePath, fs.constants.F_OK);
         } catch (e) {
@@ -242,9 +240,8 @@ class AppManager {
 
   private async loadMissingFiles(fileMap: SN.TableMap) {
     try {
-      const _codeSrcPath = await getSourcePath();
       for (let tableName in fileMap) {
-        let tablePath = path.join(_codeSrcPath, tableName);
+        let tablePath = path.join(source_path, tableName);
         let tableConfig = fileMap[tableName];
         for (let recName in tableConfig.records) {
           let recPath = path.join(tablePath, recName);
@@ -370,7 +367,7 @@ class AppManager {
 
   async pushAllFiles(skipPrompt: boolean = false) {
     try {
-      this.pushSpecificFiles(await getSourcePath(), skipPrompt);
+      this.pushSpecificFiles(source_path, skipPrompt);
     } catch (e) {
       throw e;
     }
