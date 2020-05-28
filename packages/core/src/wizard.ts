@@ -1,7 +1,7 @@
 import { SN, Sinc } from "@sincronia/types";
 import inquirer from "inquirer";
 import { getAppList, getManifestWithFiles } from "./server";
-import { DEFAULT_CONFIG_FILE, manifest, config_path, env_path } from "./config";
+import ConfigManager from "./config";
 import AppManager from "./AppManager";
 import fs from "fs";
 const fsp = fs.promises;
@@ -14,9 +14,9 @@ export async function startWizard() {
   let hasConfig = await checkConfig();
   if (!hasConfig) {
     logger.info("Generating config...");
-    await writeDefaultConfig();
+    await writeDefaultConfig(hasConfig);
   }
-  let man = await manifest;
+  let man = ConfigManager.getManifest(true);
   if (!man) {
     let selectedApp = await showAppList(loginAnswers);
     if (!selectedApp) {
@@ -28,6 +28,7 @@ export async function startWizard() {
   logger.success(
     "You are all set up 👍 Try running 'npx sinc dev' to begin development mode."
   );
+  await ConfigManager.loadStartupFiles();
 }
 
 async function getLoginInfo(): Promise<Sinc.LoginAnswers> {
@@ -53,10 +54,11 @@ async function getLoginInfo(): Promise<Sinc.LoginAnswers> {
 
 async function checkConfig(): Promise<boolean> {
   try {
-    if (!config_path) {
+    let checkConfig = ConfigManager.checkConfigPath();
+    if (!checkConfig) {
       return false;
     }
-    await fsp.access(config_path, fs.constants.F_OK);
+    await fsp.access(checkConfig, fs.constants.F_OK);
     return true;
   } catch (e) {
     return false;
@@ -72,17 +74,19 @@ SN_INSTANCE=${answers.instance}
   process.env.SN_PASSWORD = answers.password;
   process.env.SN_INSTANCE = answers.instance;
   try {
-    await fsp.writeFile(env_path, data);
+    await fsp.writeFile(ConfigManager.getEnvPath(), data);
   } catch (e) {
     throw e;
   }
 }
 
-async function writeDefaultConfig() {
+async function writeDefaultConfig(hasConfig: boolean) {
   try {
-    let pth = config_path || path.join(process.cwd(), "sinc.config.js");
+    let pth;
+    if (hasConfig) pth = ConfigManager.getConfigPath();
+    else pth = path.join(process.cwd(), "sinc.config.js");
     if (pth) {
-      await fsp.writeFile(pth, DEFAULT_CONFIG_FILE);
+      await fsp.writeFile(pth, ConfigManager.getDefaultConfigFile());
     }
   } catch (e) {
     throw e;

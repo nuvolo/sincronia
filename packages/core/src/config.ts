@@ -3,8 +3,9 @@ import path from "path";
 import { promises as fsp } from "fs";
 import { logger } from "./Logger";
 import { includes, excludes, tableOptions } from "./defaultOptions";
+import { Config } from "winston/lib/winston/config";
 
-export const DEFAULT_CONFIG: Sinc.Config = {
+const DEFAULT_CONFIG: Sinc.Config = {
   sourceDirectory: "src",
   rules: [],
   includes,
@@ -12,70 +13,125 @@ export const DEFAULT_CONFIG: Sinc.Config = {
   tableOptions: {}
 };
 
-export const DEFAULT_CONFIG_FILE: string = `
-module.exports = {
-  sourceDirectory: "src",
-  rules: [],
-  excludes:{},
-  includes:{},
-  tableOptions:{}
-};
-`.trim();
+let ConfigManager = new (class {
+  private root_dir: string | undefined;
+  private config: Sinc.Config | undefined;
+  private manifest: SN.AppManifest | undefined;
+  private config_path: string | undefined;
+  private source_path: string | undefined;
+  private env_path: string | undefined;
+  private manifest_path: string | undefined;
+  constructor() {}
 
-export let root_dir: string;
-export let config: Sinc.Config;
-export let manifest: SN.AppManifest;
-export let config_path: string;
-export let source_path: string;
-export let env_path: string;
-export let manifest_path: string;
+  async loadStartupFiles() {
+    //Ordered due to config dependencies within loads
+    let skipConfigPath = false; //Prevents logging error messages during init
+    await loadConfigPath()
+      .then(_config_path => {
+        if (_config_path) this.config_path = _config_path;
+        else skipConfigPath = true;
+      })
+      .then(() => {
+        return loadRootDir(skipConfigPath);
+      })
+      .then(_root_dir => {
+        if (_root_dir) this.root_dir = _root_dir;
+      })
+      .then(() => {
+        return loadConfig(skipConfigPath);
+      })
+      .then(_config => {
+        if (_config) this.config = _config;
+      })
+      .then(loadEnvPath)
+      .then(_env_path => {
+        if (_env_path) this.env_path = _env_path;
+      })
+      .then(loadSourcePath)
+      .then(_source_path => {
+        if (_source_path) this.source_path = _source_path;
+      })
+      .then(loadManifestPath)
+      .then(_manifest_path => {
+        if (_manifest_path) this.manifest_path = _manifest_path;
+      })
+      .then(loadManifest)
+      .then(_manifest => {
+        if (_manifest) this.manifest = _manifest;
+      })
+      .catch(e => {
+        throw e;
+      });
+  }
 
-export async function loadStartupFiles() {
-  //Ordered due to config dependencies within promises
-  await _getConfigPath()
-    .then(_config_path => {
-      if (_config_path) config_path = _config_path;
-      else logger.error("Error loading config path");
-    })
-    .then(_getRootDir)
-    .then(_root_dir => {
-      if (_root_dir) root_dir = _root_dir;
-      else logger.error("Error loading root directory");
-    })
-    .then(_getConfig)
-    .then(_config => {
-      if (_config) config = _config;
-      else logger.error("Error loading config file");
-    })
-    .then(_getEnvPath)
-    .then(_env_path => {
-      if (_env_path) env_path = _env_path;
-      else logger.error("Error loading env path");
-    })
-    .then(_getSourcePath)
-    .then(_source_path => {
-      if (_source_path) source_path = _source_path;
-      else logger.error("Error loading source path");
-    })
-    .then(_getManifestPath)
-    .then(_manifest_path => {
-      if (_manifest_path) manifest_path = _manifest_path;
-      else logger.error("Error loading manifest path");
-    })
-    .then(_getManifest)
-    .then(_manifest => {
-      if (_manifest) manifest = _manifest;
-      else logger.error("Error loading manifest");
-    })
-    .catch(e => {
-      throw e;
-    });
-}
+  getConfig(setup = false) {
+    if (this.config) return this.config;
+    logger.error("Error getting config");
+    return DEFAULT_CONFIG;
+  }
 
-async function _getConfig(): Promise<Sinc.Config> {
+  getConfigPath() {
+    if (this.config_path) return this.config_path;
+    logger.error("Error getting config path");
+    return "";
+  }
+
+  checkConfigPath() {
+    if (this.config_path) return this.config_path;
+    return false;
+  }
+
+  getRootDir() {
+    if (this.root_dir) return this.root_dir;
+    logger.error("Error getting root directory");
+    return "";
+  }
+
+  getManifest(setup = false) {
+    if (this.manifest) return this.manifest;
+    if (!setup) logger.error("Error getting manifest");
+  }
+
+  getManifestPath() {
+    if (this.manifest_path) return this.manifest_path;
+    logger.error("Error getting manifest path");
+    return "";
+  }
+
+  getSourcePath() {
+    if (this.source_path) return this.source_path;
+    logger.error("Error getting source path");
+    return "";
+  }
+
+  getEnvPath() {
+    if (this.env_path) return this.env_path;
+    logger.error("Error getting env path");
+    return "";
+  }
+
+  getDefaultConfigFile(): string {
+    return `
+    module.exports = {
+      sourceDirectory: "src",
+      rules: [],
+      excludes:{},
+      includes:{},
+      tableOptions:{}
+    };
+    `.trim();
+  }
+})();
+
+async function loadConfig(skipConfigPath = false): Promise<Sinc.Config> {
+  if (skipConfigPath) {
+    logger.warn("Couldn't find config file. Loading default...");
+    return DEFAULT_CONFIG;
+  }
   try {
-    if (config_path) {
-      let projectConfig: Sinc.Config = (await import(config_path)).default;
+    let configPath = ConfigManager.getConfigPath();
+    if (configPath) {
+      let projectConfig: Sinc.Config = (await import(configPath)).default;
       //merge in includes/excludes
       let {
         includes: pIncludes = {},
@@ -97,16 +153,19 @@ async function _getConfig(): Promise<Sinc.Config> {
   }
 }
 
-async function _getManifest(): Promise<SN.AppManifest | undefined> {
+async function loadManifest(): Promise<SN.AppManifest | undefined> {
   try {
-    let manifestString = await fsp.readFile(manifest_path, "utf-8");
+    let manifestString = await fsp.readFile(
+      ConfigManager.getManifestPath(),
+      "utf-8"
+    );
     return JSON.parse(manifestString);
   } catch (e) {
     return undefined;
   }
 }
 
-async function _getConfigPath(pth?: string): Promise<string | false> {
+async function loadConfigPath(pth?: string): Promise<string | false> {
   if (!pth) {
     pth = process.cwd();
   }
@@ -118,36 +177,37 @@ async function _getConfigPath(pth?: string): Promise<string | false> {
     if (isRoot(pth)) {
       return false;
     }
-    return _getConfigPath(path.dirname(pth));
+    return loadConfigPath(path.dirname(pth));
   }
   function isRoot(pth: string) {
     return path.parse(pth).root === pth;
   }
 }
 
-async function _getSourcePath() {
-  let rootDir = root_dir;
-  let { sourceDirectory = "src" } = config;
+async function loadSourcePath() {
+  let rootDir = ConfigManager.getRootDir();
+  let { sourceDirectory = "src" } = ConfigManager.getConfig();
   return path.join(rootDir, sourceDirectory);
 }
 
-async function _getEnvPath() {
-  let rootDir = root_dir;
+async function loadEnvPath() {
+  let rootDir = ConfigManager.getRootDir();
   return path.join(rootDir, ".env");
 }
 
-async function _getManifestPath() {
-  let rootDir = root_dir;
+async function loadManifestPath() {
+  let rootDir = ConfigManager.getRootDir();
   return path.join(rootDir, "sinc.manifest.json");
 }
 
-async function _getRootDir() {
-  let configPath = config_path;
-  let rootDir;
+async function loadRootDir(skip?: boolean) {
+  if (skip) return process.cwd();
+  let configPath = ConfigManager.getConfigPath();
   if (configPath) {
-    rootDir = path.dirname(configPath);
+    return path.dirname(configPath);
   } else {
-    rootDir = process.cwd();
+    return process.cwd();
   }
-  return rootDir;
 }
+
+export default ConfigManager;

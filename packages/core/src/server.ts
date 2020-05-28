@@ -3,7 +3,7 @@ import axios, { AxiosRequestConfig, AxiosInstance } from "axios";
 import { wait, chunkArr } from "./utils";
 import PluginManager from "./PluginManager";
 import { logger } from "./Logger";
-import { config } from "./config";
+import ConfigManager from "./config";
 import ProgressBar from "progress";
 
 const axiosConfig: AxiosRequestConfig = {
@@ -53,7 +53,11 @@ export async function getManifestWithFiles(
 ): Promise<SN.AppManifest> {
   let endpoint = `api/x_nuvo_sinc/sinc/getManifestWithFiles/${scope}`;
   try {
-    const { includes = {}, excludes = {}, tableOptions = {} } = await config;
+    const {
+      includes = {},
+      excludes = {},
+      tableOptions = {}
+    } = ConfigManager.getConfig();
     let response;
     if (creds) {
       let client = getBasicAxiosClient(creds);
@@ -74,7 +78,11 @@ export async function getManifestWithFiles(
 export async function getManifest(scope: string): Promise<SN.AppManifest> {
   let endpoint = `api/x_nuvo_sinc/sinc/getManifest/${scope}`;
   try {
-    const { includes = {}, excludes = {}, tableOptions = {} } = await config;
+    const {
+      includes = {},
+      excludes = {},
+      tableOptions = {}
+    } = ConfigManager.getConfig();
     let response = await api.post(endpoint, {
       includes,
       excludes,
@@ -91,7 +99,7 @@ export async function getMissingFiles(
 ): Promise<SN.TableMap> {
   let endpoint = `api/x_nuvo_sinc/sinc/bulkDownload`;
   try {
-    const { tableOptions = {} } = await config;
+    const { tableOptions = {} } = ConfigManager.getConfig();
     const payload = { missingFiles, tableOptions };
     let response = await api.post(endpoint, payload);
     return response.data.result as SN.TableMap;

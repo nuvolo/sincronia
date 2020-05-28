@@ -1,5 +1,5 @@
 import { Sinc } from "@sincronia/types";
-import { config, root_dir } from "./config";
+import ConfigManager from "./config";
 import fs from "fs";
 import path from "path";
 const fsp = fs.promises;
@@ -11,7 +11,7 @@ class PluginManager {
   }
 
   async loadPluginConfig() {
-    let conf = await config;
+    let conf = ConfigManager.getConfig();
     if (conf && conf.rules) {
       this.pluginRules = conf.rules;
     }
@@ -38,7 +38,11 @@ class PluginManager {
     try {
       let output = content;
       for (let pConfig of plugins) {
-        let pluginPath = path.join(root_dir, "node_modules", pConfig.name);
+        let pluginPath = path.join(
+          ConfigManager.getRootDir(),
+          "node_modules",
+          pConfig.name
+        );
         let plugin: Sinc.Plugin = await import(pluginPath);
         let results = await plugin.run(context, output, pConfig.options);
         if (!results.success) {
