@@ -3,7 +3,7 @@ import ConfigManager from "./config";
 
 export async function init() {
   try {
-    await ConfigManager.loadStartupFiles();
+    await ConfigManager.loadConfigs();
   } catch (e) {
     console.log(e);
   }

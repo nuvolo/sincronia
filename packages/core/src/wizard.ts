@@ -28,7 +28,7 @@ export async function startWizard() {
   logger.success(
     "You are all set up 👍 Try running 'npx sinc dev' to begin development mode."
   );
-  await ConfigManager.loadStartupFiles();
+  await ConfigManager.loadConfigs();
 }
 
 async function getLoginInfo(): Promise<Sinc.LoginAnswers> {
