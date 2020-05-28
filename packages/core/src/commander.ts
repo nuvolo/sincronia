@@ -4,7 +4,8 @@ import {
   refreshCommand,
   pushCommand,
   downloadCommand,
-  initCommand
+  initCommand,
+  statusCommand
 } from "./commands";
 import yargs from "yargs";
 export async function initCommands() {
@@ -73,6 +74,12 @@ export async function initCommands() {
       "Provisions an initial project for you",
       sharedOptions,
       initCommand
+    )
+    .command(
+      "status",
+      "Get information about the connected instance",
+      sharedOptions,
+      statusCommand
     )
     .help().argv;
 }
