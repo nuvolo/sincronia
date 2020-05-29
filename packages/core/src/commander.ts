@@ -5,6 +5,7 @@ import {
   pushCommand,
   downloadCommand,
   initCommand,
+  buildCommand,
   statusCommand
 } from "./commands";
 import yargs from "yargs";
@@ -74,6 +75,12 @@ export async function initCommands() {
       "Provisions an initial project for you",
       sharedOptions,
       initCommand
+    )
+    .command(
+      "build",
+      "Build application files locally",
+      sharedOptions,
+      buildCommand
     )
     .command(
       "status",

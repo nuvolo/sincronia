@@ -6,6 +6,7 @@ import { includes, excludes, tableOptions } from "./defaultOptions";
 
 export const DEFAULT_CONFIG: Sinc.Config = {
   sourceDirectory: "src",
+  buildDirectory: "build",
   rules: [],
   includes,
   excludes,
@@ -15,6 +16,7 @@ export const DEFAULT_CONFIG: Sinc.Config = {
 export const DEFAULT_CONFIG_FILE: string = `
 module.exports = {
   sourceDirectory: "src",
+  buildDirectory: "build",
   rules: [],
   excludes:{},
   includes:{},
@@ -85,6 +87,12 @@ export async function getSourcePath() {
   let rootDir = await root_dir;
   let { sourceDirectory = "src" } = await config;
   return path.join(rootDir, sourceDirectory);
+}
+
+export async function getBuildPath() {
+  let rootDir = await root_dir;
+  let { buildDirectory = "build" } = await config;
+  return path.join(rootDir, buildDirectory);
 }
 
 export async function getEnvPath() {

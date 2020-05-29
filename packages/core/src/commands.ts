@@ -88,6 +88,16 @@ export async function initCommand(args: Sinc.SharedCmdArgs) {
   }
 }
 
+
+export async function buildCommand(args: Sinc.SharedCmdArgs) {
+  setLogLevel(args);
+  try {
+    await AppManager.buildFiles();
+  } catch (e) {
+    throw e;
+}
+}
+
 export async function statusCommand() {
   try {
     let scopeObj = await getCurrentScope();
