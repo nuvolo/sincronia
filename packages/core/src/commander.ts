@@ -6,6 +6,7 @@ import {
   downloadCommand,
   initCommand,
   buildCommand
+  statusCommand
 } from "./commands";
 import yargs from "yargs";
 export async function initCommands() {
@@ -80,6 +81,12 @@ export async function initCommands() {
       "Build application files locally",
       sharedOptions,
       buildCommand
+    )
+    .command(
+      "status",
+      "Get information about the connected instance",
+      sharedOptions,
+      statusCommand
     )
     .help().argv;
 }

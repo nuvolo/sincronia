@@ -5,6 +5,7 @@ import AppManager from "./AppManager";
 import { startWizard } from "./wizard";
 import { logger } from "./Logger";
 import { scopeCheckMessage, devModeLog } from "./logMessages";
+import { getCurrentScope } from "./server";
 
 async function scopeCheck(
   successFunc: () => void,
@@ -87,10 +88,21 @@ export async function initCommand(args: Sinc.SharedCmdArgs) {
   }
 }
 
+
 export async function buildCommand(args: Sinc.SharedCmdArgs) {
   setLogLevel(args);
   try {
     await AppManager.buildFiles();
+  } catch (e) {
+    throw e;
+}
+
+export async function statusCommand() {
+  try {
+    let scopeObj = await getCurrentScope();
+    logger.info(`Instance: ${process.env.SN_INSTANCE}`);
+    logger.info(`Scope: ${scopeObj.scope}`);
+    logger.info(`User: ${process.env.SN_USER}`);
   } catch (e) {
     throw e;
   }
