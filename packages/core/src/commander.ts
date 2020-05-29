@@ -5,7 +5,7 @@ import {
   pushCommand,
   downloadCommand,
   initCommand,
-  buildCommand
+  buildCommand,
   statusCommand
 } from "./commands";
 import yargs from "yargs";
