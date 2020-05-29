@@ -20,7 +20,9 @@ const axiosConfig: AxiosRequestConfig = {
 const api = axios.create(axiosConfig);
 const WAIT_TIME = 500;
 const CHUNK_SIZE = 10;
+const NETWORK_RETRIES = 3;
 const TABLE_API = "api/now/table";
+const NETWORK_TIMEOUT = 3000;
 
 async function _update(obj: AxiosRequestConfig) {
   try {
@@ -166,7 +168,8 @@ export async function pushFiles(
 export async function pushFile(
   target_server: string,
   fileContext: Sinc.FileContext,
-  processFile: boolean = true
+  processFile: boolean = true,
+  retries: number = 0
 ): Promise<boolean> {
   const fileSummary = `${fileContext.tableName}/${fileContext.name}(${fileContext.sys_id})`;
   if (fileContext.sys_id && fileContext.targetField) {
@@ -183,12 +186,14 @@ export async function pushFile(
           logger.error(`Could not find ${fileSummary} on the server.`);
           return false;
         }
-        if (response.status < 200 && response.status > 299) {
+        if (response.status < 200 || response.status > 299) {
           logger.error(
             `Failed to push ${fileSummary}. Recieved an unexpected response (${response.status})`
           );
-          logger.debug(JSON.stringify(response, null, 2));
-          return false;
+          if (retries === NETWORK_RETRIES) {
+            logger.debug(JSON.stringify(response, null, 2));
+          }
+          throw new Error();
         }
         logger.debug(`${fileSummary} pushed successfully!`);
         return true;
@@ -197,8 +202,20 @@ export async function pushFile(
       return false;
     } catch (e) {
       logger.error(`Failed to push ${fileSummary}`);
-      console.error(e);
-      return false;
+      if (retries < NETWORK_RETRIES) {
+        logger.info(`Retrying to push ${fileSummary}. Retries: ${retries + 1}`);
+        await wait(NETWORK_TIMEOUT);
+        return await pushFile(
+          target_server,
+          fileContext,
+          processFile,
+          retries + 1
+        );
+      } else {
+        logger.info(`Maximum retries reached for ${fileSummary}`);
+        console.error(e);
+        throw new Error();
+      }
     }
   }
   logger.error(
