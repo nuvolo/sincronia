@@ -32,14 +32,16 @@ function setLogLevel(args: Sinc.SharedCmdArgs) {
   logger.setLogLevel(args.logLevel);
 }
 
-export async function devCommand() {
+export async function devCommand(args: Sinc.SharedCmdArgs) {
+  setLogLevel(args);
   scopeCheck(async () => {
     const _codeSrcPath = await getSourcePath();
     startWatching(_codeSrcPath);
     devModeLog();
   });
 }
-export async function refreshCommand() {
+export async function refreshCommand(args: Sinc.SharedCmdArgs) {
+  setLogLevel(args);
   scopeCheck(async () => {
     try {
       await AppManager.syncManifest();
