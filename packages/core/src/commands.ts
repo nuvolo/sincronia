@@ -96,6 +96,7 @@ export async function buildCommand(args: Sinc.SharedCmdArgs) {
   } catch (e) {
     throw e;
 }
+}
 
 export async function statusCommand() {
   try {
