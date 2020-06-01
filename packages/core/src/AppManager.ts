@@ -11,13 +11,14 @@ import {
 } from "./config";
 import * as Utils from "./utils";
 import { logger } from "./Logger";
-import { logMultiFilePush, logMultiFileBuild } from "./logMessages";
+import { logMultiFilePush, logMultiFileBuild, logDeploy } from "./logMessages";
 import inquirer from "inquirer";
 import {
   getManifestWithFiles,
   getManifest,
   getMissingFiles,
   pushFiles,
+  deployFiles,
   getCurrentScope,
   getScopeId,
   swapServerScope,
@@ -306,33 +307,7 @@ class AppManager {
 
   async pushSpecificFiles(pathString: string, skipPrompt: boolean = false) {
     try {
-      let pathPromises = pathString
-        .split(PATH_DELIMITER)
-        .filter(cur => {
-          //make sure it isn't blank
-          if (cur && cur !== "") {
-            //make sure it exists
-            let resolvedPath = path.resolve(process.cwd(), cur);
-            return fs.existsSync(resolvedPath);
-          } else {
-            return false;
-          }
-        })
-        .map(async cur => {
-          let resolvedPath = path.resolve(process.cwd(), cur);
-          let stats = await fsp.stat(resolvedPath);
-          if (stats.isDirectory()) {
-            return await this.loadList(resolvedPath);
-          } else {
-            return [resolvedPath];
-          }
-        });
-      let pathArrays = await Promise.all(pathPromises);
-      let paths = pathArrays.reduce((acc, cur) => {
-        return acc.concat(cur);
-      }, []);
-      logger.silly(`${paths.length} paths found...`);
-      logger.silly(JSON.stringify(paths, null, 2));
+      let paths = await this.getFilePaths(pathString);
       let fileContexts = await this.parseFileParams(paths);
       logger.info(`${fileContexts.length} files to push...`);
       logger.silly(
@@ -487,6 +462,56 @@ class AppManager {
       }
     } catch (e) {
       throw e;
+    }
+  }
+
+  async canDeploy() {
+    const targetServer = process.env.SN_INSTANCE || "";
+    if (!targetServer) {
+      logger.error("No server configured for deploy!");
+      return false;
+    }
+    try {
+      let answers: { confirmed: boolean } = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "confirmed",
+          message:
+            "Deploying will overwrite code in your instance. Are you sure?",
+          default: false
+        }
+      ]);
+      if (!answers["confirmed"]) {
+        return false;
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async deployFiles(skipPrompt: boolean = false) {
+    if (skipPrompt || (await this.canDeploy())) {
+      const build = await getBuildPath();
+      let paths = await this.getFilePaths(build);
+      try {
+        let fileContexts = await this.parseFileParams(paths);
+        logger.info(`${fileContexts.length} files to deploy...`);
+        logger.silly(
+          JSON.stringify(fileContexts.map(ctx => ctx.filePath), null, 2)
+        );
+        try {
+          const resultSet = await deployFiles(
+            process.env.SN_INSTANCE || "",
+            fileContexts
+          );
+          logDeploy(fileContexts, true, resultSet);
+        } catch (e) {
+          logDeploy(fileContexts, false, [], e);
+        }
+      } catch (e) {
+        throw e;
+      }
     }
   }
 
