@@ -2,13 +2,7 @@ import { SN, Sinc } from "@sincronia/types";
 import fs from "fs";
 import * as cp from "child_process";
 import path from "path";
-import {
-  config,
-  manifest,
-  getManifestPath,
-  getSourcePath,
-  getBuildPath
-} from "./config";
+import ConfigManager from "./config";
 import * as Utils from "./utils";
 import { logger } from "./Logger";
 import { logMultiFilePush, logMultiFileBuild, logDeploy } from "./logMessages";
@@ -39,7 +33,10 @@ class AppManager {
   constructor() {}
 
   private async writeManifestFile(man: SN.AppManifest) {
-    return fsp.writeFile(await getManifestPath(), JSON.stringify(man, null, 2));
+    return fsp.writeFile(
+      ConfigManager.getManifestPath(),
+      JSON.stringify(man, null, 2)
+    );
   }
 
   private async writeNewFiles(
@@ -71,10 +68,9 @@ class AppManager {
     skipFileCheck: boolean
   ) {
     const { tables } = manifest;
-    const _codeSrcPath = await getSourcePath();
     for (let tableName in tables) {
       let table = tables[tableName];
-      let tableFolder = path.join(_codeSrcPath, tableName);
+      let tableFolder = path.join(ConfigManager.getSourcePath(), tableName);
       for (let recKey in table.records) {
         const rec = table.records[recKey];
         let recPath = path.join(tableFolder, rec.name);
@@ -132,7 +128,7 @@ class AppManager {
   }
   async syncManifest() {
     try {
-      let curManifest = await manifest;
+      let curManifest = await ConfigManager.getManifest();
       if (!curManifest) {
         throw new Error("No manifest file loaded!");
       }
@@ -169,12 +165,11 @@ class AppManager {
   ): Promise<SN.MissingFileTableMap> {
     try {
       let missing: SN.MissingFileTableMap = {};
-      const _codeSrcPath = await getSourcePath();
       const { tables } = manifest;
       //go through each table
       for (let tableName in tables) {
         let table = tables[tableName];
-        let tablePath = path.join(_codeSrcPath, tableName);
+        let tablePath = path.join(ConfigManager.getSourcePath(), tableName);
         try {
           await fsp.access(tablePath, fs.constants.F_OK);
         } catch (e) {
@@ -251,9 +246,8 @@ class AppManager {
 
   private async loadMissingFiles(fileMap: SN.TableMap) {
     try {
-      const _codeSrcPath = await getSourcePath();
       for (let tableName in fileMap) {
-        let tablePath = path.join(_codeSrcPath, tableName);
+        let tablePath = path.join(ConfigManager.getSourcePath(), tableName);
         let tableConfig = fileMap[tableName];
         for (let recName in tableConfig.records) {
           let recPath = path.join(tablePath, recName);
@@ -383,7 +377,7 @@ class AppManager {
 
   async pushAllFiles(skipPrompt: boolean = false) {
     try {
-      this.pushSpecificFiles(await getSourcePath(), skipPrompt);
+      this.pushSpecificFiles(ConfigManager.getSourcePath(), skipPrompt);
     } catch (e) {
       throw e;
     }
@@ -424,8 +418,8 @@ class AppManager {
     const resultSet: boolean[] = [];
 
     try {
-      let source = await getSourcePath();
-      let build = await getBuildPath();
+      let source = ConfigManager.getSourcePath();
+      let build = ConfigManager.getBuildPath();
       let paths = await this.getFilePaths(source);
       logger.info(`Building ${paths.length} files`);
       let fileContexts = await this.parseFileParams(paths);
@@ -491,15 +485,15 @@ class AppManager {
   }
 
   async deployFiles(skipPrompt: boolean = false) {
-    if (skipPrompt || (await this.canDeploy())) {
-      const build = await getBuildPath();
+    try {
+      const build = ConfigManager.getBuildPath();
       let paths = await this.getFilePaths(build);
-      try {
-        let fileContexts = await this.parseFileParams(paths);
-        logger.info(`${fileContexts.length} files to deploy...`);
-        logger.silly(
-          JSON.stringify(fileContexts.map(ctx => ctx.filePath), null, 2)
-        );
+      let fileContexts = await this.parseFileParams(paths);
+      logger.info(`${fileContexts.length} files to deploy...`);
+      logger.silly(
+        JSON.stringify(fileContexts.map(ctx => ctx.filePath), null, 2)
+      );
+      if (skipPrompt || (await this.canDeploy())) {
         try {
           const resultSet = await deployFiles(
             process.env.SN_INSTANCE || "",
@@ -509,15 +503,15 @@ class AppManager {
         } catch (e) {
           logDeploy(fileContexts, false, [], e);
         }
-      } catch (e) {
-        throw e;
       }
+    } catch (e) {
+      throw e;
     }
   }
 
   async checkScope(swapScope: boolean): Promise<Sinc.ScopeCheckResult> {
     try {
-      let man = await manifest;
+      let man = ConfigManager.getManifest();
       if (man) {
         let scopeObj = await getCurrentScope();
         if (scopeObj.scope === man.scope) {

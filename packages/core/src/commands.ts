@@ -1,5 +1,5 @@
 import { Sinc } from "@sincronia/types";
-import { getSourcePath } from "./config";
+import ConfigManager from "./config";
 import { startWatching } from "./Watcher";
 import AppManager from "./AppManager";
 import { startWizard } from "./wizard";
@@ -36,8 +36,7 @@ function setLogLevel(args: Sinc.SharedCmdArgs) {
 export async function devCommand(args: Sinc.SharedCmdArgs) {
   setLogLevel(args);
   scopeCheck(async () => {
-    const _codeSrcPath = await getSourcePath();
-    startWatching(_codeSrcPath);
+    startWatching(ConfigManager.getSourcePath());
     devModeLog();
   });
 }
