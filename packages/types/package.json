@@ -1,6 +1,6 @@
 {
   "name": "@sincronia/types",
-  "version": "0.2.3",
+  "version": "0.3.10-alpha.0",
   "description": "Type Declarations for Sincronia",
   "main": "index.d.ts",
   "scripts": {

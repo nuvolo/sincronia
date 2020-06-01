@@ -1,6 +1,6 @@
 {
   "name": "@sincronia/babel-plugin-remove-modules",
-  "version": "0.3.4",
+  "version": "0.3.10-alpha.0",
   "description": "Babel plugin that removes imports and exports from code",
   "main": "./dist/index.js",
   "scripts": {
@@ -21,7 +21,7 @@
     "@babel/types": "^7.5.5"
   },
   "devDependencies": {
-    "@sincronia/types": "^0.2.3",
+    "@sincronia/types": "^0.3.10-alpha.0",
     "@types/babel__core": "^7.1.2"
   },
   "publishConfig": {
