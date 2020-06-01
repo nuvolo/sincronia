@@ -39,4 +39,5 @@ All notable changes to this project will be documented in this file.
 - nothing removed
 
 [0.3.6]: https://github.com/nuvolo/
+[0.3.10-alpha.0]: https://github.com/nuvolo/sincronia/releases/tag/v0.3.10-alpha.0
 [@nrdurken]: https://github.com/nrdurken
