@@ -20,7 +20,9 @@ const axiosConfig: AxiosRequestConfig = {
 const api = axios.create(axiosConfig);
 const WAIT_TIME = 500;
 const CHUNK_SIZE = 10;
+const NETWORK_RETRIES = 3;
 const TABLE_API = "api/now/table";
+const NETWORK_TIMEOUT = 3000;
 
 async function _update(obj: AxiosRequestConfig) {
   try {
@@ -115,11 +117,15 @@ function buildFileEndpoint(payload: Sinc.FileContext) {
 
 async function buildFileRequestObj(
   target_server: string,
-  filePayload: Sinc.FileContext
+  filePayload: Sinc.FileContext,
+  processFile: boolean = true
 ): Promise<Sinc.ServerRequestConfig> {
   try {
     const url = buildFileEndpoint(filePayload);
-    const fileContents = await PluginManager.getFinalFileContents(filePayload);
+    const fileContents = await PluginManager.getFinalFileContents(
+      filePayload,
+      processFile
+    );
     const { targetField } = filePayload;
     const data: any = {};
     data[targetField] = fileContents;
@@ -131,7 +137,8 @@ async function buildFileRequestObj(
 
 export async function pushFiles(
   target_server: string,
-  filesPayload: Sinc.FileContext[]
+  filesPayload: Sinc.FileContext[],
+  processFile: boolean = true
 ) {
   const resultSet: boolean[] = [];
   let progBar: ProgressBar | undefined;
@@ -145,7 +152,7 @@ export async function pushFiles(
   logger.silly(`${chunks.length} chunks of ${CHUNK_SIZE}`);
   for (let chunk of chunks) {
     let resultsPromises = chunk.map(ctx => {
-      const pushPromise = pushFile(target_server, ctx);
+      const pushPromise = pushFile(target_server, ctx, processFile);
       pushPromise
         .then(() => {
           if (progBar) {
@@ -168,12 +175,18 @@ export async function pushFiles(
 
 export async function pushFile(
   target_server: string,
-  fileContext: Sinc.FileContext
+  fileContext: Sinc.FileContext,
+  processFile: boolean = true,
+  retries: number = 0
 ): Promise<boolean> {
   const fileSummary = `${fileContext.tableName}/${fileContext.name}(${fileContext.sys_id})`;
   if (fileContext.sys_id && fileContext.targetField) {
     try {
-      let requestObj = await buildFileRequestObj(target_server, fileContext);
+      let requestObj = await buildFileRequestObj(
+        target_server,
+        fileContext,
+        processFile
+      );
       let response = await pushUpdate(requestObj);
       logger.debug(`Attempting to push ${fileSummary}`);
       if (response) {
@@ -181,12 +194,14 @@ export async function pushFile(
           logger.error(`Could not find ${fileSummary} on the server.`);
           return false;
         }
-        if (response.status < 200 && response.status > 299) {
+        if (response.status < 200 || response.status > 299) {
           logger.error(
             `Failed to push ${fileSummary}. Recieved an unexpected response (${response.status})`
           );
-          logger.debug(JSON.stringify(response, null, 2));
-          return false;
+          if (retries === NETWORK_RETRIES) {
+            logger.debug(JSON.stringify(response, null, 2));
+          }
+          throw new Error();
         }
         logger.debug(`${fileSummary} pushed successfully!`);
         return true;
@@ -195,14 +210,33 @@ export async function pushFile(
       return false;
     } catch (e) {
       logger.error(`Failed to push ${fileSummary}`);
-      console.error(e);
-      return false;
+      if (retries < NETWORK_RETRIES) {
+        logger.info(`Retrying to push ${fileSummary}. Retries: ${retries + 1}`);
+        await wait(NETWORK_TIMEOUT);
+        return await pushFile(
+          target_server,
+          fileContext,
+          processFile,
+          retries + 1
+        );
+      } else {
+        logger.info(`Maximum retries reached for ${fileSummary}`);
+        console.error(e);
+        throw new Error();
+      }
     }
   }
   logger.error(
     `Failed to push ${fileSummary}, missing either a target field or sys_id`
   );
   return false;
+}
+
+export async function deployFiles(
+  target_server: string,
+  filesPayload: Sinc.FileContext[]
+) {
+  return await pushFiles(target_server, filesPayload, false);
 }
 
 export async function getCurrentScope(): Promise<SN.ScopeObj> {

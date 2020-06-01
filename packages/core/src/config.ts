@@ -6,6 +6,7 @@ import { includes, excludes, tableOptions } from "./defaultOptions";
 
 const DEFAULT_CONFIG: Sinc.Config = {
   sourceDirectory: "src",
+  buildDirectory: "build",
   rules: [],
   includes,
   excludes,
@@ -18,6 +19,7 @@ let ConfigManager = new (class {
   private manifest: SN.AppManifest | undefined;
   private config_path: string | undefined;
   private source_path: string | undefined;
+  private build_path: string | undefined;
   private env_path: string | undefined;
   private manifest_path: string | undefined;
   constructor() {}
@@ -40,6 +42,9 @@ let ConfigManager = new (class {
 
       const source = await this.loadSourcePath();
       if (source) this.source_path = source;
+
+      const build = await this.loadBuildPath();
+      if (build) this.build_path = build;
 
       const manifest_path = await this.loadManifestPath();
       if (manifest_path) this.manifest_path = manifest_path;
@@ -86,6 +91,11 @@ let ConfigManager = new (class {
     throw new Error("Error getting source path");
   }
 
+  getBuildPath() {
+    if (this.build_path) return this.build_path;
+    throw new Error("Error getting build path");
+  }
+
   getEnvPath() {
     if (this.env_path) return this.env_path;
     throw new Error("Error getting env path");
@@ -95,6 +105,7 @@ let ConfigManager = new (class {
     return `
     module.exports = {
       sourceDirectory: "src",
+      buildDirectory: "build",
       rules: [],
       excludes:{},
       includes:{},
@@ -168,6 +179,12 @@ let ConfigManager = new (class {
     let rootDir = ConfigManager.getRootDir();
     let { sourceDirectory = "src" } = ConfigManager.getConfig();
     return path.join(rootDir, sourceDirectory);
+  }
+
+  private async loadBuildPath() {
+    let rootDir = ConfigManager.getRootDir();
+    let { buildDirectory = "src" } = ConfigManager.getConfig();
+    return path.join(rootDir, buildDirectory);
   }
 
   private async loadEnvPath() {

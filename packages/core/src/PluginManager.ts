@@ -83,12 +83,18 @@ class PluginManager {
     }
   }
 
-  async getFinalFileContents(context: Sinc.FileContext) {
+  async getFinalFileContents(
+    context: Sinc.FileContext,
+    processFile: boolean = true
+  ) {
     const { filePath } = context;
     try {
       const contents = await fsp.readFile(filePath, "utf-8");
-      await this.loadPluginConfig();
-      return await this.processFile(context, contents);
+      if (processFile) {
+        await this.loadPluginConfig();
+        return await this.processFile(context, contents);
+      }
+      return contents;
     } catch (e) {
       throw e;
     }
