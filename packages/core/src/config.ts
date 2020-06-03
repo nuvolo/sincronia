@@ -22,6 +22,7 @@ let ConfigManager = new (class {
   private build_path: string | undefined;
   private env_path: string | undefined;
   private manifest_path: string | undefined;
+  private diff_path: string | undefined;
   constructor() {}
 
   async loadConfigs() {
@@ -51,6 +52,9 @@ let ConfigManager = new (class {
 
       const manifest = await this.loadManifest();
       if (manifest) this.manifest = manifest;
+
+      const diff = await this.loadDiffPath();
+      if (diff) this.diff_path = diff;
     } catch (e) {
       throw e;
     }
@@ -99,6 +103,11 @@ let ConfigManager = new (class {
   getEnvPath() {
     if (this.env_path) return this.env_path;
     throw new Error("Error getting env path");
+  }
+
+  getDiffPath() {
+    if (this.diff_path) return this.diff_path;
+    throw new Error("Error getting diff path");
   }
 
   getDefaultConfigFile(): string {
@@ -195,6 +204,11 @@ let ConfigManager = new (class {
   private async loadManifestPath() {
     let rootDir = ConfigManager.getRootDir();
     return path.join(rootDir, "sinc.manifest.json");
+  }
+
+  private async loadDiffPath() {
+    let rootDir = ConfigManager.getRootDir();
+    return path.join(rootDir, "sinc.diff.manifest.json");
   }
 
   private async loadRootDir(skip?: boolean) {

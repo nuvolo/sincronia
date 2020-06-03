@@ -570,6 +570,14 @@ class AppManager {
     });
   }
 
+  async writeDiff(files: string) {
+    let paths = await this.getFilePaths(files);
+    fsp.writeFile(
+      ConfigManager.getDiffPath(),
+      JSON.stringify({ changed: paths })
+    );
+  }
+
   private async formatGitFiles(gitFiles: string) {
     const baseRepoPath = await this.getRepoRootDir();
     const workspaceDir = process.cwd();
