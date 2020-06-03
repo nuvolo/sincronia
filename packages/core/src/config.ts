@@ -10,7 +10,8 @@ const DEFAULT_CONFIG: Sinc.Config = {
   rules: [],
   includes,
   excludes,
-  tableOptions: {}
+  tableOptions: {},
+  refreshInterval: 30
 };
 
 let ConfigManager = new (class {
@@ -22,6 +23,7 @@ let ConfigManager = new (class {
   private build_path: string | undefined;
   private env_path: string | undefined;
   private manifest_path: string | undefined;
+  private refresh_interval: number | undefined;
   constructor() {}
 
   async loadConfigs() {
@@ -51,6 +53,9 @@ let ConfigManager = new (class {
 
       const manifest = await this.loadManifest();
       if (manifest) this.manifest = manifest;
+
+      const refresh = await this.loadRefresh();
+      if (refresh) this.refresh_interval = refresh;
     } catch (e) {
       throw e;
     }
@@ -101,6 +106,11 @@ let ConfigManager = new (class {
     throw new Error("Error getting env path");
   }
 
+  getRefresh() {
+    if (this.refresh_interval) return this.refresh_interval;
+    throw new Error("Error getting refresh interval");
+  }
+
   getDefaultConfigFile(): string {
     return `
     module.exports = {
@@ -109,7 +119,8 @@ let ConfigManager = new (class {
       rules: [],
       excludes:{},
       includes:{},
-      tableOptions:{}
+      tableOptions:{},
+      refreshInterval:30
     };
     `.trim();
   }
@@ -156,6 +167,10 @@ let ConfigManager = new (class {
     }
   }
 
+  updateManifest(man: SN.AppManifest) {
+    this.manifest = man;
+  }
+
   private async loadConfigPath(pth?: string): Promise<string | false> {
     if (!pth) {
       pth = process.cwd();
@@ -173,6 +188,11 @@ let ConfigManager = new (class {
     function isRoot(pth: string) {
       return path.parse(pth).root === pth;
     }
+  }
+
+  private async loadRefresh() {
+    let { refreshInterval = 30 } = ConfigManager.getConfig();
+    return refreshInterval;
   }
 
   private async loadSourcePath() {
