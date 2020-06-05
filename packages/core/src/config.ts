@@ -10,7 +10,8 @@ const DEFAULT_CONFIG: Sinc.Config = {
   rules: [],
   includes,
   excludes,
-  tableOptions: {}
+  tableOptions: {},
+  refreshInterval: 30
 };
 
 let ConfigManager = new (class {
@@ -23,6 +24,8 @@ let ConfigManager = new (class {
   private env_path: string | undefined;
   private manifest_path: string | undefined;
   private diff_path: string | undefined;
+  private refresh_interval: number | undefined;
+  
   constructor() {}
 
   async loadConfigs() {
@@ -55,6 +58,10 @@ let ConfigManager = new (class {
 
       const diff = await this.loadDiffPath();
       if (diff) this.diff_path = diff;
+
+      const refresh = await this.loadRefresh();
+      if (refresh) this.refresh_interval = refresh;
+
     } catch (e) {
       throw e;
     }
@@ -109,6 +116,10 @@ let ConfigManager = new (class {
     if (this.diff_path) return this.diff_path;
     throw new Error("Error getting diff path");
   }
+  getRefresh() {
+    if (this.refresh_interval) return this.refresh_interval;
+    throw new Error("Error getting refresh interval");
+  }
 
   getDefaultConfigFile(): string {
     return `
@@ -118,7 +129,8 @@ let ConfigManager = new (class {
       rules: [],
       excludes:{},
       includes:{},
-      tableOptions:{}
+      tableOptions:{},
+      refreshInterval:30
     };
     `.trim();
   }
@@ -165,6 +177,10 @@ let ConfigManager = new (class {
     }
   }
 
+  updateManifest(man: SN.AppManifest) {
+    this.manifest = man;
+  }
+
   private async loadConfigPath(pth?: string): Promise<string | false> {
     if (!pth) {
       pth = process.cwd();
@@ -182,6 +198,11 @@ let ConfigManager = new (class {
     function isRoot(pth: string) {
       return path.parse(pth).root === pth;
     }
+  }
+
+  private async loadRefresh() {
+    let { refreshInterval = 30 } = ConfigManager.getConfig();
+    return refreshInterval;
   }
 
   private async loadSourcePath() {

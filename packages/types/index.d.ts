@@ -23,6 +23,7 @@ export module Sinc {
     includes?: TablePropMap;
     excludes?: TablePropMap;
     tableOptions: ITableOptionsMap;
+    refreshInterval: number;
   }
 
   interface ITableOptionsMap {
