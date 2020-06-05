@@ -1,6 +1,6 @@
 {
   "name": "@sincronia/eslint-plugin",
-  "version": "0.3.10-alpha.1",
+  "version": "0.3.10-alpha.2",
   "description": "ESLint plugin for Sincronia",
   "main": "./dist/index.js",
   "scripts": {
@@ -9,7 +9,7 @@
   "author": "Multiple",
   "license": "GPL-3.0",
   "devDependencies": {
-    "@sincronia/types": "^0.3.10-alpha.1",
+    "@sincronia/types": "^0.3.10-alpha.2",
     "@types/eslint": "^6.1.2",
     "@types/prettier": "^1.18.0",
     "typescript": "^3.5.3"
