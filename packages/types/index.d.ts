@@ -13,6 +13,9 @@ export module Sinc {
     updateSet: string;
     ci: boolean;
   }
+  interface BuildCmdArgs extends SharedCmdArgs {
+    diff: string;
+  }
   interface Config {
     sourceDirectory: string;
     buildDirectory: string;

@@ -103,9 +103,13 @@ export async function initCommand(args: Sinc.SharedCmdArgs) {
   }
 }
 
-export async function buildCommand(args: Sinc.SharedCmdArgs) {
+export async function buildCommand(args: Sinc.BuildCmdArgs) {
   setLogLevel(args);
   try {
+    if (args.diff !== "") {
+      let files = await AppManager.gitDiff(args.diff);
+      AppManager.writeDiff(files);
+    }
     await AppManager.buildFiles();
   } catch (e) {
     throw e;

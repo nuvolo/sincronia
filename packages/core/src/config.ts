@@ -23,7 +23,9 @@ let ConfigManager = new (class {
   private build_path: string | undefined;
   private env_path: string | undefined;
   private manifest_path: string | undefined;
+  private diff_path: string | undefined;
   private refresh_interval: number | undefined;
+  
   constructor() {}
 
   async loadConfigs() {
@@ -54,8 +56,12 @@ let ConfigManager = new (class {
       const manifest = await this.loadManifest();
       if (manifest) this.manifest = manifest;
 
+      const diff = await this.loadDiffPath();
+      if (diff) this.diff_path = diff;
+
       const refresh = await this.loadRefresh();
       if (refresh) this.refresh_interval = refresh;
+
     } catch (e) {
       throw e;
     }
@@ -106,6 +112,10 @@ let ConfigManager = new (class {
     throw new Error("Error getting env path");
   }
 
+  getDiffPath() {
+    if (this.diff_path) return this.diff_path;
+    throw new Error("Error getting diff path");
+  }
   getRefresh() {
     if (this.refresh_interval) return this.refresh_interval;
     throw new Error("Error getting refresh interval");
@@ -215,6 +225,11 @@ let ConfigManager = new (class {
   private async loadManifestPath() {
     let rootDir = ConfigManager.getRootDir();
     return path.join(rootDir, "sinc.manifest.json");
+  }
+
+  private async loadDiffPath() {
+    let rootDir = ConfigManager.getRootDir();
+    return path.join(rootDir, "sinc.diff.manifest.json");
   }
 
   private async loadRootDir(skip?: boolean) {
