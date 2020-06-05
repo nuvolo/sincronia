@@ -31,5 +31,5 @@
     "@types/memory-fs": "^0.3.2",
     "@types/webpack": "^4.41.1"
   },
-  "gitHead": "a7fcba02c388ad529f52dc1aa5d0bd56abae1476"
+  "gitHead": "67b694054cf072be150b9bd4dc3d1b01f8e24ed9"
 }
