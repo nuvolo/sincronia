@@ -24,8 +24,9 @@ let ConfigManager = new (class {
   private env_path: string | undefined;
   private manifest_path: string | undefined;
   private diff_path: string | undefined;
+  private diff_file: Sinc.DiffFile | undefined;
   private refresh_interval: number | undefined;
-  
+
   constructor() {}
 
   async loadConfigs() {
@@ -59,9 +60,11 @@ let ConfigManager = new (class {
       const diff = await this.loadDiffPath();
       if (diff) this.diff_path = diff;
 
+      const diff_file = await this.loadDiffFile();
+      if (diff_file) this.diff_file = diff_file;
+
       const refresh = await this.loadRefresh();
       if (refresh) this.refresh_interval = refresh;
-
     } catch (e) {
       throw e;
     }
@@ -116,6 +119,12 @@ let ConfigManager = new (class {
     if (this.diff_path) return this.diff_path;
     throw new Error("Error getting diff path");
   }
+
+  getDiffFile() {
+    if (this.diff_file) return this.diff_file;
+    throw new Error("Error getting diff file");
+  }
+
   getRefresh() {
     if (this.refresh_interval) return this.refresh_interval;
     throw new Error("Error getting refresh interval");
@@ -213,7 +222,7 @@ let ConfigManager = new (class {
 
   private async loadBuildPath() {
     let rootDir = ConfigManager.getRootDir();
-    let { buildDirectory = "src" } = ConfigManager.getConfig();
+    let { buildDirectory = "build" } = ConfigManager.getConfig();
     return path.join(rootDir, buildDirectory);
   }
 
@@ -230,6 +239,15 @@ let ConfigManager = new (class {
   private async loadDiffPath() {
     let rootDir = ConfigManager.getRootDir();
     return path.join(rootDir, "sinc.diff.manifest.json");
+  }
+
+  private async loadDiffFile() {
+    try {
+      let diffString = await fsp.readFile(ConfigManager.getDiffPath(), "utf-8");
+      return JSON.parse(diffString);
+    } catch (e) {
+      return undefined;
+    }
   }
 
   private async loadRootDir(skip?: boolean) {
