@@ -107,6 +107,10 @@ export module Sinc {
   interface AppSelectionAnswer {
     app: string;
   }
+
+  interface DiffFile {
+    changed: Array<string>;
+  }
 }
 
 export module SN {
