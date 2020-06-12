@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.3.10-alpha.0] - 2020-06-01
+## [0.4.0] - 2020-06-11
 
 ### Added
 
@@ -10,7 +10,6 @@ All notable changes to this project will be documented in this file.
 - Added status command to show current connection information from [@nrdurken]
 - Added "build" command to create static deployable bundles from [@nrdurken].
 - Added "deploy" command to deploy static bundles to servers from [@nrdurken].
--
 
 ### Changed
 
@@ -21,8 +20,6 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 - nothing removed
-
-# Example
 
 ## [0.3.6] - 2020-02-12
 
@@ -39,5 +36,5 @@ All notable changes to this project will be documented in this file.
 - nothing removed
 
 [0.3.6]: https://github.com/nuvolo/
-[0.3.10-alpha.0]: https://github.com/nuvolo/sincronia/releases/tag/v0.3.10-alpha.0
+[0.4.0]: https://github.com/nuvolo/sincronia/releases/tag/v0.4.0
 [@nrdurken]: https://github.com/nrdurken
