@@ -1,6 +1,6 @@
 {
   "name": "@sincronia/core",
-  "version": "0.3.10-alpha.2",
+  "version": "0.4.0",
   "description": "Next-gen file syncer",
   "license": "GPL-3.0",
   "main": "./dist./index.js",
@@ -17,7 +17,7 @@
     "node": ">=12.0.0"
   },
   "devDependencies": {
-    "@sincronia/types": "^0.3.10-alpha.2",
+    "@sincronia/types": "^0.4.0",
     "@types/dotenv": "^6.1.1",
     "@types/inquirer": "^6.0.3",
     "@types/lodash": "^4.14.138",
