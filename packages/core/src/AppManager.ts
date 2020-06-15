@@ -23,7 +23,6 @@ import {
   updateCurrentUpdateSetUserPref,
   createCurrentUpdateSetUserPref
 } from "./server";
-import { PATH_DELIMITER } from "./constants";
 import PluginManager from "./PluginManager";
 import ProgressBar from "progress";
 
@@ -271,7 +270,7 @@ class AppManager {
 
   private async getFilePaths(pathString: string) {
     let pathPromises = pathString
-      .split(PATH_DELIMITER)
+      .split(ConfigManager.getPathDelimiter())
       .filter(cur => {
         //make sure it isn't blank
         if (cur && cur !== "") {
@@ -615,7 +614,7 @@ class AppManager {
         }
       }
     });
-    return fileArray.join(PATH_DELIMITER);
+    return fileArray.join(ConfigManager.getPathDelimiter());
   }
 
   private getRepoRootDir(): Promise<string> {

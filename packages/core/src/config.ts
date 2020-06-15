@@ -11,7 +11,8 @@ const DEFAULT_CONFIG: Sinc.Config = {
   includes,
   excludes,
   tableOptions: {},
-  refreshInterval: 30
+  refreshInterval: 30,
+  pathDelimiter: `'${path.delimiter}${path.delimiter}'`
 };
 
 let ConfigManager = new (class {
@@ -26,6 +27,7 @@ let ConfigManager = new (class {
   private diff_path: string | undefined;
   private diff_file: Sinc.DiffFile | undefined;
   private refresh_interval: number | undefined;
+  private path_delimeter: string | undefined;
 
   constructor() {}
 
@@ -65,6 +67,9 @@ let ConfigManager = new (class {
 
       const refresh = await this.loadRefresh();
       if (refresh) this.refresh_interval = refresh;
+
+      const delimeter = await this.loadDelimiter();
+      if (delimeter) this.path_delimeter = delimeter;
     } catch (e) {
       throw e;
     }
@@ -130,6 +135,11 @@ let ConfigManager = new (class {
     throw new Error("Error getting refresh interval");
   }
 
+  getPathDelimiter() {
+    if (this.path_delimeter) return this.path_delimeter;
+    throw new Error("Error getting path delimiter");
+  }
+
   getDefaultConfigFile(): string {
     return `
     module.exports = {
@@ -139,7 +149,8 @@ let ConfigManager = new (class {
       excludes:{},
       includes:{},
       tableOptions:{},
-      refreshInterval:30
+      refreshInterval:30,
+      pathDelimiter:"${path.delimiter}${path.delimiter}"
     };
     `.trim();
   }
@@ -258,6 +269,13 @@ let ConfigManager = new (class {
     } else {
       return process.cwd();
     }
+  }
+
+  private async loadDelimiter() {
+    let {
+      pathDelimiter = `'${path.delimiter}${path.delimiter}'`
+    } = ConfigManager.getConfig();
+    return pathDelimiter;
   }
 })();
 
