@@ -1,12 +1,7 @@
 import { SN, Sinc } from "@sincronia/types";
 import inquirer from "inquirer";
 import { getAppList, getManifestWithFiles } from "./server";
-import {
-  DEFAULT_CONFIG_FILE,
-  manifest,
-  getConfigPath,
-  getEnvPath
-} from "./config";
+import ConfigManager from "./config";
 import AppManager from "./AppManager";
 import fs from "fs";
 const fsp = fs.promises;
@@ -15,24 +10,34 @@ import path from "path";
 
 export async function startWizard() {
   let loginAnswers = await getLoginInfo();
-  await setupDotEnv(loginAnswers);
-  let hasConfig = await checkConfig();
-  if (!hasConfig) {
-    logger.info("Generating config...");
-    await writeDefaultConfig();
-  }
-  let man = await manifest;
-  if (!man) {
-    let selectedApp = await showAppList(loginAnswers);
-    if (!selectedApp) {
-      return;
+  try {
+    let { username: user, password, instance } = loginAnswers;
+    let apps = await getAppList({ user, password, instance });
+    await setupDotEnv(loginAnswers);
+    let hasConfig = await checkConfig();
+    if (!hasConfig) {
+      logger.info("Generating config...");
+      await writeDefaultConfig(hasConfig);
     }
-    logger.info("Downloading app...");
-    await downloadApp(loginAnswers, selectedApp);
+    let man = ConfigManager.getManifest(true);
+    if (!man) {
+      let selectedApp = await showAppList(apps);
+      if (!selectedApp) {
+        return;
+      }
+      logger.info("Downloading app...");
+      await downloadApp(loginAnswers, selectedApp);
+    }
+    logger.success(
+      "You are all set up 👍 Try running 'npx sinc dev' to begin development mode."
+    );
+    await ConfigManager.loadConfigs();
+  } catch (e) {
+    logger.error(
+      "Failed to setup application. Check to see that your credentials are correct and you have the update set installed on your instance."
+    );
+    return;
   }
-  logger.success(
-    "You are all set up 👍 Try running 'npx sinc dev' to begin development mode."
-  );
 }
 
 async function getLoginInfo(): Promise<Sinc.LoginAnswers> {
@@ -58,11 +63,11 @@ async function getLoginInfo(): Promise<Sinc.LoginAnswers> {
 
 async function checkConfig(): Promise<boolean> {
   try {
-    let pth = await getConfigPath();
-    if (!pth) {
+    let checkConfig = ConfigManager.checkConfigPath();
+    if (!checkConfig) {
       return false;
     }
-    await fsp.access(pth, fs.constants.F_OK);
+    await fsp.access(checkConfig, fs.constants.F_OK);
     return true;
   } catch (e) {
     return false;
@@ -77,39 +82,27 @@ SN_INSTANCE=${answers.instance}
   process.env.SN_USER = answers.username;
   process.env.SN_PASSWORD = answers.password;
   process.env.SN_INSTANCE = answers.instance;
-  let dotEnvPath = await getEnvPath();
   try {
-    await fsp.writeFile(dotEnvPath, data);
+    await fsp.writeFile(ConfigManager.getEnvPath(), data);
   } catch (e) {
     throw e;
   }
 }
 
-async function writeDefaultConfig() {
+async function writeDefaultConfig(hasConfig: boolean) {
   try {
-    let pth =
-      (await getConfigPath()) || path.join(process.cwd(), "sinc.config.js");
+    let pth;
+    if (hasConfig) pth = ConfigManager.getConfigPath();
+    else pth = path.join(process.cwd(), "sinc.config.js");
     if (pth) {
-      await fsp.writeFile(pth, DEFAULT_CONFIG_FILE);
+      await fsp.writeFile(pth, ConfigManager.getDefaultConfigFile());
     }
   } catch (e) {
     throw e;
   }
 }
 
-async function showAppList(
-  answers: Sinc.LoginAnswers
-): Promise<string | undefined> {
-  let { username: user, password, instance } = answers;
-  let apps: SN.App[] = [];
-  try {
-    apps = await getAppList({ user, password, instance });
-  } catch (e) {
-    logger.error(
-      "Failed to get application list. Check to see that your credentials are correct and you have the update set installed on your instance."
-    );
-    return;
-  }
+async function showAppList(apps: SN.App[]): Promise<string | undefined> {
   let appSelection: Sinc.AppSelectionAnswer = await inquirer.prompt([
     {
       type: "list",

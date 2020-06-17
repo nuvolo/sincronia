@@ -1,5 +1,5 @@
 import { Sinc } from "@sincronia/types";
-import { config, getRootDir } from "./config";
+import ConfigManager from "./config";
 import fs from "fs";
 import path from "path";
 const fsp = fs.promises;
@@ -11,7 +11,7 @@ class PluginManager {
   }
 
   async loadPluginConfig() {
-    let conf = await config;
+    let conf = ConfigManager.getConfig();
     if (conf && conf.rules) {
       this.pluginRules = conf.rules;
     }
@@ -39,7 +39,7 @@ class PluginManager {
       let output = content;
       for (let pConfig of plugins) {
         let pluginPath = path.join(
-          await getRootDir(),
+          ConfigManager.getRootDir(),
           "node_modules",
           pConfig.name
         );
@@ -83,12 +83,18 @@ class PluginManager {
     }
   }
 
-  async getFinalFileContents(context: Sinc.FileContext) {
+  async getFinalFileContents(
+    context: Sinc.FileContext,
+    processFile: boolean = true
+  ) {
     const { filePath } = context;
     try {
       const contents = await fsp.readFile(filePath, "utf-8");
-      await this.loadPluginConfig();
-      return await this.processFile(context, contents);
+      if (processFile) {
+        await this.loadPluginConfig();
+        return await this.processFile(context, contents);
+      }
+      return contents;
     } catch (e) {
       throw e;
     }

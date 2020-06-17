@@ -1,12 +1,12 @@
 import { SN, Sinc } from "@sincronia/types";
-import { manifest } from "./config";
 import path from "path";
+import ConfigManager from "./config";
 
 async function _getConfigFromPath(
   params: Sinc.FileSyncParams
 ): Promise<Sinc.FileContext | undefined> {
   try {
-    let curManifest = await manifest;
+    let curManifest = ConfigManager.getManifest();
     if (!curManifest) {
       throw new Error("No Manifest file");
     }

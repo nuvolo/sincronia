@@ -8,13 +8,22 @@ export module Sinc {
   }
   interface PushCmdArgs extends SharedCmdArgs {
     target?: string;
+    diff: string;
+    scopeSwap: boolean;
+    updateSet: string;
+    ci: boolean;
+  }
+  interface BuildCmdArgs extends SharedCmdArgs {
+    diff: string;
   }
   interface Config {
     sourceDirectory: string;
+    buildDirectory: string;
     rules?: PluginRule[];
     includes?: TablePropMap;
     excludes?: TablePropMap;
     tableOptions: ITableOptionsMap;
+    refreshInterval: number;
   }
 
   interface ITableOptionsMap {
@@ -97,6 +106,10 @@ export module Sinc {
 
   interface AppSelectionAnswer {
     app: string;
+  }
+
+  interface DiffFile {
+    changed: Array<string>;
   }
 }
 

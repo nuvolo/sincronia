@@ -1,6 +1,6 @@
 {
   "name": "@sincronia/babel-preset-servicenow",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "ServiceNow Sanitizer Plugin",
   "main": "./dist/index.js",
   "scripts": {
@@ -21,7 +21,7 @@
     "@babel/types": "^7.5.5"
   },
   "devDependencies": {
-    "@sincronia/types": "^0.2.2",
+    "@sincronia/types": "^0.4.0",
     "@types/babel__core": "^7.1.2",
     "typescript": "^3.5.3"
   },
@@ -31,5 +31,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "39a00ff49992565be79bae12508c788ee9f8cc48"
+  "gitHead": "67b694054cf072be150b9bd4dc3d1b01f8e24ed9"
 }

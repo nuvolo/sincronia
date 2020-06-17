@@ -4,7 +4,10 @@ import {
   refreshCommand,
   pushCommand,
   downloadCommand,
-  initCommand
+  initCommand,
+  buildCommand,
+  deployCommand,
+  statusCommand
 } from "./commands";
 import yargs from "yargs";
 export async function initCommands() {
@@ -25,7 +28,37 @@ export async function initCommands() {
     .command(
       ["push [target]"],
       "[DESTRUCTIVE] Push all files from current local files to ServiceNow instance.",
-      sharedOptions,
+      cmdArgs => {
+        cmdArgs.options({
+          ...sharedOptions,
+          diff: {
+            alias: "d",
+            type: "string",
+            default: "",
+            describe: "Specify branch to do git diff against"
+          },
+          scopeSwap: {
+            alias: "ss",
+            type: "boolean",
+            default: false,
+            describe:
+              "Will auto-swap to the correct scope for the files being pushed"
+          },
+          updateSet: {
+            alias: "us",
+            type: "string",
+            default: "",
+            describe:
+              "Will create a new update set with the provided anme to store all changes into"
+          },
+          ci: {
+            type: "boolean",
+            default: false,
+            describe: "Will skip confirmation prompts during the push process"
+          }
+        });
+        return cmdArgs;
+      },
       (args: TSFIXME) => {
         pushCommand(args as Sinc.PushCmdArgs);
       }
@@ -43,6 +76,37 @@ export async function initCommands() {
       "Provisions an initial project for you",
       sharedOptions,
       initCommand
+    )
+    .command(
+      "build",
+      "Build application files locally",
+      cmdArgs => {
+        cmdArgs.options({
+          ...sharedOptions,
+          diff: {
+            alias: "d",
+            type: "string",
+            default: "",
+            describe: "Specify branch to do git diff against"
+          }
+        });
+        return cmdArgs;
+      },
+      (args: TSFIXME) => {
+        buildCommand(args);
+      }
+    )
+    .command(
+      "deploy",
+      "Deploy local build files to the scoped application",
+      sharedOptions,
+      deployCommand
+    )
+    .command(
+      "status",
+      "Get information about the connected instance",
+      sharedOptions,
+      statusCommand
     )
     .help().argv;
 }

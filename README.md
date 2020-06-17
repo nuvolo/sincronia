@@ -1,3 +1,4 @@
+[![Build Status](https://dev.azure.com/nuvoengineering/sincronia/_apis/build/status/nuvolo.sincronia?branchName=dev)](https://dev.azure.com/nuvoengineering/sincronia/_build/latest?definitionId=15&branchName=dev)
 # Sincronia
 
 ## Overview

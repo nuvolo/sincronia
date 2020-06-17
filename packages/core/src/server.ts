@@ -3,7 +3,7 @@ import axios, { AxiosRequestConfig, AxiosInstance } from "axios";
 import { wait, chunkArr } from "./utils";
 import PluginManager from "./PluginManager";
 import { logger } from "./Logger";
-import { config } from "./config";
+import ConfigManager from "./config";
 import ProgressBar from "progress";
 
 const axiosConfig: AxiosRequestConfig = {
@@ -20,7 +20,9 @@ const axiosConfig: AxiosRequestConfig = {
 const api = axios.create(axiosConfig);
 const WAIT_TIME = 500;
 const CHUNK_SIZE = 10;
+const NETWORK_RETRIES = 3;
 const TABLE_API = "api/now/table";
+const NETWORK_TIMEOUT = 3000;
 
 async function _update(obj: AxiosRequestConfig) {
   try {
@@ -53,7 +55,11 @@ export async function getManifestWithFiles(
 ): Promise<SN.AppManifest> {
   let endpoint = `api/x_nuvo_sinc/sinc/getManifestWithFiles/${scope}`;
   try {
-    const { includes = {}, excludes = {}, tableOptions = {} } = await config;
+    const {
+      includes = {},
+      excludes = {},
+      tableOptions = {}
+    } = ConfigManager.getConfig();
     let response;
     if (creds) {
       let client = getBasicAxiosClient(creds);
@@ -74,7 +80,11 @@ export async function getManifestWithFiles(
 export async function getManifest(scope: string): Promise<SN.AppManifest> {
   let endpoint = `api/x_nuvo_sinc/sinc/getManifest/${scope}`;
   try {
-    const { includes = {}, excludes = {}, tableOptions = {} } = await config;
+    const {
+      includes = {},
+      excludes = {},
+      tableOptions = {}
+    } = ConfigManager.getConfig();
     let response = await api.post(endpoint, {
       includes,
       excludes,
@@ -91,7 +101,7 @@ export async function getMissingFiles(
 ): Promise<SN.TableMap> {
   let endpoint = `api/x_nuvo_sinc/sinc/bulkDownload`;
   try {
-    const { tableOptions = {} } = await config;
+    const { tableOptions = {} } = ConfigManager.getConfig();
     const payload = { missingFiles, tableOptions };
     let response = await api.post(endpoint, payload);
     return response.data.result as SN.TableMap;
@@ -107,11 +117,15 @@ function buildFileEndpoint(payload: Sinc.FileContext) {
 
 async function buildFileRequestObj(
   target_server: string,
-  filePayload: Sinc.FileContext
+  filePayload: Sinc.FileContext,
+  processFile: boolean = true
 ): Promise<Sinc.ServerRequestConfig> {
   try {
     const url = buildFileEndpoint(filePayload);
-    const fileContents = await PluginManager.getFinalFileContents(filePayload);
+    const fileContents = await PluginManager.getFinalFileContents(
+      filePayload,
+      processFile
+    );
     const { targetField } = filePayload;
     const data: any = {};
     data[targetField] = fileContents;
@@ -123,7 +137,8 @@ async function buildFileRequestObj(
 
 export async function pushFiles(
   target_server: string,
-  filesPayload: Sinc.FileContext[]
+  filesPayload: Sinc.FileContext[],
+  processFile: boolean = true
 ) {
   const resultSet: boolean[] = [];
   let progBar: ProgressBar | undefined;
@@ -137,7 +152,7 @@ export async function pushFiles(
   logger.silly(`${chunks.length} chunks of ${CHUNK_SIZE}`);
   for (let chunk of chunks) {
     let resultsPromises = chunk.map(ctx => {
-      const pushPromise = pushFile(target_server, ctx);
+      const pushPromise = pushFile(target_server, ctx, processFile);
       pushPromise
         .then(() => {
           if (progBar) {
@@ -160,12 +175,18 @@ export async function pushFiles(
 
 export async function pushFile(
   target_server: string,
-  fileContext: Sinc.FileContext
+  fileContext: Sinc.FileContext,
+  processFile: boolean = true,
+  retries: number = 0
 ): Promise<boolean> {
   const fileSummary = `${fileContext.tableName}/${fileContext.name}(${fileContext.sys_id})`;
   if (fileContext.sys_id && fileContext.targetField) {
     try {
-      let requestObj = await buildFileRequestObj(target_server, fileContext);
+      let requestObj = await buildFileRequestObj(
+        target_server,
+        fileContext,
+        processFile
+      );
       let response = await pushUpdate(requestObj);
       logger.debug(`Attempting to push ${fileSummary}`);
       if (response) {
@@ -173,12 +194,14 @@ export async function pushFile(
           logger.error(`Could not find ${fileSummary} on the server.`);
           return false;
         }
-        if (response.status < 200 && response.status > 299) {
+        if (response.status < 200 || response.status > 299) {
           logger.error(
             `Failed to push ${fileSummary}. Recieved an unexpected response (${response.status})`
           );
-          logger.debug(JSON.stringify(response, null, 2));
-          return false;
+          if (retries === NETWORK_RETRIES) {
+            logger.debug(JSON.stringify(response, null, 2));
+          }
+          throw new Error();
         }
         logger.debug(`${fileSummary} pushed successfully!`);
         return true;
@@ -187,14 +210,33 @@ export async function pushFile(
       return false;
     } catch (e) {
       logger.error(`Failed to push ${fileSummary}`);
-      console.error(e);
-      return false;
+      if (retries < NETWORK_RETRIES) {
+        logger.info(`Retrying to push ${fileSummary}. Retries: ${retries + 1}`);
+        await wait(NETWORK_TIMEOUT);
+        return await pushFile(
+          target_server,
+          fileContext,
+          processFile,
+          retries + 1
+        );
+      } else {
+        logger.info(`Maximum retries reached for ${fileSummary}`);
+        console.error(e);
+        throw new Error();
+      }
     }
   }
   logger.error(
     `Failed to push ${fileSummary}, missing either a target field or sys_id`
   );
   return false;
+}
+
+export async function deployFiles(
+  target_server: string,
+  filesPayload: Sinc.FileContext[]
+) {
+  return await pushFiles(target_server, filesPayload, false);
 }
 
 export async function getCurrentScope(): Promise<SN.ScopeObj> {
@@ -240,4 +282,176 @@ function getBasicAxiosClient(creds: SNInstanceCreds) {
     },
     baseURL: `https://${serverString}/`
   });
+}
+
+export async function swapServerScope(
+  scopeId: string,
+  updateSetName: string = ""
+): Promise<void> {
+  try {
+    const userSysId = await getUserSysId();
+    const curAppUserPrefId = await getCurrentAppUserPrefSysId(userSysId);
+    // If not user pref record exists, create it.
+    if (curAppUserPrefId !== "") {
+      await updateCurrentAppUserPref(scopeId, curAppUserPrefId);
+    } else {
+      await createCurrentAppUserPref(scopeId, userSysId);
+    }
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+}
+
+export async function getScopeId(scopeName: string): Promise<string> {
+  try {
+    const endpoint = "api/now/table/sys_scope";
+    let response = await api.get(endpoint, {
+      params: {
+        sysparm_query: `scope=${scopeName}`,
+        sysparm_fields: "sys_id"
+      }
+    });
+    logger.debug(`getScopeId.response = ${JSON.stringify(response.data)}`);
+    return response.data.result[0].sys_id;
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+}
+
+export async function getUserSysId(
+  userName: string = process.env.SN_USER as string
+): Promise<string> {
+  try {
+    const endpoint = "api/now/table/sys_user";
+    let response = await api.get(endpoint, {
+      params: {
+        sysparm_query: `user_name=${userName}`,
+        sysparm_fields: "sys_id"
+      }
+    });
+    return response.data.result[0].sys_id;
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+}
+
+export async function getCurrentAppUserPrefSysId(
+  userSysId: string
+): Promise<string> {
+  try {
+    const endpoint = `api/now/table/sys_user_preference`;
+    let response = await api.get(endpoint, {
+      params: {
+        sysparm_query: `user=${userSysId}^name=apps.current_app`,
+        sysparm_fields: "sys_id"
+      }
+    });
+    logger.debug(
+      `getCurrentAppUserPrefSysId.response = ${JSON.stringify(response.data)}`
+    );
+    if (response.data.result.length > 0) {
+      return response.data.result[0].sys_id;
+    } else {
+      return "";
+    }
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+}
+
+export async function updateCurrentAppUserPref(
+  appSysId: string,
+  userPrefSysId: string
+): Promise<void> {
+  try {
+    const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
+    await api.put(endpoint, { value: appSysId });
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+}
+
+export async function createCurrentAppUserPref(
+  appSysId: string,
+  userSysId: string
+): Promise<void> {
+  try {
+    const endpoint = `api/now/table/sys_user_preference`;
+    await api.post(endpoint, {
+      value: appSysId,
+      name: "apps.current_app",
+      type: "string",
+      user: userSysId
+    });
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+}
+
+export async function getCurrentUpdateSetUserPref(
+  userSysId: string
+): Promise<string> {
+  try {
+    const endpoint = `api/now/table/sys_user_preference`;
+    let response = await api.get(endpoint, {
+      params: {
+        sysparm_query: `user=${userSysId}^name=sys_update_set`,
+        sysparm_fields: "sys_id"
+      }
+    });
+    return response.data.result[0].sys_id;
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+}
+
+export async function updateCurrentUpdateSetUserPref(
+  updateSetSysId: string,
+  userPrefSysId: string
+): Promise<void> {
+  try {
+    const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
+    await api.put(endpoint, { value: updateSetSysId });
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+}
+
+export async function createCurrentUpdateSetUserPref(
+  updateSetSysId: string,
+  userSysId: string
+): Promise<void> {
+  try {
+    const endpoint = `api/now/table/sys_user_preference`;
+    await api.put(endpoint, {
+      value: updateSetSysId,
+      name: "sys_update_set",
+      type: "string",
+      user: userSysId
+    });
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+}
+
+export async function createUpdateSet(updateSetName: string): Promise<string> {
+  try {
+    const endpoint = `api/now/table/sys_update_set`;
+    const response = await api.post(endpoint, {
+      name: updateSetName
+    });
+    return response.data.result.sys_id;
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
 }

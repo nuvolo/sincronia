@@ -50,25 +50,75 @@ export function logFilePush(
   spacer();
 }
 
-export function logMultiFilePush(
+function multiLog(
   files: Sinc.FileContext[],
   success: boolean,
   resultSet: boolean[],
+  successMessage: string,
+  errorMessage: string,
   err?: Error
 ) {
   if (success) {
     let fileNum = chalk.bold.blue(
       resultSet.filter(result => result).length + ""
     );
-    let message = chalk.green(`${fileNum} files successfully pushed to server`);
+    let message = chalk.green(`${fileNum} files ${successMessage}`);
     logger.info(message);
   } else {
-    logger.error("Failed to push files to server");
+    logger.error(errorMessage);
     if (err) {
       logger.error(parseError(err));
     }
   }
   spacer();
+}
+
+export function logMultiFilePush(
+  files: Sinc.FileContext[],
+  success: boolean,
+  resultSet: boolean[],
+  err?: Error
+) {
+  multiLog(
+    files,
+    success,
+    resultSet,
+    "successfully pushed to server",
+    "Failed to push files to server",
+    err
+  );
+}
+
+export function logMultiFileBuild(
+  files: Sinc.FileContext[],
+  success: boolean,
+  resultSet: boolean[],
+  err?: Error
+) {
+  multiLog(
+    files,
+    success,
+    resultSet,
+    "successfully built",
+    "Failed to build files",
+    err
+  );
+}
+
+export function logDeploy(
+  files: Sinc.FileContext[],
+  success: boolean,
+  resultSet: boolean[],
+  err?: Error
+) {
+  multiLog(
+    files,
+    success,
+    resultSet,
+    "successfully deployed",
+    "Failed to deploy files",
+    err
+  );
 }
 
 function spacer() {
