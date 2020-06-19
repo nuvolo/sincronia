@@ -80,8 +80,21 @@ export async function initCommands() {
     .command(
       "build",
       "Build application files locally",
-      sharedOptions,
-      buildCommand
+      cmdArgs => {
+        cmdArgs.options({
+          ...sharedOptions,
+          diff: {
+            alias: "d",
+            type: "string",
+            default: "",
+            describe: "Specify branch to do git diff against"
+          }
+        });
+        return cmdArgs;
+      },
+      (args: TSFIXME) => {
+        buildCommand(args);
+      }
     )
     .command(
       "deploy",

@@ -139,6 +139,7 @@ class AppManager {
         this.writeManifestFile(newManifest);
         logger.info("Finding and creating missing files...");
         await this.reconcileDifferences(newManifest);
+        ConfigManager.updateManifest(newManifest);
         logger.success("Refresh complete! ✅");
       } catch (e) {
         logger.error("Encountered error while refreshing! ❌");
@@ -486,8 +487,24 @@ class AppManager {
 
   async deployFiles(skipPrompt: boolean = false) {
     try {
-      const build = ConfigManager.getBuildPath();
-      let paths = await this.getFilePaths(build);
+      let paths = ConfigManager.getDiffFile().changed;
+      let deployDiff = false;
+      if (paths && paths.length > 0) {
+        let answers: { confirmed: boolean } = await inquirer.prompt([
+          {
+            type: "confirm",
+            name: "confirmed",
+            message:
+              "Would you like to deploy only files changed in your diff file?",
+            default: false
+          }
+        ]);
+        if (answers["confirmed"]) deployDiff = true;
+      }
+      if (!deployDiff) {
+        const build = ConfigManager.getBuildPath();
+        paths = await this.getFilePaths(build);
+      }
       let fileContexts = await this.parseFileParams(paths);
       logger.info(`${fileContexts.length} files to deploy...`);
       logger.silly(
@@ -568,6 +585,14 @@ class AppManager {
         }
       });
     });
+  }
+
+  async writeDiff(files: string) {
+    let paths = await this.getFilePaths(files);
+    fsp.writeFile(
+      ConfigManager.getDiffPath(),
+      JSON.stringify({ changed: paths })
+    );
   }
 
   private async formatGitFiles(gitFiles: string) {

@@ -22,7 +22,6 @@ All notable changes to this project will be documented in this file.
 - Added status command to show current connection information from [@nrdurkin]
 - Added "build" command to create static deployable bundles from [@nrdurkin].
 - Added "deploy" command to deploy static bundles to servers from [@nrdurkin].
--
 
 ### Changed
 
@@ -33,8 +32,6 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 - nothing removed
-
-# Example
 
 ## [0.3.6] - 2020-02-12
 

@@ -13,6 +13,9 @@ export module Sinc {
     updateSet: string;
     ci: boolean;
   }
+  interface BuildCmdArgs extends SharedCmdArgs {
+    diff: string;
+  }
   interface Config {
     sourceDirectory: string;
     buildDirectory: string;
@@ -20,6 +23,7 @@ export module Sinc {
     includes?: TablePropMap;
     excludes?: TablePropMap;
     tableOptions: ITableOptionsMap;
+    refreshInterval: number;
   }
 
   interface ITableOptionsMap {
@@ -102,6 +106,10 @@ export module Sinc {
 
   interface AppSelectionAnswer {
     app: string;
+  }
+
+  interface DiffFile {
+    changed: Array<string>;
   }
 }
 

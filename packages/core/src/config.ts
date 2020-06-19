@@ -10,7 +10,8 @@ const DEFAULT_CONFIG: Sinc.Config = {
   rules: [],
   includes,
   excludes,
-  tableOptions: {}
+  tableOptions: {},
+  refreshInterval: 30
 };
 
 let ConfigManager = new (class {
@@ -22,6 +23,10 @@ let ConfigManager = new (class {
   private build_path: string | undefined;
   private env_path: string | undefined;
   private manifest_path: string | undefined;
+  private diff_path: string | undefined;
+  private diff_file: Sinc.DiffFile | undefined;
+  private refresh_interval: number | undefined;
+
   constructor() {}
 
   async loadConfigs() {
@@ -51,6 +56,15 @@ let ConfigManager = new (class {
 
       const manifest = await this.loadManifest();
       if (manifest) this.manifest = manifest;
+
+      const diff = await this.loadDiffPath();
+      if (diff) this.diff_path = diff;
+
+      const diff_file = await this.loadDiffFile();
+      if (diff_file) this.diff_file = diff_file;
+
+      const refresh = await this.loadRefresh();
+      if (refresh) this.refresh_interval = refresh;
     } catch (e) {
       throw e;
     }
@@ -101,6 +115,21 @@ let ConfigManager = new (class {
     throw new Error("Error getting env path");
   }
 
+  getDiffPath() {
+    if (this.diff_path) return this.diff_path;
+    throw new Error("Error getting diff path");
+  }
+
+  getDiffFile() {
+    if (this.diff_file) return this.diff_file;
+    throw new Error("Error getting diff file");
+  }
+
+  getRefresh() {
+    if (this.refresh_interval) return this.refresh_interval;
+    throw new Error("Error getting refresh interval");
+  }
+
   getDefaultConfigFile(): string {
     return `
     module.exports = {
@@ -109,7 +138,8 @@ let ConfigManager = new (class {
       rules: [],
       excludes:{},
       includes:{},
-      tableOptions:{}
+      tableOptions:{},
+      refreshInterval:30
     };
     `.trim();
   }
@@ -156,6 +186,10 @@ let ConfigManager = new (class {
     }
   }
 
+  updateManifest(man: SN.AppManifest) {
+    this.manifest = man;
+  }
+
   private async loadConfigPath(pth?: string): Promise<string | false> {
     if (!pth) {
       pth = process.cwd();
@@ -175,6 +209,11 @@ let ConfigManager = new (class {
     }
   }
 
+  private async loadRefresh() {
+    let { refreshInterval = 30 } = ConfigManager.getConfig();
+    return refreshInterval;
+  }
+
   private async loadSourcePath() {
     let rootDir = ConfigManager.getRootDir();
     let { sourceDirectory = "src" } = ConfigManager.getConfig();
@@ -183,7 +222,7 @@ let ConfigManager = new (class {
 
   private async loadBuildPath() {
     let rootDir = ConfigManager.getRootDir();
-    let { buildDirectory = "src" } = ConfigManager.getConfig();
+    let { buildDirectory = "build" } = ConfigManager.getConfig();
     return path.join(rootDir, buildDirectory);
   }
 
@@ -195,6 +234,20 @@ let ConfigManager = new (class {
   private async loadManifestPath() {
     let rootDir = ConfigManager.getRootDir();
     return path.join(rootDir, "sinc.manifest.json");
+  }
+
+  private async loadDiffPath() {
+    let rootDir = ConfigManager.getRootDir();
+    return path.join(rootDir, "sinc.diff.manifest.json");
+  }
+
+  private async loadDiffFile() {
+    try {
+      let diffString = await fsp.readFile(ConfigManager.getDiffPath(), "utf-8");
+      return JSON.parse(diffString);
+    } catch (e) {
+      return undefined;
+    }
   }
 
   private async loadRootDir(skip?: boolean) {
