@@ -1,4 +1,5 @@
 [![Build Status](https://dev.azure.com/nuvoengineering/sincronia/_apis/build/status/nuvolo.sincronia?branchName=dev)](https://dev.azure.com/nuvoengineering/sincronia/_build/latest?definitionId=15&branchName=dev)
+
 # Sincronia
 
 ## Overview
@@ -89,6 +90,17 @@ Sincronia has a few basic commands to help you get the job done
 | `init`             | **none** | Walks you through creating a basic Sincronia project. This is the recommended way to create a Sincronia project from scratch.                               | `npx sinc init`                 |
 | `push`             | **none** | Builds and pushes all files in your local Sincronia project to the ServiceNow instance in your `.env` file                                                  | `npx sinc push`                 |
 | `download <scope>` | **none** | Downloads the specified scoped app, overwriting all local files in the way. **Only use this if you know what you are doing!**                               | `npx sinc download my_test_app` |
+| `build`            | **none** | Builds the local Sincronia project and stores the files locally                                                                                             | `npx sinc build`                |
+| `deploy`           | **none** | Deploys the files in the build folder to the ServiceNow instance.                                                                                           | `npx sinc deploy`               |
+| `status`           | **none** | Lists the connected ServiceNow instance, scope, and user                                                                                                    | `npx sinc status`               |
+
+#### Using the diff option
+
+When using the `push` and `build` commands you can specify a branch to compare changes against using the `--diff` option. When using diff with build, Sincronia will build all files from the source folder but will create a `sinc.diff.manifest.json` file that tracks changes for deploy.
+
+```bash
+npx sinc build --diff master
+```
 
 ### Workflow
 
@@ -117,6 +129,10 @@ This is the configuration file for Sincronia. [Learn More](#configuration)
 #### sinc.manifest.json
 
 Keeps track of all ServiceNow files that are watched by Sincronia. **Do not manually modify it**
+
+#### sinc.diff.manifest.json
+
+Tracks changed files for build and deploy commands when using diff option.
 
 #### .env
 
@@ -176,7 +192,7 @@ function _createClass(Constructor, protoProps, staticProps) {
 
 var Example =
   /*#__PURE__*/
-  (function() {
+  (function () {
     function Example(message) {
       _classCallCheck(this, Example);
 
@@ -188,8 +204,8 @@ var Example =
         key: "sayHello",
         value: function sayHello() {
           gs.info("Hello, Sincronia!");
-        }
-      }
+        },
+      },
     ]);
 
     return Example;
@@ -215,6 +231,8 @@ module.exports = {
   // Directory where your source files will be kept and will be watched by Sincronia
   // during development.
   sourceDirectory: "src",
+  //Directory where local builds will be stored
+  buildDirectory: "build",
   // This is where you will configure your plugins. You match based on plugins.
   // Order your rules by MOST SPECIFIC extension first! The first match is the
   // only one that gets executed.
@@ -224,7 +242,9 @@ module.exports = {
   excludes: {},
   // Tables/fields to explicitly include in your Sincronia project.
   // Can override excludes if necessary.
-  includes: {}
+  includes: {},
+  //How often sincronia will refresh the manifest in development mode
+  refreshInterval: 30,
 };
 ```
 
@@ -255,8 +275,8 @@ module.exports = {
     // Excludes the `cool_script` field specifically from the `new_cool_table` table.
     // Other valid fields will be included.
     new_cool_table: {
-      cool_script: true
-    }
+      cool_script: true,
+    },
   },
   includes: {
     // Turns off the default inclusion of the `content_css` table
@@ -269,10 +289,10 @@ module.exports = {
     // represent code.
     special_code_table: {
       neat_script_field: {
-        type: "js"
-      }
-    }
-  }
+        type: "js",
+      },
+    },
+  },
 };
 ```
 
@@ -290,7 +310,7 @@ module.exports = {
       // If there is a file that ends in `.secret.ts` it will match here and
       // NO PLUGINS WILL BE RUN
       match: /\.secret\.ts$/,
-      plugins: []
+      plugins: [],
     },
     {
       // If there are just generic TypeScript files that have no other extension, they will
@@ -308,12 +328,12 @@ module.exports = {
           // In this case, we are telling the typescript plugin to only type check and
           // not transpile.
           options: {
-            transpile: false
-          }
-        }
-      ]
-    }
-  ]
+            transpile: false,
+          },
+        },
+      ],
+    },
+  ],
 };
 ```
 
