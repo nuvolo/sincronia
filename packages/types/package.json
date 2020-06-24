@@ -1,6 +1,6 @@
 {
   "name": "@sincronia/types",
-  "version": "0.3.10-alpha.0",
+  "version": "0.4.0",
   "description": "Type Declarations for Sincronia",
   "main": "index.d.ts",
   "scripts": {
@@ -15,5 +15,6 @@
   "bugs": {
     "url": "https://github.com/nuvolo/sincronia/issues"
   },
-  "homepage": "https://github.com/nuvolo/sincronia#readme"
+  "homepage": "https://github.com/nuvolo/sincronia#readme",
+  "gitHead": "67b694054cf072be150b9bd4dc3d1b01f8e24ed9"
 }

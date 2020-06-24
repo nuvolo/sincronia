@@ -38,13 +38,27 @@ export async function devCommand(args: Sinc.SharedCmdArgs) {
   scopeCheck(async () => {
     startWatching(ConfigManager.getSourcePath());
     devModeLog();
+
+    let refresher = () => {
+      refreshCommand(args, false);
+    };
+    let interval = ConfigManager.getRefresh();
+    if (interval && interval > 0) {
+      logger.info(`Checking for new manifest files every ${interval} seconds`);
+      setInterval(refresher, interval * 1000);
+    }
   });
 }
-export async function refreshCommand(args: Sinc.SharedCmdArgs) {
+export async function refreshCommand(
+  args: Sinc.SharedCmdArgs,
+  log: boolean = true
+) {
   setLogLevel(args);
   scopeCheck(async () => {
     try {
+      if (!log) setLogLevel({ logLevel: "warn" });
       await AppManager.syncManifest();
+      setLogLevel(args);
     } catch (e) {
       throw e;
     }
@@ -89,9 +103,13 @@ export async function initCommand(args: Sinc.SharedCmdArgs) {
   }
 }
 
-export async function buildCommand(args: Sinc.SharedCmdArgs) {
+export async function buildCommand(args: Sinc.BuildCmdArgs) {
   setLogLevel(args);
   try {
+    if (args.diff !== "") {
+      let files = await AppManager.gitDiff(args.diff);
+      AppManager.writeDiff(files);
+    }
     await AppManager.buildFiles();
   } catch (e) {
     throw e;
