@@ -71,4 +71,4 @@ node_modules
 junit.xml
 
 #DSstore
-packages/core/.DS_Store
+.DS_Store
