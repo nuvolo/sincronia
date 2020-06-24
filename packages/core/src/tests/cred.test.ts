@@ -52,7 +52,10 @@ test('Credentials correct when file is correct', async () => {
     expect(process.env.SN_PASSWORD).toEqual(t_pass);
     expect(process.env.SN_INSTANCE).toEqual(t_instance);
 });
-
+// Cleans up leftover files
+if (fs.existsSync(envPath)){
+    fs.unlinkSync(envPath)
+}
 
     
     
