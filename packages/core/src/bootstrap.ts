@@ -12,6 +12,5 @@ export async function init() {
   dotenv.config({
     path
   });
-  console.log(path);
   (await import("./commander")).initCommands();
 }
