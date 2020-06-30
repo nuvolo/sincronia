@@ -177,6 +177,7 @@ export async function pushFile(
   target_server: string,
   fileContext: Sinc.FileContext,
   processFile: boolean = true,
+  devMode: boolean = false,
   retries: number = 0
 ): Promise<boolean> {
   const fileSummary = `${fileContext.tableName}/${fileContext.name}(${fileContext.sys_id})`;
@@ -198,7 +199,7 @@ export async function pushFile(
           logger.error(
             `Failed to push ${fileSummary}. Recieved an unexpected response (${response.status})`
           );
-          if (retries === NETWORK_RETRIES) {
+          if (devMode || retries === NETWORK_RETRIES) {
             logger.debug(JSON.stringify(response, null, 2));
           }
           throw new Error();
@@ -210,13 +211,14 @@ export async function pushFile(
       return false;
     } catch (e) {
       logger.error(`Failed to push ${fileSummary}`);
-      if (retries < NETWORK_RETRIES) {
+      if (!devMode && retries < NETWORK_RETRIES) {
         logger.info(`Retrying to push ${fileSummary}. Retries: ${retries + 1}`);
         await wait(NETWORK_TIMEOUT);
         return await pushFile(
           target_server,
           fileContext,
           processFile,
+          devMode,
           retries + 1
         );
       } else {
