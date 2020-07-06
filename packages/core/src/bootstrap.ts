@@ -7,7 +7,7 @@ export async function init() {
   } catch (e) {
     console.log(e);
   }
-  
+
   let path = ConfigManager.getEnvPath();
   dotenv.config({
     path
