@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - 2020-07-06
+
+### Added
+
+- updated deps version with security vulnerabilities [@collinparker-nuvolo]
+- in dev mode, retries are disabledd from [@nrdurkin]
+
 ## [0.4.0] - 2020-06-19
 
 ### Added
@@ -47,7 +54,10 @@ All notable changes to this project will be documented in this file.
 
 - nothing removed
 
+[0.4.1]: https://github.com/nuvolo/sincronia/releases/tag/v0.4.1
+[0.4.0]: https://github.com/nuvolo/sincronia/releases/tag/v0.4.0
 [0.3.6]: https://github.com/nuvolo/
 [0.3.10-alpha.0]: https://github.com/nuvolo/sincronia/releases/tag/v0.3.10-alpha.0
 [@nrdurkin]: https://github.com/nrdurkin
 [@tyler-ed]: https://github.com/tyler-ed
+[@collinparker-nuvolo]: https://github.com/collinparker-nuvolo
