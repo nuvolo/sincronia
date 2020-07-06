@@ -3,6 +3,6 @@
     "outDir": "./dist",
     "baseUrl": "./"
   },
-  "types": ["jest"],
+  "types": ["jest", "node"],
   "extends": "../../tsconfig.json"
 }
