@@ -56,9 +56,10 @@ export async function parseFileNameParams(filePath: string) {
   const ext = getExtension(filePath);
   const resourcePath = path.dirname(filePath).split(path.sep);
   const resources = resourcePath.slice(-3);
-  const targetField = path.basename(filePath, ext);
+  let targetField = path.basename(filePath, ext);
   const tableName = resources[1];
   const name = resources[2];
+  if (tableName === "sys_atf_step") targetField = "inputs.script";
   return await _getConfigFromPath({
     filePath,
     tableName,
