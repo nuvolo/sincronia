@@ -24,6 +24,7 @@ export module Sinc {
     excludes?: TablePropMap;
     tableOptions: ITableOptionsMap;
     refreshInterval: number;
+    fileDelimiter: string;
   }
 
   interface ITableOptionsMap {

@@ -60,16 +60,23 @@ export async function getManifestWithFiles(
       excludes = {},
       tableOptions = {}
     } = ConfigManager.getConfig();
+    const fileDelimiter = ConfigManager.getFileDelimiter();
     let response;
     if (creds) {
       let client = getBasicAxiosClient(creds);
       response = await client.post(endpoint, {
         includes,
         excludes,
-        tableOptions
+        tableOptions,
+        fileDelimiter
       });
     } else {
-      response = await api.post(endpoint, { includes, excludes, tableOptions });
+      response = await api.post(endpoint, {
+        includes,
+        excludes,
+        tableOptions,
+        fileDelimiter
+      });
     }
     return response.data.result as SN.AppManifest;
   } catch (e) {
@@ -85,10 +92,12 @@ export async function getManifest(scope: string): Promise<SN.AppManifest> {
       excludes = {},
       tableOptions = {}
     } = ConfigManager.getConfig();
+    const fileDelimiter = ConfigManager.getFileDelimiter();
     let response = await api.post(endpoint, {
       includes,
       excludes,
-      tableOptions
+      tableOptions,
+      fileDelimiter
     });
     return response.data.result as SN.AppManifest;
   } catch (e) {
@@ -102,7 +111,8 @@ export async function getMissingFiles(
   let endpoint = `api/x_nuvo_sinc/sinc/bulkDownload`;
   try {
     const { tableOptions = {} } = ConfigManager.getConfig();
-    const payload = { missingFiles, tableOptions };
+    const fileDelimiter = ConfigManager.getFileDelimiter();
+    const payload = { missingFiles, tableOptions, fileDelimiter };
     let response = await api.post(endpoint, payload);
     return response.data.result as SN.TableMap;
   } catch (e) {

@@ -11,7 +11,8 @@ const DEFAULT_CONFIG: Sinc.Config = {
   includes,
   excludes,
   tableOptions: {},
-  refreshInterval: 30
+  refreshInterval: 30,
+  fileDelimiter: ":"
 };
 
 let ConfigManager = new (class {
@@ -26,6 +27,7 @@ let ConfigManager = new (class {
   private diff_path: string | undefined;
   private diff_file: Sinc.DiffFile | undefined;
   private refresh_interval: number | undefined;
+  private file_delimiter: string | undefined;
 
   constructor() {}
 
@@ -65,6 +67,9 @@ let ConfigManager = new (class {
 
       const refresh = await this.loadRefresh();
       if (refresh) this.refresh_interval = refresh;
+
+      const file_delimiter = await this.loadFileDelimiter();
+      if (file_delimiter) this.file_delimiter = file_delimiter;
     } catch (e) {
       throw e;
     }
@@ -130,18 +135,13 @@ let ConfigManager = new (class {
     throw new Error("Error getting refresh interval");
   }
 
+  getFileDelimiter() {
+    if (this.file_delimiter) return this.file_delimiter;
+    throw new Error("Error getting file delimiter");
+  }
+
   getDefaultConfigFile(): string {
-    return `
-    module.exports = {
-      sourceDirectory: "src",
-      buildDirectory: "build",
-      rules: [],
-      excludes:{},
-      includes:{},
-      tableOptions:{},
-      refreshInterval:30
-    };
-    `.trim();
+    return `module.exports = ${JSON.stringify(DEFAULT_CONFIG)};`.trim();
   }
 
   private async loadConfig(skipConfigPath = false): Promise<Sinc.Config> {
@@ -210,19 +210,25 @@ let ConfigManager = new (class {
   }
 
   private async loadRefresh() {
-    let { refreshInterval = 30 } = ConfigManager.getConfig();
+    let {
+      refreshInterval = DEFAULT_CONFIG.refreshInterval
+    } = ConfigManager.getConfig();
     return refreshInterval;
   }
 
   private async loadSourcePath() {
     let rootDir = ConfigManager.getRootDir();
-    let { sourceDirectory = "src" } = ConfigManager.getConfig();
+    let {
+      sourceDirectory = DEFAULT_CONFIG.sourceDirectory
+    } = ConfigManager.getConfig();
     return path.join(rootDir, sourceDirectory);
   }
 
   private async loadBuildPath() {
     let rootDir = ConfigManager.getRootDir();
-    let { buildDirectory = "build" } = ConfigManager.getConfig();
+    let {
+      buildDirectory = DEFAULT_CONFIG.buildDirectory
+    } = ConfigManager.getConfig();
     return path.join(rootDir, buildDirectory);
   }
 
@@ -258,6 +264,13 @@ let ConfigManager = new (class {
     } else {
       return process.cwd();
     }
+  }
+
+  private async loadFileDelimiter() {
+    let {
+      fileDelimiter = DEFAULT_CONFIG.fileDelimiter
+    } = ConfigManager.getConfig();
+    return fileDelimiter;
   }
 })();
 
