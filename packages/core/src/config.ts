@@ -12,7 +12,7 @@ const DEFAULT_CONFIG: Sinc.Config = {
   excludes,
   tableOptions: {},
   refreshInterval: 30,
-  fileDelimiter: ":"
+  fileDelimiter: "="
 };
 
 let ConfigManager = new (class {
@@ -141,7 +141,11 @@ let ConfigManager = new (class {
   }
 
   getDefaultConfigFile(): string {
-    return `module.exports = ${JSON.stringify(DEFAULT_CONFIG)};`.trim();
+    return `module.exports = ${JSON.stringify(
+      DEFAULT_CONFIG,
+      null,
+      2
+    )};`.trim();
   }
 
   private async loadConfig(skipConfigPath = false): Promise<Sinc.Config> {
