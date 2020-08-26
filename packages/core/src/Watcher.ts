@@ -22,7 +22,7 @@ const processQueue = debounce(() => {
             logger.error("No server configured for push!") ||
             "";
           if (targetServer && payload) {
-            pushFile(targetServer, payload)
+            pushFile(targetServer, payload, true, true)
               .then(result => {
                 logFilePush(payload, result);
               })
