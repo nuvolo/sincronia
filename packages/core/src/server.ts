@@ -1,5 +1,5 @@
 import { SN, Sinc } from "@sincronia/types";
-import axios, { AxiosRequestConfig, AxiosInstance } from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 import { wait, chunkArr } from "./utils";
 import PluginManager from "./PluginManager";
 import { logger } from "./Logger";
@@ -110,6 +110,17 @@ export async function getMissingFiles(
   }
 }
 
+async function pushATFfile(file: string, sys_id: string) {
+  let endpoint = `api/x_nuvo_sinc/sinc/pushATFfile`;
+  try {
+    let payload = { file, sys_id };
+    let response = await api.post(endpoint, payload);
+    return response;
+  } catch (e) {
+    throw e;
+  }
+}
+
 function buildFileEndpoint(payload: Sinc.FileContext) {
   const { tableName, sys_id } = payload;
   return [TABLE_API, tableName, sys_id].join("/");
@@ -127,8 +138,9 @@ async function buildFileRequestObj(
       processFile
     );
     const { targetField } = filePayload;
-    const data: any = {};
+    let data: any = {};
     data[targetField] = fileContents;
+    if (filePayload.tableName === "sys_atf_step") data = fileContents;
     return { url, data, method: "PATCH" };
   } catch (e) {
     throw e;
@@ -188,7 +200,11 @@ export async function pushFile(
         fileContext,
         processFile
       );
-      let response = await pushUpdate(requestObj);
+      let response =
+        fileContext.tableName === "sys_atf_step"
+          ? await pushATFfile(requestObj.data, fileContext.sys_id)
+          : await pushUpdate(requestObj);
+
       logger.debug(`Attempting to push ${fileSummary}`);
       if (response) {
         if (response.status === 404) {
