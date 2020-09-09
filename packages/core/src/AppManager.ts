@@ -25,6 +25,7 @@ import {
 } from "./server";
 import { PATH_DELIMITER } from "./constants";
 import PluginManager from "./PluginManager";
+import * as AppUtils from "./appUtils";
 import ProgressBar from "progress";
 
 const fsp = fs.promises;
@@ -39,70 +40,7 @@ class AppManager {
     );
   }
 
-  private async writeNewFiles(
-    file: SN.File,
-    parentDir: string,
-    content: string,
-    skipFileCheck: boolean
-  ) {
-    let exists = true;
-    if (!skipFileCheck) {
-      let files = await fsp.readdir(parentDir);
-      let matchingFiles = files.filter(f => {
-        let reg = new RegExp(file.name + "\\.*$");
-        return reg.test(f);
-      });
-      exists = matchingFiles.length > 0;
-    }
-
-    if (skipFileCheck || !exists) {
-      await fsp.writeFile(
-        path.join(parentDir, `${file.name}.${file.type}`),
-        content
-      );
-    }
-  }
-
-  private async createNewFiles(
-    manifest: SN.AppManifest,
-    skipFileCheck: boolean
-  ) {
-    const { tables } = manifest;
-    for (let tableName in tables) {
-      let table = tables[tableName];
-      let tableFolder = path.join(ConfigManager.getSourcePath(), tableName);
-      for (let recKey in table.records) {
-        const rec = table.records[recKey];
-        let recPath = path.join(tableFolder, rec.name);
-        await fsp.mkdir(recPath, { recursive: true });
-        for (let file of rec.files) {
-          const content = file.content || "";
-          await this.writeNewFiles(file, recPath, content, skipFileCheck);
-          delete file.content;
-        }
-      }
-    }
-  }
-
-  async processManifest(
-    manifest: SN.AppManifest,
-    skipFileCheckOnFileGeneration?: boolean
-  ) {
-    if (
-      !skipFileCheckOnFileGeneration &&
-      typeof skipFileCheckOnFileGeneration !== "boolean"
-    ) {
-      skipFileCheckOnFileGeneration = false;
-    }
-    const skipFileCheck = skipFileCheckOnFileGeneration;
-    await this.createNewFiles(manifest, skipFileCheck);
-    await this.writeManifestFile(manifest);
-  }
-
-  async downloadWithFiles(
-    scope: string,
-    skipFileCheck?: boolean
-  ): Promise<any> {
+  async downloadWithFiles(scope: string): Promise<any> {
     try {
       let answers: { confirmed: boolean } = await inquirer.prompt([
         {
@@ -119,7 +57,7 @@ class AppManager {
       logger.info("Downloading manifest and files...");
       let man = await getManifestWithFiles(scope);
       logger.info("Creating local files from manifest...");
-      await this.processManifest(man, skipFileCheck);
+      await AppUtils.processManifest(man);
       logger.success("Download complete ✅");
     } catch (e) {
       logger.error("Encountered error while performing download ❌");
