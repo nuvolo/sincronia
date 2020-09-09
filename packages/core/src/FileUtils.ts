@@ -1,6 +1,7 @@
-import { SN } from "@sincronia/types";
+import { SN, Sinc } from "@sincronia/types";
 import fs, { promises as fsp } from "fs";
 import path from "path";
+import ConfigManager from "./config";
 
 export const SNFileExists = (parentDirPath: string) => async (
   file: SN.File
@@ -46,8 +47,108 @@ export const pathExists = async (path: string): Promise<boolean> => {
   }
 };
 
-export const appendToPath = (prefix: string) => (suffix: string) =>
+export const appendToPath = (prefix: string) => (suffix: string): string =>
   path.join(prefix, suffix);
+
+/**
+ * Detects if a path is under a parent directory
+ * @param parentPath full path to parent directory
+ * @param potentialChildPath full path to child directory
+ */
+export const isUnderPath = (
+  parentPath: string,
+  potentialChildPath: string
+): boolean => {
+  const parentTokens = parentPath.split(path.sep);
+  const childTokens = potentialChildPath.split(path.sep);
+  return parentTokens.every((token, index) => token === childTokens[index]);
+};
+
+const getFileExtension = (filePath: string): string => {
+  try {
+    return (
+      "." +
+      path
+        .basename(filePath)
+        .split(".")
+        .slice(1)
+        .join(".")
+    );
+  } catch (e) {
+    return "";
+  }
+};
+
+const getTargetFieldFromPath = (
+  filePath: string,
+  table: string,
+  ext: string
+): string => {
+  return table === "sys_atf_step"
+    ? "inputs.script"
+    : path.basename(filePath, ext);
+};
+
+export const getFileContextFromPath = (
+  filePath: string
+): Sinc.FileContext | undefined => {
+  const ext = getFileExtension(filePath);
+  const [tableName, recordName] = path
+    .dirname(filePath)
+    .split(path.sep)
+    .slice(-2);
+  const targetField = getTargetFieldFromPath(filePath, tableName, ext);
+  const manifest = ConfigManager.getManifest();
+  if (!manifest) {
+    throw new Error("No manifest has been loaded!");
+  }
+  const { tables, scope } = manifest;
+  try {
+    const { records } = tables[tableName];
+    const record = records[recordName];
+    const { files, sys_id } = record;
+    const field = files.find(file => file.name === targetField);
+    if (!field) {
+      return undefined;
+    }
+    return {
+      filePath,
+      ext,
+      sys_id,
+      name: recordName,
+      scope,
+      tableName,
+      targetField
+    };
+  } catch (e) {
+    return undefined;
+  }
+};
+
+export const toAbsolutePath = (p: string): string =>
+  path.isAbsolute(p) ? p : path.join(process.cwd(), p);
+
+export const isDirectory = async (p: string): Promise<boolean> => {
+  const stats = await fsp.stat(p);
+  return stats.isDirectory();
+};
+
+export const getPathsInPath = async (p: string): Promise<string[]> => {
+  if (!isUnderPath(ConfigManager.getSourcePath(), p)) {
+    return [];
+  }
+  const isDir = await isDirectory(p);
+  if (!isDir) {
+    return [p];
+  } else {
+    const childPaths = await fsp.readdir(p);
+    const pathPromises = childPaths.map(childPath =>
+      getPathsInPath(path.resolve(p, childPath))
+    );
+    const stackedPaths = await Promise.all(pathPromises);
+    return stackedPaths.flat();
+  }
+};
 
 export const writeSNFileIfNotExists = writeSNFileCurry(true);
 export const writeSNFileForce = writeSNFileCurry(false);
