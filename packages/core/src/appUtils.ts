@@ -184,7 +184,7 @@ export const findMissingFiles = async (
   return missing;
 };
 
-const processMissingFiles = async (newManifest: SN.AppManifest) => {
+export const processMissingFiles = async (newManifest: SN.AppManifest) => {
   try {
     const missing = await findMissingFiles(newManifest);
     const filesToProcess = await SNClient.getMissingFiles(missing);
