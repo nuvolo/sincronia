@@ -10,7 +10,6 @@ import inquirer from "inquirer";
 import {
   getManifestWithFiles,
   getManifest,
-  getMissingFiles,
   pushFiles,
   deployFiles,
   getCurrentScope,
@@ -18,7 +17,6 @@ import {
   swapServerScope,
   createUpdateSet,
   getCurrentUpdateSetUserPref,
-  getCurrentAppUserPrefSysId,
   getUserSysId,
   updateCurrentUpdateSetUserPref,
   createCurrentUpdateSetUserPref
@@ -76,7 +74,7 @@ class AppManager {
         logger.info("Writing new manifest file...");
         this.writeManifestFile(newManifest);
         logger.info("Finding and creating missing files...");
-        await this.reconcileDifferences(newManifest);
+        await AppUtils.processMissingFiles(newManifest);
         ConfigManager.updateManifest(newManifest);
         logger.success("Refresh complete! ✅");
       } catch (e) {
@@ -86,124 +84,6 @@ class AppManager {
     } catch (e) {
       logger.error("Encountered error while refreshing! ❌");
       logger.error(e.toString());
-    }
-  }
-
-  async reconcileDifferences(manifest: SN.AppManifest) {
-    try {
-      let missing = await this.determineMissing(manifest);
-      let missingFileMap = await getMissingFiles(missing);
-      await this.loadMissingFiles(missingFileMap);
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async determineMissing(
-    manifest: SN.AppManifest
-  ): Promise<SN.MissingFileTableMap> {
-    try {
-      let missing: SN.MissingFileTableMap = {};
-      const { tables } = manifest;
-      //go through each table
-      for (let tableName in tables) {
-        let table = tables[tableName];
-        let tablePath = path.join(ConfigManager.getSourcePath(), tableName);
-        try {
-          await fsp.access(tablePath, fs.constants.F_OK);
-        } catch (e) {
-          this.noteMissingTable(missing, table, tableName);
-          continue;
-        }
-        //go through records
-        for (let recName in table.records) {
-          let record = table.records[recName];
-          let recPath = path.join(tablePath, recName);
-          try {
-            await fsp.access(recPath, fs.constants.F_OK);
-          } catch (e) {
-            this.noteMissingRecord(missing, record, tableName);
-            continue;
-          }
-          //go through files
-          for (let file of record.files) {
-            let fileList = await fsp.readdir(recPath);
-            let matchingFiles = fileList.filter(f => {
-              let reg = new RegExp(file.name + ".*$");
-              return reg.test(f);
-            });
-            let exists = matchingFiles.length > 0;
-            if (!exists) {
-              this.noteMissingFile(missing, file, tableName, record);
-            }
-          }
-        }
-      }
-      return missing;
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  private noteMissingFile(
-    missingObj: SN.MissingFileTableMap,
-    file: SN.File,
-    tableName: string,
-    record: SN.MetaRecord
-  ) {
-    if (!missingObj.hasOwnProperty(tableName)) {
-      missingObj[tableName] = {};
-    }
-    if (!missingObj[tableName].hasOwnProperty(record.sys_id)) {
-      missingObj[tableName][record.sys_id] = [];
-    }
-    missingObj[tableName][record.sys_id].push({
-      name: file.name,
-      type: file.type
-    });
-  }
-  private noteMissingRecord(
-    missingObj: SN.MissingFileTableMap,
-    record: SN.MetaRecord,
-    tableName: string
-  ) {
-    for (let file of record.files) {
-      this.noteMissingFile(missingObj, file, tableName, record);
-    }
-  }
-
-  private noteMissingTable(
-    missingObj: SN.MissingFileTableMap,
-    table: SN.TableConfig,
-    tableName: string
-  ) {
-    for (let recName in table.records) {
-      let record = table.records[recName];
-      this.noteMissingRecord(missingObj, record, tableName);
-    }
-  }
-
-  private async loadMissingFiles(fileMap: SN.TableMap) {
-    try {
-      for (let tableName in fileMap) {
-        let tablePath = path.join(ConfigManager.getSourcePath(), tableName);
-        let tableConfig = fileMap[tableName];
-        for (let recName in tableConfig.records) {
-          let recPath = path.join(tablePath, recName);
-          let record = tableConfig.records[recName];
-          try {
-            await fsp.access(recPath, fs.constants.F_OK);
-          } catch (e) {
-            await fsp.mkdir(recPath, { recursive: true });
-          }
-          for (let file of record.files) {
-            let filePath = path.join(recPath, `${file.name}.${file.type}`);
-            await fsp.writeFile(filePath, file.content || "");
-          }
-        }
-      }
-    } catch (e) {
-      throw new Error("failed to load missing files");
     }
   }
 
