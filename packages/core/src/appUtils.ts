@@ -188,7 +188,7 @@ const processMissingFiles = async (newManifest: SN.AppManifest) => {
   try {
     const missing = await findMissingFiles(newManifest);
     const filesToProcess = await SNClient.getMissingFiles(missing);
-    await processTablesInManifest(filesToProcess);
+    await processTablesInManifest(filesToProcess, false);
   } catch (e) {
     throw e;
   }
