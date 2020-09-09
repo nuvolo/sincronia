@@ -57,7 +57,7 @@ class AppManager {
       logger.info("Downloading manifest and files...");
       let man = await getManifestWithFiles(scope);
       logger.info("Creating local files from manifest...");
-      await AppUtils.processManifest(man);
+      await AppUtils.processManifest(man, true);
       logger.success("Download complete ✅");
     } catch (e) {
       logger.error("Encountered error while performing download ❌");
