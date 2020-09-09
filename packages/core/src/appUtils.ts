@@ -4,10 +4,13 @@ import * as fUtils from "./FileUtils";
 import * as SNClient from "./server";
 import ConfigManager from "./config";
 
-const processFilesInManRec = async (recPath: string, rec: SN.MetaRecord) => {
-  const filePromises = rec.files.map(file =>
-    fUtils.writeSNFileIfNotExists(file, recPath)
-  );
+const processFilesInManRec = async (
+  recPath: string,
+  rec: SN.MetaRecord,
+  forceWrite: boolean
+) => {
+  const fileWrite = fUtils.writeSNFileCurry(forceWrite);
+  const filePromises = rec.files.map(file => fileWrite(file, recPath));
   await Promise.all(filePromises);
   // Side effect, remove content from files so it doesn't get written to manifest
   rec.files.forEach(file => {
@@ -17,7 +20,8 @@ const processFilesInManRec = async (recPath: string, rec: SN.MetaRecord) => {
 
 const processRecsInManTable = async (
   tablePath: string,
-  table: SN.TableConfig
+  table: SN.TableConfig,
+  forceWrite: boolean
 ) => {
   const { records } = table;
   const recKeys = Object.keys(records);
@@ -31,7 +35,7 @@ const processRecsInManTable = async (
     (acc: Promise<void>[], recKey: string) => {
       return [
         ...acc,
-        processFilesInManRec(recKeyToPath(recKey), records[recKey])
+        processFilesInManRec(recKeyToPath(recKey), records[recKey], forceWrite)
       ];
     },
     [] as Promise<void>[]
@@ -39,19 +43,26 @@ const processRecsInManTable = async (
   return Promise.all(filePromises);
 };
 
-const processTablesInManifest = async (tables: SN.TableMap) => {
+const processTablesInManifest = async (
+  tables: SN.TableMap,
+  forceWrite: boolean
+) => {
   const tableNames = Object.keys(tables);
   const tablePromises = tableNames.map(tableName => {
     return processRecsInManTable(
       path.join(ConfigManager.getSourcePath(), tableName),
-      tables[tableName]
+      tables[tableName],
+      forceWrite
     );
   });
   await Promise.all(tablePromises);
 };
 
-export const processManifest = async (manifest: SN.AppManifest) => {
-  await processTablesInManifest(manifest.tables);
+export const processManifest = async (
+  manifest: SN.AppManifest,
+  forceWrite = false
+) => {
+  await processTablesInManifest(manifest.tables, forceWrite);
   await fUtils.writeFileForce(
     ConfigManager.getManifestPath(),
     JSON.stringify(manifest, null, 2)

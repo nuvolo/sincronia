@@ -15,7 +15,7 @@ export const SNFileExists = (parentDirPath: string) => async (
   }
 };
 
-const writeSNFileCurry = (checkExists: boolean) => async (
+export const writeSNFileCurry = (checkExists: boolean) => async (
   file: SN.File,
   parentPath: string
 ): Promise<void> => {
