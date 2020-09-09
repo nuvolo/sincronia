@@ -151,7 +151,7 @@ class AppManager {
     }
   }
 
-  private async reconcileDifferences(manifest: SN.AppManifest) {
+  async reconcileDifferences(manifest: SN.AppManifest) {
     try {
       let missing = await this.determineMissing(manifest);
       let missingFileMap = await getMissingFiles(missing);
@@ -161,7 +161,7 @@ class AppManager {
     }
   }
 
-  private async determineMissing(
+  async determineMissing(
     manifest: SN.AppManifest
   ): Promise<SN.MissingFileTableMap> {
     try {
