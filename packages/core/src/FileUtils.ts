@@ -8,8 +8,8 @@ export const SNFileExists = (parentDirPath: string) => async (
 ): Promise<boolean> => {
   try {
     const files = await fsp.readdir(parentDirPath);
-    const reg = new RegExp(`${file.name}\\.*$`);
-    return !!files.find(reg.test);
+    const reg = new RegExp(`${file.name}\..*$`);
+    return !!files.find(f => reg.test(f));
   } catch (e) {
     return false;
   }

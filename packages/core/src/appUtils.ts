@@ -129,19 +129,20 @@ const checkRecordsForMissing = async (
     fUtils.pathExists(recPaths[index])
   );
   const checks = await Promise.all(checkPromises);
-  checks.forEach((check, index) => {
+  const fileCheckPromises = checks.map(async (check, index) => {
     const recName = recNames[index];
     const record = records[recName];
     if (!check) {
       markRecordMissing(record, missingFunc);
       return;
     }
-    checkFilesForMissing(
+    await checkFilesForMissing(
       recPaths[index],
       record.files,
       missingFunc(record.sys_id)
     );
   });
+  await Promise.all(fileCheckPromises);
 };
 
 const checkTablesForMissing = async (
@@ -155,18 +156,20 @@ const checkTablesForMissing = async (
     fUtils.pathExists(tablePaths[index])
   );
   const checks = await Promise.all(checkPromises);
-  checks.forEach((check, index) => {
+
+  const recCheckPromises = checks.map(async (check, index) => {
     const tableName = tableNames[index];
     if (!check) {
       markTableMissing(tables[tableName], tableName, missingFunc);
       return;
     }
-    checkRecordsForMissing(
+    await checkRecordsForMissing(
       tablePaths[index],
       tables[tableName].records,
       missingFunc(tableName)
     );
   });
+  await Promise.all(recCheckPromises);
 };
 
 export const findMissingFiles = async (
@@ -180,7 +183,7 @@ export const findMissingFiles = async (
     tables,
     missingTableFunc
   );
-
+  // missing gets mutated along the way as things get processed
   return missing;
 };
 
