@@ -20,6 +20,10 @@ export const writeSNFileCurry = (checkExists: boolean) => async (
   parentPath: string
 ): Promise<void> => {
   const { name, type, content = "" } = file;
+  // content can sometimes be null
+  if (!content) {
+    content === "";
+  }
   const write = async () => {
     const fullPath = path.join(parentPath, `${name}.${type}`);
     return await fsp.writeFile(fullPath, content);
