@@ -3,6 +3,7 @@ import inquirer from "inquirer";
 import { getAppList, getManifestWithFiles } from "./server";
 import ConfigManager from "./config";
 import AppManager from "./AppManager";
+import * as AppUtils from "./appUtils";
 import fs from "fs";
 const fsp = fs.promises;
 import { logger } from "./Logger";
@@ -124,7 +125,7 @@ async function downloadApp(answers: Sinc.LoginAnswers, scope: string) {
   try {
     let { username: user, password, instance } = answers;
     let man = await getManifestWithFiles(scope, { user, password, instance });
-    await AppManager.processManifest(man);
+    await AppUtils.processManifest(man);
   } catch (e) {
     logger.error(e.toString());
     throw new Error("Failed to download files!");
