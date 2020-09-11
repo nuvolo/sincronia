@@ -124,3 +124,25 @@ export function logDeploy(
 function spacer() {
   logger.info("");
 }
+
+export const logPushResults = (results: Sinc.PushResult[]): void => {
+  const unsuccessful = results.filter(r => !r.success);
+  const logr = logger.getInternalLogger();
+  const label = (content: string) => chalk.bold.blue(content);
+  const success = (content: string) => chalk.bold.green(content);
+  const fail = (content: string) => chalk.bold.red(content);
+  logr.info(`${label("Total Records:")} ${results.length}`);
+  logr.info(
+    `${label("Successful Pushes:")} ${success(
+      results.length - unsuccessful.length + ""
+    )}`
+  );
+  logr.info(`${label("Failed Pushes:")} ${fail(unsuccessful.length + "")}`);
+  if (unsuccessful.length === 0) {
+    return;
+  }
+  logger.error("-".repeat(60));
+  unsuccessful.forEach(({ message }, index) => {
+    logger.error(`${index + 1}. ${message}`);
+  });
+};

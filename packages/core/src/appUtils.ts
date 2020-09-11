@@ -323,19 +323,31 @@ const getProgTick = (
   return undefined;
 };
 
-export const pushFiles = async (
-  encodedPaths: string,
-  skipPrompt = false
-): Promise<Sinc.PushResult[]> => {
+export const getValidPaths = async (
+  encodedPaths: string
+): Promise<string[]> => {
   const pathChunks = encodedPaths
     .split(PATH_DELIMITER)
     .filter(p => p && p !== "");
   const pathExistsPromises = pathChunks.map(fUtils.pathExists);
   const pathExistsCheck = await Promise.all(pathExistsPromises);
-  const validPaths = pathChunks.filter((_, index) => pathExistsCheck[index]);
+  return pathChunks.filter((_, index) => pathExistsCheck[index]);
+};
+
+export const getFilesAndCount = async (
+  encodedPaths: string
+): Promise<[Sinc.AppFileContextTree, number]> => {
+  const validPaths = await getValidPaths(encodedPaths);
   const appFileCtxs = await getAppFilesInPaths(validPaths);
   const appFileTree = groupAppFiles(appFileCtxs);
   const recordCount = countRecsInTree(appFileTree);
+  return [appFileTree, recordCount];
+};
+
+export const pushFiles = async (
+  appFileTree: Sinc.AppFileContextTree,
+  recordCount: number
+): Promise<Sinc.PushResult[]> => {
   const tick = getProgTick(logger.getLogLevel(), recordCount);
   const buildAndPushPromises = Object.keys(appFileTree).map(table =>
     buildAndPush(table, appFileTree[table], tick)
