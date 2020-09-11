@@ -38,7 +38,7 @@ export const writeSNFileCurry = (checkExists: boolean) => async (
   }
 };
 
-export const createDirRecursively = async (path: string) => {
+export const createDirRecursively = async (path: string): Promise<void> => {
   await fsp.mkdir(path, { recursive: true });
 };
 
@@ -152,6 +152,11 @@ export const getPathsInPath = async (p: string): Promise<string[]> => {
     const stackedPaths = await Promise.all(pathPromises);
     return stackedPaths.flat();
   }
+};
+
+export const summarizeFile = (ctx: Sinc.FileContext): string => {
+  const { tableName, name: recordName, sys_id } = ctx;
+  return `${tableName}/${recordName}/${sys_id}`;
 };
 
 export const writeSNFileIfNotExists = writeSNFileCurry(true);

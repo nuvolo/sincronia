@@ -1,8 +1,17 @@
 import { SN, Sinc } from "@sincronia/types";
 import path from "path";
+import ProgressBar from "progress";
 import * as fUtils from "./FileUtils";
 import * as SNClient from "./server";
 import ConfigManager from "./config";
+import { PATH_DELIMITER, PUSH_RETRY_LIMIT, PUSH_RETRY_WAIT } from "./constants";
+import PluginManager from "./PluginManager";
+import {
+  defaultClient as clientFactory,
+  processPushResponse,
+  retryOnErr
+} from "./snClient";
+import { logger } from "./Logger";
 
 const processFilesInManRec = async (
   recPath: string,
@@ -61,7 +70,7 @@ const processTablesInManifest = async (
 export const processManifest = async (
   manifest: SN.AppManifest,
   forceWrite = false
-) => {
+): Promise<void> => {
   await processTablesInManifest(manifest.tables, forceWrite);
   await fUtils.writeFileForce(
     ConfigManager.getManifestPath(),
@@ -187,7 +196,9 @@ export const findMissingFiles = async (
   return missing;
 };
 
-export const processMissingFiles = async (newManifest: SN.AppManifest) => {
+export const processMissingFiles = async (
+  newManifest: SN.AppManifest
+): Promise<void> => {
   try {
     const missing = await findMissingFiles(newManifest);
     const filesToProcess = await SNClient.getMissingFiles(missing);
@@ -217,13 +228,16 @@ const getAppFilesInPaths = async (
   return appFileLists.flat();
 };
 
-type AppFileTree = Record<
-  string,
-  Record<string, Record<string, Sinc.FileContext>>
->;
+const countRecsInTree = (tree: Sinc.AppFileContextTree): number => {
+  return Object.keys(tree).reduce((acc, table) => {
+    return acc + Object.keys(tree[table]).length;
+  }, 0);
+};
 
-export const groupAppFiles = (fileCtxs: Sinc.FileContext[]): AppFileTree => {
-  const fillIfNotExists = (rec: Record<string, any>, key: string) => {
+export const groupAppFiles = (
+  fileCtxs: Sinc.FileContext[]
+): Sinc.AppFileContextTree => {
+  const fillIfNotExists = (rec: Record<string, unknown>, key: string) => {
     if (!rec[key]) {
       rec[key] = {};
     }
@@ -236,6 +250,96 @@ export const groupAppFiles = (fileCtxs: Sinc.FileContext[]): AppFileTree => {
       tree[tableName][sys_id][targetField] = cur;
       return tree;
     },
-    {} as AppFileTree
+    {} as Sinc.AppFileContextTree
   );
+};
+
+const buildRec = async (
+  rec: Sinc.RecordContextMap
+): Promise<Record<string, string>> => {
+  const fields = Object.keys(rec);
+  const buildPromises = fields.map(field => {
+    return PluginManager.getFinalFileContents(rec[field]);
+  });
+  const builtFiles = await Promise.all(buildPromises);
+  return builtFiles.reduce(
+    (acc, content, index) => {
+      const fieldName = fields[index];
+      return { ...acc, [fieldName]: content };
+    },
+    {} as Record<string, string>
+  );
+};
+
+const summarizeRecord = (table: string, sysId: string): string =>
+  `${table}=>${sysId}`;
+
+const buildAndPush = async (
+  table: string,
+  tableTree: Sinc.TableContextTree,
+  tick?: () => void
+): Promise<Sinc.PushResult[]> => {
+  const recIds = Object.keys(tableTree);
+  const buildPromises = recIds.map(sysId => buildRec(tableTree[sysId]));
+  const builtRecs = await Promise.all(buildPromises);
+  const client = clientFactory();
+  const pushPromises = builtRecs.map(
+    async (fieldMap, index): Promise<Sinc.PushResult> => {
+      try {
+        const res = await retryOnErr(
+          () => client.updateRecord(table, recIds[index], fieldMap),
+          PUSH_RETRY_LIMIT,
+          PUSH_RETRY_WAIT
+        );
+        return processPushResponse(res, summarizeRecord(table, recIds[index]));
+      } catch (e) {
+        return { success: false, message: "Too many retries" };
+      } finally {
+        // this block always runs, even if we return
+        if (tick) {
+          tick();
+        }
+      }
+    }
+  );
+  const pushResults = await Promise.all(pushPromises);
+  return pushResults;
+};
+
+const getProgTick = (
+  logLevel: string,
+  total: number
+): (() => void) | undefined => {
+  if (logLevel === "info") {
+    const progBar = new ProgressBar(":bar :current/:total (:percent)", {
+      total,
+      width: 60
+    });
+    return () => {
+      progBar.tick();
+    };
+  }
+  // no-op at other log levels
+  return undefined;
+};
+
+export const pushFiles = async (
+  encodedPaths: string,
+  skipPrompt = false
+): Promise<Sinc.PushResult[]> => {
+  const pathChunks = encodedPaths
+    .split(PATH_DELIMITER)
+    .filter(p => p && p !== "");
+  const pathExistsPromises = pathChunks.map(fUtils.pathExists);
+  const pathExistsCheck = await Promise.all(pathExistsPromises);
+  const validPaths = pathChunks.filter((_, index) => pathExistsCheck[index]);
+  const appFileCtxs = await getAppFilesInPaths(validPaths);
+  const appFileTree = groupAppFiles(appFileCtxs);
+  const recordCount = countRecsInTree(appFileTree);
+  const tick = getProgTick(logger.getLogLevel(), recordCount);
+  const buildAndPushPromises = Object.keys(appFileTree).map(table =>
+    buildAndPush(table, appFileTree[table], tick)
+  );
+  const tablePushResults = await Promise.all(buildAndPushPromises);
+  return tablePushResults.flat();
 };
