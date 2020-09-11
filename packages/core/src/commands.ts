@@ -82,7 +82,9 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
         return ConfigManager.getSourcePath();
       };
       const encodedPaths = await getEncodedPaths();
-      const [fileTree, count] = await AppUtils.getFilesAndCount(encodedPaths);
+      const [fileTree, count] = await AppUtils.getFileTreeAndCount(
+        encodedPaths
+      );
       logger.info(`${count} files to push.`);
       let canPush = true;
       if (!ci) {

@@ -334,7 +334,7 @@ export const getValidPaths = async (
   return pathChunks.filter((_, index) => pathExistsCheck[index]);
 };
 
-export const getFilesAndCount = async (
+export const getFileTreeAndCount = async (
   encodedPaths: string
 ): Promise<[Sinc.AppFileContextTree, number]> => {
   const validPaths = await getValidPaths(encodedPaths);
