@@ -254,7 +254,7 @@ export const groupAppFiles = (
   );
 };
 
-const buildRec = async (
+export const buildRec = async (
   rec: Sinc.RecordContextMap
 ): Promise<Record<string, string>> => {
   const fields = Object.keys(rec);
@@ -271,7 +271,7 @@ const buildRec = async (
   );
 };
 
-const summarizeRecord = (table: string, sysId: string): string =>
+export const summarizeRecord = (table: string, sysId: string): string =>
   `${table}=>${sysId}`;
 
 const buildAndPush = async (
@@ -293,7 +293,7 @@ const buildAndPush = async (
         );
         return processPushResponse(res, summarizeRecord(table, recIds[index]));
       } catch (e) {
-        return { success: false, message: "Too many retries" };
+        return { success: false, message: e.message || "Too many retries" };
       } finally {
         // this block always runs, even if we return
         if (tick) {

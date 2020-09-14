@@ -30,10 +30,10 @@ function parseError(err: Error): string {
 
 export function logFilePush(
   context: Sinc.FileContext,
-  success: boolean,
-  err?: Error
-) {
-  let label = chalk.bold.blue;
+  res: Sinc.PushResult
+): void {
+  const { message, success } = res;
+  const label = chalk.bold.blue;
   logger.info(chalk.underline("File Push Summary"));
   logger.info(`${label("When:\t")}${new Date().toLocaleTimeString()}`);
   logger.info(`${label("Table:\t")}${context.tableName}`);
@@ -44,8 +44,8 @@ export function logFilePush(
     status = chalk.red("Failed to push 👎");
   }
   logger.info(`${label("Status:\t")}${status}`);
-  if (err) {
-    logger.error(parseError(err));
+  if (!success) {
+    logger.error(message);
   }
   spacer();
 }
