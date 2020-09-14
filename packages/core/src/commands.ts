@@ -2,9 +2,10 @@ import { Sinc } from "@sincronia/types";
 import ConfigManager from "./config";
 import { startWatching } from "./Watcher";
 import AppManager from "./AppManager";
+import * as AppUtils from "./appUtils";
 import { startWizard } from "./wizard";
 import { logger } from "./Logger";
-import { scopeCheckMessage, devModeLog } from "./logMessages";
+import { scopeCheckMessage, devModeLog, logPushResults } from "./logMessages";
 import { getCurrentScope } from "./server";
 
 async function scopeCheck(
@@ -64,23 +65,36 @@ export async function refreshCommand(
     }
   });
 }
-export async function pushCommand(args: Sinc.PushCmdArgs) {
+export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
   setLogLevel(args);
   scopeCheck(async () => {
     try {
+      const { updateSet, ci, target, diff } = args;
       // Does not create update set if updateSetName is blank
-      await AppManager.createAndAssignUpdateSet(args.updateSet, args.ci);
-
-      if (args.target !== undefined) {
-        if (args.target !== "") {
-          await AppManager.pushSpecificFiles(args.target, args.ci);
+      await AppManager.createAndAssignUpdateSet(updateSet, ci);
+      const getEncodedPaths = async () => {
+        if (target !== undefined && target !== "") {
+          return target;
         }
-      } else if (args.diff !== "") {
-        const files = await AppManager.gitDiff(args.diff);
-        await AppManager.pushSpecificFiles(files, args.ci);
-      } else {
-        await AppManager.pushAllFiles(args.ci);
+        if (diff !== "") {
+          return AppManager.gitDiff(diff);
+        }
+        return ConfigManager.getSourcePath();
+      };
+      const encodedPaths = await getEncodedPaths();
+      const [fileTree, count] = await AppUtils.getFileTreeAndCount(
+        encodedPaths
+      );
+      logger.info(`${count} files to push.`);
+      let canPush = true;
+      if (!ci) {
+        canPush = await AppManager.canPush();
       }
+      if (!canPush) {
+        return;
+      }
+      const pushResults = await AppUtils.pushFiles(fileTree, count);
+      logPushResults(pushResults);
     } catch (e) {
       throw e;
     }

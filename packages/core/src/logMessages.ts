@@ -30,10 +30,10 @@ function parseError(err: Error): string {
 
 export function logFilePush(
   context: Sinc.FileContext,
-  success: boolean,
-  err?: Error
-) {
-  let label = chalk.bold.blue;
+  res: Sinc.PushResult
+): void {
+  const { message, success } = res;
+  const label = chalk.bold.blue;
   logger.info(chalk.underline("File Push Summary"));
   logger.info(`${label("When:\t")}${new Date().toLocaleTimeString()}`);
   logger.info(`${label("Table:\t")}${context.tableName}`);
@@ -44,8 +44,8 @@ export function logFilePush(
     status = chalk.red("Failed to push 👎");
   }
   logger.info(`${label("Status:\t")}${status}`);
-  if (err) {
-    logger.error(parseError(err));
+  if (!success) {
+    logger.error(message);
   }
   spacer();
 }
@@ -124,3 +124,25 @@ export function logDeploy(
 function spacer() {
   logger.info("");
 }
+
+export const logPushResults = (results: Sinc.PushResult[]): void => {
+  const unsuccessful = results.filter(r => !r.success);
+  const logr = logger.getInternalLogger();
+  const label = (content: string) => chalk.bold.blue(content);
+  const success = (content: string) => chalk.bold.green(content);
+  const fail = (content: string) => chalk.bold.red(content);
+  logr.info(`${label("Total Records:")} ${results.length}`);
+  logr.info(
+    `${label("Successful Pushes:")} ${success(
+      results.length - unsuccessful.length + ""
+    )}`
+  );
+  logr.info(`${label("Failed Pushes:")} ${fail(unsuccessful.length + "")}`);
+  if (unsuccessful.length === 0) {
+    return;
+  }
+  logger.error("-".repeat(60));
+  unsuccessful.forEach(({ message }, index) => {
+    logger.error(`${index + 1}. ${message}`);
+  });
+};

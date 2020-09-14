@@ -8,8 +8,8 @@ export const SNFileExists = (parentDirPath: string) => async (
 ): Promise<boolean> => {
   try {
     const files = await fsp.readdir(parentDirPath);
-    const reg = new RegExp(`${file.name}\\.*$`);
-    return !!files.find(reg.test);
+    const reg = new RegExp(`${file.name}\..*$`);
+    return !!files.find(f => reg.test(f));
   } catch (e) {
     return false;
   }
@@ -20,6 +20,10 @@ export const writeSNFileCurry = (checkExists: boolean) => async (
   parentPath: string
 ): Promise<void> => {
   const { name, type, content = "" } = file;
+  // content can sometimes be null
+  if (!content) {
+    content === "";
+  }
   const write = async () => {
     const fullPath = path.join(parentPath, `${name}.${type}`);
     return await fsp.writeFile(fullPath, content);
@@ -34,7 +38,7 @@ export const writeSNFileCurry = (checkExists: boolean) => async (
   }
 };
 
-export const createDirRecursively = async (path: string) => {
+export const createDirRecursively = async (path: string): Promise<void> => {
   await fsp.mkdir(path, { recursive: true });
 };
 
@@ -148,6 +152,11 @@ export const getPathsInPath = async (p: string): Promise<string[]> => {
     const stackedPaths = await Promise.all(pathPromises);
     return stackedPaths.flat();
   }
+};
+
+export const summarizeFile = (ctx: Sinc.FileContext): string => {
+  const { tableName, name: recordName, sys_id } = ctx;
+  return `${tableName}/${recordName}/${sys_id}`;
 };
 
 export const writeSNFileIfNotExists = writeSNFileCurry(true);

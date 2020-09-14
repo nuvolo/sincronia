@@ -5,12 +5,11 @@ import path from "path";
 import ConfigManager from "./config";
 import * as Utils from "./utils";
 import { logger } from "./Logger";
-import { logMultiFilePush, logMultiFileBuild, logDeploy } from "./logMessages";
+import { logMultiFileBuild, logDeploy } from "./logMessages";
 import inquirer from "inquirer";
 import {
   getManifestWithFiles,
   getManifest,
-  pushFiles,
   deployFiles,
   getCurrentScope,
   getScopeId,
@@ -118,30 +117,6 @@ class AppManager {
     return paths;
   }
 
-  async pushSpecificFiles(pathString: string, skipPrompt: boolean = false) {
-    try {
-      let paths = await this.getFilePaths(pathString);
-      let fileContexts = await this.parseFileParams(paths);
-      logger.info(`${fileContexts.length} files to push...`);
-      logger.silly(
-        JSON.stringify(fileContexts.map(ctx => ctx.filePath), null, 2)
-      );
-      if (skipPrompt || (await this.canPush())) {
-        try {
-          const resultSet = await pushFiles(
-            process.env.SN_INSTANCE || "",
-            fileContexts
-          );
-          logMultiFilePush(fileContexts, true, resultSet);
-        } catch (e) {
-          logMultiFilePush(fileContexts, false, [], e);
-        }
-      }
-    } catch (e) {
-      throw e;
-    }
-  }
-
   private async loaddir(dirPath: string, list: string[]) {
     try {
       let files = await fsp.readdir(dirPath);
@@ -191,14 +166,6 @@ class AppManager {
       return true;
     } catch (e) {
       return false;
-    }
-  }
-
-  async pushAllFiles(skipPrompt: boolean = false) {
-    try {
-      this.pushSpecificFiles(ConfigManager.getSourcePath(), skipPrompt);
-    } catch (e) {
-      throw e;
     }
   }
 

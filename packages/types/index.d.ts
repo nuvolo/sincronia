@@ -1,4 +1,4 @@
-export module Sinc {
+export namespace Sinc {
   interface SharedCmdArgs {
     logLevel: string;
   }
@@ -111,9 +111,18 @@ export module Sinc {
   interface DiffFile {
     changed: Array<string>;
   }
+
+  type RecordContextMap = Record<string, FileContext>;
+  type TableContextTree = Record<string, RecordContextMap>;
+  type AppFileContextTree = Record<string, TableContextTree>;
+
+  interface PushResult {
+    success: boolean;
+    message: string;
+  }
 }
 
-export module SN {
+export namespace SN {
   interface AppManifest {
     tables: TableMap;
     scope: string;
