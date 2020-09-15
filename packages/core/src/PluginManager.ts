@@ -66,14 +66,16 @@ class PluginManager {
     context: Sinc.FileContext,
     content: string
   ): Promise<string> {
-    let plugins = this.determinePlugins(context);
+    const plugins = this.determinePlugins(context);
     if (plugins.length > 0) {
       try {
-        let pluginResults = await this.runPlugins(plugins, context, content);
+        const pluginResults = await this.runPlugins(plugins, context, content);
         if (pluginResults.success) {
           return pluginResults.content;
         } else {
-          return "";
+          throw new Error(
+            `Failed to build ${context.tableName}=>${context.sys_id}!`
+          );
         }
       } catch (e) {
         throw e;

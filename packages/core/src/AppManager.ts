@@ -3,7 +3,7 @@ import fs from "fs";
 import * as cp from "child_process";
 import path from "path";
 import ConfigManager from "./config";
-import * as Utils from "./utils";
+import * as Utils from "./genericUtils";
 import { logger } from "./Logger";
 import { logMultiFileBuild, logDeploy } from "./logMessages";
 import inquirer from "inquirer";

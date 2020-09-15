@@ -12,6 +12,7 @@ import {
   retryOnErr
 } from "./snClient";
 import { logger } from "./Logger";
+import { aggregateErrorMessages, allSettled } from "./genericUtils";
 
 const processFilesInManRec = async (
   recPath: string,
@@ -261,9 +262,24 @@ export const buildRec = async (
   const buildPromises = fields.map(field => {
     return PluginManager.getFinalFileContents(rec[field]);
   });
-  const builtFiles = await Promise.all(buildPromises);
+  const builtFiles = await allSettled(buildPromises);
+  const buildSuccess = !builtFiles.find(
+    buildRes => buildRes.status === "rejected"
+  );
+  if (!buildSuccess) {
+    throw new Error(
+      aggregateErrorMessages(
+        builtFiles
+          .filter((b): b is Sinc.FailPromiseResult => b.status === "rejected")
+          .map(b => b.reason),
+        "Failed to build!",
+        (_, index) => `${index}`
+      )
+    );
+  }
   return builtFiles.reduce(
-    (acc, content, index) => {
+    (acc, buildRes, index) => {
+      const { value: content } = buildRes as Sinc.SuccessPromiseResult<string>;
       const fieldName = fields[index];
       return { ...acc, [fieldName]: content };
     },
@@ -281,13 +297,19 @@ const buildAndPush = async (
 ): Promise<Sinc.PushResult[]> => {
   const recIds = Object.keys(tableTree);
   const buildPromises = recIds.map(sysId => buildRec(tableTree[sysId]));
-  const builtRecs = await Promise.all(buildPromises);
+  const builtRecs = await allSettled(buildPromises);
   const client = clientFactory();
   const pushPromises = builtRecs.map(
-    async (fieldMap, index): Promise<Sinc.PushResult> => {
+    async (buildRes, index): Promise<Sinc.PushResult> => {
+      if (buildRes.status === "rejected") {
+        return {
+          success: false,
+          message: buildRes.reason
+        };
+      }
       try {
         const res = await retryOnErr(
-          () => client.updateRecord(table, recIds[index], fieldMap),
+          () => client.updateRecord(table, recIds[index], buildRes.value),
           PUSH_RETRY_LIMIT,
           PUSH_RETRY_WAIT
         );
