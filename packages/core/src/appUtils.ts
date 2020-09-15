@@ -304,7 +304,7 @@ const buildAndPush = async (
       if (buildRes.status === "rejected") {
         return {
           success: false,
-          message: buildRes.reason
+          message: buildRes.reason.message
         };
       }
       try {

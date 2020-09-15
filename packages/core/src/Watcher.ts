@@ -5,6 +5,7 @@ import { getFileContextFromPath } from "./FileUtils";
 import { Sinc } from "@sincronia/types";
 import { defaultClient as client, processPushResponse } from "./snClient";
 import { buildRec, summarizeRecord } from "./appUtils";
+import { allSettled } from "./genericUtils";
 const DEBOUNCE_MS = 300;
 let pushQueue: string[] = [];
 let watcher: chokidar.FSWatcher | undefined = undefined;
@@ -23,19 +24,31 @@ const processQueue = debounce(async () => {
       const fieldMap = { [targetField]: ctx };
       return buildRec(fieldMap);
     });
-    const builds = await Promise.all(buildPromises);
-    const updatePromises = builds.map(async (recMap, index) => {
-      const { tableName, sys_id } = fileContexts[index];
-      try {
-        const response = await snClient.updateRecord(tableName, sys_id, recMap);
-        return processPushResponse(
-          response,
-          summarizeRecord(tableName, sys_id)
-        );
-      } catch (e) {
-        return { success: false, message: e.message || "Failed to update" };
+    const builds = await allSettled(buildPromises);
+    const updatePromises = builds.map(
+      async (buildRes, index): Promise<Sinc.PushResult> => {
+        const { tableName, sys_id } = fileContexts[index];
+        if (buildRes.status === "rejected") {
+          return {
+            success: false,
+            message: buildRes.reason.message || "Failed to build"
+          };
+        }
+        try {
+          const response = await snClient.updateRecord(
+            tableName,
+            sys_id,
+            buildRes.value
+          );
+          return processPushResponse(
+            response,
+            summarizeRecord(tableName, sys_id)
+          );
+        } catch (e) {
+          return { success: false, message: e.message || "Failed to update" };
+        }
       }
-    });
+    );
 
     const updateResults = await Promise.all(updatePromises);
     updateResults.forEach((res, index) => {
