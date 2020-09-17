@@ -1,7 +1,7 @@
 import { Sinc } from "@sincronia/types";
 import axios, { AxiosResponse } from "axios";
 import rateLimit from "axios-rate-limit";
-import { wait } from "./utils";
+import { wait } from "./genericUtils";
 
 export const retryOnErr = async <T>(
   f: () => Promise<T>,

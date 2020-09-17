@@ -100,3 +100,35 @@ export function chunkArr(
   }
   return chunks;
 }
+
+export const allSettled = <T>(
+  promises: Promise<T>[]
+): Promise<Sinc.PromiseResult<T>[]> => {
+  return Promise.all(
+    promises.map(prom =>
+      prom
+        .then(
+          (value): Sinc.PromiseResult<T> => ({
+            status: "fulfilled",
+            value
+          })
+        )
+        .catch(
+          (reason): Sinc.PromiseResult<T> => ({
+            status: "rejected",
+            reason
+          })
+        )
+    )
+  );
+};
+
+export const aggregateErrorMessages = (
+  errs: any[],
+  defaultMsg: string,
+  labelFn: (err: any, index: number) => string
+): string => {
+  return errs.reduce((acc, err, index) => {
+    return `${acc}\n${labelFn(err, index)}:\n${err.message || defaultMsg}`;
+  }, "");
+};
