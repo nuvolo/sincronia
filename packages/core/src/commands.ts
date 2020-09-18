@@ -26,8 +26,8 @@ async function scopeCheck(
       "Failed to check your scope! You may want to make sure your project is configured correctly or run `npx sinc init`"
     );
     // Throw exception to register this as an error
+    process.exit(1);
   }
-  process.exit(1);
 }
 
 function setLogLevel(args: Sinc.SharedCmdArgs) {
