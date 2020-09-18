@@ -308,7 +308,7 @@ const buildAndPush = async (
       if (buildRes.status === "rejected") {
         return {
           success: false,
-          message: `${recSummary} -- ${buildRes.reason.message}`
+          message: `${recSummary} : ${buildRes.reason.message}`
         };
       }
       try {
@@ -325,7 +325,7 @@ const buildAndPush = async (
         return processPushResponse(res, recSummary);
       } catch (e) {
         const errMsg = e.message || "Too many retries";
-        return { success: false, message: `${recSummary} -- ${errMsg}` };
+        return { success: false, message: `${recSummary} : ${errMsg}` };
       } finally {
         // this block always runs, even if we return
         if (tick) {
