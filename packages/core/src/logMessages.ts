@@ -142,7 +142,12 @@ export const logPushResults = (results: Sinc.PushResult[]): void => {
     return;
   }
   logger.error("-".repeat(60));
+  logger.error(fail("Error Summary"));
+  logger.error("-".repeat(60));
   unsuccessful.forEach(({ message }, index) => {
-    logger.error(`${index + 1}. ${message}`);
+    if (unsuccessful.length === 1) {
+      logr.error(message);
+    }
+    logr.error(`${index + 1}. ${message}`);
   });
 };

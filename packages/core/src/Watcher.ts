@@ -27,7 +27,7 @@ const processQueue = debounce(async () => {
     const builds = await allSettled(buildPromises);
     const updatePromises = builds.map(
       async (buildRes, index): Promise<Sinc.PushResult> => {
-        const { tableName, sys_id } = fileContexts[index];
+        const { tableName, sys_id, name } = fileContexts[index];
         if (buildRes.status === "rejected") {
           return {
             success: false,
@@ -42,7 +42,7 @@ const processQueue = debounce(async () => {
           );
           return processPushResponse(
             response,
-            summarizeRecord(tableName, sys_id)
+            summarizeRecord(tableName, name)
           );
         } catch (e) {
           return { success: false, message: e.message || "Failed to update" };
