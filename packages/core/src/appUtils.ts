@@ -287,8 +287,8 @@ export const buildRec = async (
   );
 };
 
-export const summarizeRecord = (table: string, sysId: string): string =>
-  `${table}=>${sysId}`;
+export const summarizeRecord = (table: string, recDescriptor: string): string =>
+  `${table} > ${recDescriptor}`;
 
 const buildAndPush = async (
   table: string,
@@ -301,21 +301,31 @@ const buildAndPush = async (
   const client = clientFactory();
   const pushPromises = builtRecs.map(
     async (buildRes, index): Promise<Sinc.PushResult> => {
+      const recMap = tableTree[recIds[index]];
+      const recFields = Object.keys(recMap);
+      const recDesc = recMap[recFields[0]].name || recIds[index];
+      const recSummary = summarizeRecord(table, recDesc);
       if (buildRes.status === "rejected") {
         return {
           success: false,
-          message: buildRes.reason.message
+          message: `${recSummary} -- ${buildRes.reason.message}`
         };
       }
       try {
         const res = await retryOnErr(
           () => client.updateRecord(table, recIds[index], buildRes.value),
           PUSH_RETRY_LIMIT,
-          PUSH_RETRY_WAIT
+          PUSH_RETRY_WAIT,
+          (numTries: number) => {
+            logger.debug(
+              `Failed to push ${recSummary}! Retrying with ${numTries} left...`
+            );
+          }
         );
-        return processPushResponse(res, summarizeRecord(table, recIds[index]));
+        return processPushResponse(res, recSummary);
       } catch (e) {
-        return { success: false, message: e.message || "Too many retries" };
+        const errMsg = e.message || "Too many retries";
+        return { success: false, message: `${recSummary} -- ${errMsg}` };
       } finally {
         // this block always runs, even if we return
         if (tick) {

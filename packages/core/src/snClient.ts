@@ -6,7 +6,8 @@ import { wait } from "./genericUtils";
 export const retryOnErr = async <T>(
   f: () => Promise<T>,
   allowedRetries: number,
-  msBetween = 0
+  msBetween = 0,
+  onRetry?: (retriesLeft: number) => void
 ): Promise<T> => {
   try {
     return await f();
@@ -15,8 +16,11 @@ export const retryOnErr = async <T>(
     if (newRetries <= 0) {
       throw e;
     }
+    if (onRetry) {
+      onRetry(newRetries);
+    }
     await wait(msBetween);
-    return retryOnErr(f, newRetries, msBetween);
+    return retryOnErr(f, newRetries, msBetween, onRetry);
   }
 };
 
