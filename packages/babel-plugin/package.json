@@ -1,6 +1,6 @@
 {
   "name": "@sincronia/babel-plugin",
-  "version": "0.4.1",
+  "version": "0.4.2-alpha.0",
   "description": "Babel Plugin for sincronia",
   "main": "./dist/index.js",
   "scripts": {
@@ -27,7 +27,7 @@
     "@babel/types": "^7.5.5"
   },
   "devDependencies": {
-    "@sincronia/types": "^0.4.0",
+    "@sincronia/types": "^0.4.2-alpha.0",
     "@types/babel__core": "^7.1.2"
   },
   "gitHead": "67b694054cf072be150b9bd4dc3d1b01f8e24ed9"
