@@ -26,8 +26,8 @@ async function scopeCheck(
       "Failed to check your scope! You may want to make sure your project is configured correctly or run `npx sinc init`"
     );
     // Throw exception to register this as an error
-    throw e;
   }
+  process.exit(1);
 }
 
 function setLogLevel(args: Sinc.SharedCmdArgs) {
@@ -96,7 +96,7 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
       const pushResults = await AppUtils.pushFiles(fileTree, count);
       logPushResults(pushResults);
     } catch (e) {
-      throw e;
+      process.exit(1);
     }
   }, args.scopeSwap);
 }
