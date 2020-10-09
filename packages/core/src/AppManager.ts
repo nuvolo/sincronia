@@ -86,7 +86,7 @@ class AppManager {
     }
   }
 
-  private async getFilePaths(pathString: string) {
+  async getFilePaths(pathString: string) {
     let pathPromises = pathString
       .split(PATH_DELIMITER)
       .filter(cur => {
@@ -357,71 +357,6 @@ class AppManager {
     } catch (e) {
       throw e;
     }
-  }
-
-  gitDiff(target: string): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      const cmdStr = `git diff --name-status ${target}...`;
-      cp.exec(cmdStr, (err, stdout, stderr) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(this.formatGitFiles(stdout.trim()));
-        }
-      });
-    });
-  }
-
-  async writeDiff(files: string) {
-    let paths = await this.getFilePaths(files);
-    fsp.writeFile(
-      ConfigManager.getDiffPath(),
-      JSON.stringify({ changed: paths })
-    );
-  }
-
-  private async formatGitFiles(gitFiles: string) {
-    const baseRepoPath = await this.getRepoRootDir();
-    const workspaceDir = process.cwd();
-    const fileSplit = gitFiles.split(/\r?\n/);
-    const fileArray: string[] = [];
-    fileSplit.forEach(diffFile => {
-      if (diffFile !== "") {
-        const modCode = diffFile.charAt(0);
-
-        if (modCode !== "D") {
-          const filePath = diffFile.substr(1, diffFile.length - 1).trim();
-
-          if (this.isValidScope(filePath, workspaceDir, baseRepoPath)) {
-            logger.info(diffFile);
-            const absFilePath = path.resolve(baseRepoPath, filePath);
-            fileArray.push(absFilePath);
-          }
-        }
-      }
-    });
-    return fileArray.join(PATH_DELIMITER);
-  }
-
-  private getRepoRootDir(): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      cp.exec("git rev-parse --show-toplevel", (err, stdout, stderr) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(stdout.trim());
-        }
-      });
-    });
-  }
-
-  private isValidScope(
-    file: string,
-    scope: string,
-    baseRepoPath: string
-  ): boolean {
-    const relativePath = path.relative(baseRepoPath, scope);
-    return file.startsWith(relativePath) ? true : false;
   }
 
   /**

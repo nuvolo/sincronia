@@ -3,6 +3,7 @@ import ConfigManager from "./config";
 import { startWatching } from "./Watcher";
 import AppManager from "./AppManager";
 import * as AppUtils from "./appUtils";
+import * as GitUtils from "./gitUtils";
 import { startWizard } from "./wizard";
 import { logger } from "./Logger";
 import { scopeCheckMessage, devModeLog, logPushResults } from "./logMessages";
@@ -77,7 +78,7 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
           return target;
         }
         if (diff !== "") {
-          return AppManager.gitDiff(diff);
+          return GitUtils.gitDiff(diff);
         }
         return ConfigManager.getSourcePath();
       };
@@ -121,8 +122,8 @@ export async function buildCommand(args: Sinc.BuildCmdArgs) {
   setLogLevel(args);
   try {
     if (args.diff !== "") {
-      let files = await AppManager.gitDiff(args.diff);
-      AppManager.writeDiff(files);
+      let files = await GitUtils.gitDiff(args.diff);
+      GitUtils.writeDiff(files);
     }
     await AppManager.buildFiles();
   } catch (e) {
