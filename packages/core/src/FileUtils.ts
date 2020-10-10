@@ -1,6 +1,8 @@
 import { SN, Sinc } from "@sincronia/types";
+import { PATH_DELIMITER } from "./constants";
 import fs, { promises as fsp } from "fs";
 import path from "path";
+import AppManager from "./AppManager";
 import ConfigManager from "./config";
 
 export const SNFileExists = (parentDirPath: string) => async (
@@ -13,6 +15,13 @@ export const SNFileExists = (parentDirPath: string) => async (
   } catch (e) {
     return false;
   }
+};
+
+export const writeManifestFile = async (man: SN.AppManifest) => {
+  return fsp.writeFile(
+    ConfigManager.getManifestPath(),
+    JSON.stringify(man, null, 2)
+  );
 };
 
 export const writeSNFileCurry = (checkExists: boolean) => async (
@@ -48,6 +57,58 @@ export const pathExists = async (path: string): Promise<boolean> => {
     return true;
   } catch (e) {
     return false;
+  }
+};
+
+export const getFilePaths = async (pathString: string) => {
+  let pathPromises = pathString
+    .split(PATH_DELIMITER)
+    .filter(cur => {
+      //make sure it isn't blank
+      if (cur && cur !== "") {
+        //make sure it exists
+        let resolvedPath = path.resolve(process.cwd(), cur);
+        return fs.existsSync(resolvedPath);
+      } else {
+        return false;
+      }
+    })
+    .map(async cur => {
+      let resolvedPath = path.resolve(process.cwd(), cur);
+      let stats = await fsp.stat(resolvedPath);
+      if (stats.isDirectory()) {
+        return await loadList(resolvedPath);
+      } else {
+        return [resolvedPath];
+      }
+    });
+  let pathArrays = await Promise.all(pathPromises);
+  let paths = pathArrays.reduce((acc, cur) => {
+    return acc.concat(cur);
+  }, []);
+  return paths;
+};
+
+const loadList = async (directory: string): Promise<string[]> => {
+  let list: string[] = [];
+  await loaddir(directory, list);
+  return list;
+};
+
+const loaddir = async (dirPath: string, list: string[]) => {
+  try {
+    let files = await fsp.readdir(dirPath);
+    for (let f of files) {
+      let filep = path.join(dirPath, f);
+      let stats = await fsp.stat(filep);
+      if (stats.isDirectory()) {
+        await loaddir(filep, list);
+      } else {
+        list.push(filep);
+      }
+    }
+  } catch (e) {
+    throw e;
   }
 };
 

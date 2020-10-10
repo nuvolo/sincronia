@@ -20,22 +20,15 @@ import {
   updateCurrentUpdateSetUserPref,
   createCurrentUpdateSetUserPref
 } from "./server";
-import { PATH_DELIMITER } from "./constants";
 import PluginManager from "./PluginManager";
 import * as AppUtils from "./appUtils";
+import * as fUtils from "./FileUtils";
 import ProgressBar from "progress";
 
 const fsp = fs.promises;
 
 class AppManager {
   constructor() {}
-
-  private async writeManifestFile(man: SN.AppManifest) {
-    return fsp.writeFile(
-      ConfigManager.getManifestPath(),
-      JSON.stringify(man, null, 2)
-    );
-  }
 
   async downloadWithFiles(scope: string): Promise<any> {
     try {
@@ -71,7 +64,7 @@ class AppManager {
         logger.info("Downloading fresh manifest...");
         let newManifest = await getManifest(curManifest.scope);
         logger.info("Writing new manifest file...");
-        this.writeManifestFile(newManifest);
+        fUtils.writeManifestFile(newManifest);
         logger.info("Finding and creating missing files...");
         await AppUtils.processMissingFiles(newManifest);
         ConfigManager.updateManifest(newManifest);
@@ -86,62 +79,8 @@ class AppManager {
     }
   }
 
-  async getFilePaths(pathString: string) {
-    let pathPromises = pathString
-      .split(PATH_DELIMITER)
-      .filter(cur => {
-        //make sure it isn't blank
-        if (cur && cur !== "") {
-          //make sure it exists
-          let resolvedPath = path.resolve(process.cwd(), cur);
-          return fs.existsSync(resolvedPath);
-        } else {
-          return false;
-        }
-      })
-      .map(async cur => {
-        let resolvedPath = path.resolve(process.cwd(), cur);
-        let stats = await fsp.stat(resolvedPath);
-        if (stats.isDirectory()) {
-          return await this.loadList(resolvedPath);
-        } else {
-          return [resolvedPath];
-        }
-      });
-    let pathArrays = await Promise.all(pathPromises);
-    let paths = pathArrays.reduce((acc, cur) => {
-      return acc.concat(cur);
-    }, []);
-    logger.silly(`${paths.length} paths found...`);
-    logger.silly(JSON.stringify(paths, null, 2));
-    return paths;
-  }
-
-  private async loaddir(dirPath: string, list: string[]) {
-    try {
-      let files = await fsp.readdir(dirPath);
-      for (let f of files) {
-        let filep = path.join(dirPath, f);
-        let stats = await fsp.stat(filep);
-        if (stats.isDirectory()) {
-          await this.loaddir(filep, list);
-        } else {
-          list.push(filep);
-        }
-      }
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  private async parseFileParams(files: string[]) {
+  async parseFileParams(files: string[]) {
     return await Utils.getParsedFilesPayload(files);
-  }
-
-  private async loadList(directory: string): Promise<string[]> {
-    let list: string[] = [];
-    await this.loaddir(directory, list);
-    return list;
   }
 
   async canPush() {
@@ -206,7 +145,9 @@ class AppManager {
     try {
       let source = ConfigManager.getSourcePath();
       let build = ConfigManager.getBuildPath();
-      let paths = await this.getFilePaths(source);
+      let paths = await fUtils.getFilePaths(source);
+      logger.silly(`${paths.length} paths found...`);
+      logger.silly(JSON.stringify(paths, null, 2));
       logger.info(`Building ${paths.length} files`);
       let fileContexts = await this.parseFileParams(paths);
 
@@ -288,7 +229,9 @@ class AppManager {
       }
       if (!deployDiff) {
         const build = ConfigManager.getBuildPath();
-        paths = await this.getFilePaths(build);
+        paths = await fUtils.getFilePaths(build);
+        logger.silly(`${paths.length} paths found...`);
+        logger.silly(JSON.stringify(paths, null, 2));
       }
       let fileContexts = await this.parseFileParams(paths);
       logger.info(`${fileContexts.length} files to deploy...`);
