@@ -30,6 +30,10 @@ const fsp = fs.promises;
 class AppManager {
   constructor() {}
 
+  /*
+    MOVE TO: appUtils
+    Split inquirer into download command
+  */
   async downloadWithFiles(scope: string): Promise<any> {
     try {
       let answers: { confirmed: boolean } = await inquirer.prompt([
@@ -54,6 +58,10 @@ class AppManager {
       logger.error(e.toString());
     }
   }
+
+  /*
+    MOVE TO: appUtils
+  */
   async syncManifest() {
     try {
       let curManifest = await ConfigManager.getManifest();
@@ -79,10 +87,16 @@ class AppManager {
     }
   }
 
+  /*
+  MOVE TO: genericUtils
+  */
   async parseFileParams(files: string[]) {
     return await Utils.getParsedFilesPayload(files);
   }
 
+  /*
+  MOVE TO: push command
+  */
   async canPush() {
     const targetServer = process.env.SN_INSTANCE || "";
     if (!targetServer) {
@@ -108,6 +122,9 @@ class AppManager {
     }
   }
 
+  /*
+  MOVE TO: appUtils
+  */
   async buildFile(
     filePayload: Sinc.FileContext,
     source: string,
@@ -139,6 +156,9 @@ class AppManager {
     }
   }
 
+  /*
+    MOVE TO: appUtils
+  */
   async buildFiles() {
     const resultSet: boolean[] = [];
 
@@ -186,6 +206,9 @@ class AppManager {
     }
   }
 
+  /*
+    MOVE TO: deploy command
+  */
   async canDeploy() {
     const targetServer = process.env.SN_INSTANCE || "";
     if (!targetServer) {
@@ -211,6 +234,10 @@ class AppManager {
     }
   }
 
+  /*
+    MOVE TO: appUtils
+    TRY TO: split inquirer into deploy command
+  */
   async deployFiles(skipPrompt: boolean = false) {
     try {
       let paths = ConfigManager.getDiffFile().changed;
@@ -254,6 +281,9 @@ class AppManager {
     }
   }
 
+  /*
+    MOVE TO: appUtils
+  */
   async checkScope(swapScope: boolean): Promise<Sinc.ScopeCheckResult> {
     try {
       let man = ConfigManager.getManifest();
@@ -291,6 +321,9 @@ class AppManager {
     }
   }
 
+  /*
+    MOVE TO: snClient
+  */
   private async swapScope(currentScope: string): Promise<SN.ScopeObj> {
     try {
       const scopeId = await getScopeId(currentScope);
@@ -340,6 +373,9 @@ class AppManager {
     }
   }
 
+  /*
+  MOVE TO: appUtils
+  */
   private async promptForNewUpdateSet(
     updateSetName: string,
     skipPrompt: boolean = false

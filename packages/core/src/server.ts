@@ -24,31 +24,9 @@ const NETWORK_RETRIES = 3;
 const TABLE_API = "api/now/table";
 const NETWORK_TIMEOUT = 3000;
 
-async function _update(obj: AxiosRequestConfig) {
-  try {
-    return await api(obj);
-  } catch (e) {
-    throw e;
-  }
-}
-
-export async function pushUpdate(requestObj: Sinc.ServerRequestConfig) {
-  try {
-    if (requestObj && requestObj.data) {
-      return _update(requestObj as AxiosRequestConfig);
-    }
-    logger.error("Attempted to push an empty data object");
-  } catch (e) {
-    throw e;
-  }
-}
-
-export async function pushUpdates(
-  arrOfResourceConfig: Sinc.ServerRequestConfig[]
-) {
-  await arrOfResourceConfig.map(pushUpdate);
-}
-
+/*
+  Combine following two manifest gets into same endpoint & functions
+*/
 export async function getManifestWithFiles(
   scope: string,
   creds?: SNInstanceCreds
@@ -96,6 +74,9 @@ export async function getManifest(scope: string): Promise<SN.AppManifest> {
   }
 }
 
+/*
+  SN Client endpoint
+*/
 export async function getMissingFiles(
   missingFiles: SN.MissingFileTableMap
 ): Promise<SN.TableMap> {
@@ -110,6 +91,9 @@ export async function getMissingFiles(
   }
 }
 
+/*
+SN Client endpoint
+*/
 async function pushATFfile(file: string, sys_id: string) {
   let endpoint = `api/x_nuvo_sinc/sinc/pushATFfile`;
   try {
@@ -121,11 +105,18 @@ async function pushATFfile(file: string, sys_id: string) {
   }
 }
 
+/*
+  Function is only used in function below
+  Roll into buildFileRequestObj?
+*/
 function buildFileEndpoint(payload: Sinc.FileContext) {
   const { tableName, sys_id } = payload;
   return [TABLE_API, tableName, sys_id].join("/");
 }
 
+/*
+  Util function in SN Client
+*/
 async function buildFileRequestObj(
   target_server: string,
   filePayload: Sinc.FileContext,
@@ -142,6 +133,37 @@ async function buildFileRequestObj(
     data[targetField] = fileContents;
     if (filePayload.tableName === "sys_atf_step") data = fileContents;
     return { url, data, method: "PATCH" };
+  } catch (e) {
+    throw e;
+  }
+}
+
+/*
+  Function not used anywhere, delete
+*/
+export async function pushUpdates(
+  arrOfResourceConfig: Sinc.ServerRequestConfig[]
+) {
+  await arrOfResourceConfig.map(pushUpdate);
+}
+
+/*
+  Following several functions only used for deploy. Clean up and move to appUtils
+*/
+async function _update(obj: AxiosRequestConfig) {
+  try {
+    return await api(obj);
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function pushUpdate(requestObj: Sinc.ServerRequestConfig) {
+  try {
+    if (requestObj && requestObj.data) {
+      return _update(requestObj as AxiosRequestConfig);
+    }
+    logger.error("Attempted to push an empty data object");
   } catch (e) {
     throw e;
   }
@@ -257,6 +279,9 @@ export async function deployFiles(
   return await pushFiles(target_server, filesPayload, false);
 }
 
+/*
+  SN client endpoint
+*/
 export async function getCurrentScope(): Promise<SN.ScopeObj> {
   let endpoint = "api/x_nuvo_sinc/sinc/getCurrentScope";
   try {
@@ -267,12 +292,19 @@ export async function getCurrentScope(): Promise<SN.ScopeObj> {
   }
 }
 
+/*
+  Move to SN sincronia types
+*/
 interface SNInstanceCreds {
   instance: string;
   user: string;
   password: string;
 }
 
+/* 
+  Create a basic client? in snClient
+  Move to snClient in some form
+*/
 export async function getAppList(creds?: SNInstanceCreds): Promise<SN.App[]> {
   try {
     let endpoint = "api/x_nuvo_sinc/sinc/getAppList";
@@ -302,6 +334,9 @@ function getBasicAxiosClient(creds: SNInstanceCreds) {
   });
 }
 
+/*
+  server util function
+*/
 export async function swapServerScope(
   scopeId: string,
   updateSetName: string = ""
@@ -321,6 +356,9 @@ export async function swapServerScope(
   }
 }
 
+/*
+SN Client endpoint
+*/
 export async function getScopeId(scopeName: string): Promise<string> {
   try {
     const endpoint = "api/now/table/sys_scope";
@@ -338,6 +376,11 @@ export async function getScopeId(scopeName: string): Promise<string> {
   }
 }
 
+/*
+  *
+  All of the following should either be an endpoint, or util function in SN Client
+  *
+  */
 export async function getUserSysId(
   userName: string = process.env.SN_USER as string
 ): Promise<string> {
