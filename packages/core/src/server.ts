@@ -93,6 +93,7 @@ export async function getMissingFiles(
 
 /*
 SN Client endpoint
+Breyton: I think this exists in the snClient now under updateATFfile
 */
 async function pushATFfile(file: string, sys_id: string) {
   let endpoint = `api/x_nuvo_sinc/sinc/pushATFfile`;
@@ -108,6 +109,7 @@ async function pushATFfile(file: string, sys_id: string) {
 /*
   Function is only used in function below
   Roll into buildFileRequestObj?
+  Breyton: This function is probably useless now
 */
 function buildFileEndpoint(payload: Sinc.FileContext) {
   const { tableName, sys_id } = payload;
@@ -116,6 +118,7 @@ function buildFileEndpoint(payload: Sinc.FileContext) {
 
 /*
   Util function in SN Client
+  Breyton: This function is probably useless now
 */
 async function buildFileRequestObj(
   target_server: string,
@@ -149,6 +152,7 @@ export async function pushUpdates(
 
 /*
   Following several functions only used for deploy. Clean up and move to appUtils
+  Breyton: Should be able to leverage the same endpoints used for the new push in snClient to accomplish the same task
 */
 async function _update(obj: AxiosRequestConfig) {
   try {
@@ -294,6 +298,7 @@ export async function getCurrentScope(): Promise<SN.ScopeObj> {
 
 /*
   Move to SN sincronia types
+  Breyton: Probably a useless type once migration to snClient is complete
 */
 interface SNInstanceCreds {
   instance: string;
@@ -304,6 +309,7 @@ interface SNInstanceCreds {
 /* 
   Create a basic client? in snClient
   Move to snClient in some form
+  Breyton: Should be able to do this directly inside of snClient since you can now generate one on the fly
 */
 export async function getAppList(creds?: SNInstanceCreds): Promise<SN.App[]> {
   try {
@@ -336,6 +342,7 @@ function getBasicAxiosClient(creds: SNInstanceCreds) {
 
 /*
   server util function
+  Breyton: Probably could live in either appUtils or snClient
 */
 export async function swapServerScope(
   scopeId: string,

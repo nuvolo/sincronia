@@ -89,6 +89,7 @@ class AppManager {
 
   /*
   MOVE TO: genericUtils
+  Breyton: This might not be a necessary function anymore. In push, this is replaced by appUtils > getAppFilesInPaths I think
   */
   async parseFileParams(files: string[]) {
     return await Utils.getParsedFilesPayload(files);
@@ -124,6 +125,7 @@ class AppManager {
 
   /*
   MOVE TO: appUtils
+  Breyton: In addition to moving to appUtils, we should look at the build stuff I wrote for the new push flow and see how much we can re-use, may need to break out some of the push stuff into smaller functions to make it work.
   */
   async buildFile(
     filePayload: Sinc.FileContext,
@@ -133,6 +135,9 @@ class AppManager {
     const { filePath, targetField } = filePayload;
     const fileContents = await PluginManager.getFinalFileContents(filePayload);
 
+    /**
+     * Breyton: May want to write a function for determining the extension. I believe there are other types of files that we can build to besides these three. XML for example.
+     */
     let ext = "js";
     if (targetField === "css") ext = "css";
     if (targetField === "html") ext = "html";
@@ -237,6 +242,7 @@ class AppManager {
   /*
     MOVE TO: appUtils
     TRY TO: split inquirer into deploy command
+    Breyton: Similar to the build command, there's probably some logic from the new push that we can re-use here to push the files up. 
   */
   async deployFiles(skipPrompt: boolean = false) {
     try {
@@ -323,6 +329,7 @@ class AppManager {
 
   /*
     MOVE TO: snClient
+    Breyton: Could go either way on this between snClient and appUtils. Core logic should definitely live in snClient for the HTTP stuff anyways.
   */
   private async swapScope(currentScope: string): Promise<SN.ScopeObj> {
     try {
@@ -340,6 +347,9 @@ class AppManager {
    * @param updateSetName - does not create update set if value is blank
    * @param skipPrompt - will not prompt user to verify update set name
    *
+   */
+  /**
+   * Breyton: Probably move to appUtils, maybe return the core information instead of logging it here
    */
   async createAndAssignUpdateSet(
     updateSetName: string = "",
@@ -375,6 +385,7 @@ class AppManager {
 
   /*
   MOVE TO: appUtils
+  Breyton: Might be better to move this directly to commands.ts
   */
   private async promptForNewUpdateSet(
     updateSetName: string,
