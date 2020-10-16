@@ -40,7 +40,7 @@ export async function getManifestWithFiles(
     } = ConfigManager.getConfig();
     let response;
     if (creds) {
-      let client = getBasicAxiosClient(creds);
+      let client = api;
       response = await client.post(endpoint, {
         includes,
         excludes,
@@ -306,39 +306,6 @@ interface SNInstanceCreds {
   password: string;
 }
 
-/* 
-  Create a basic client? in snClient
-  Move to snClient in some form
-  Breyton: Should be able to do this directly inside of snClient since you can now generate one on the fly
-*/
-export async function getAppList(creds?: SNInstanceCreds): Promise<SN.App[]> {
-  try {
-    let endpoint = "api/x_nuvo_sinc/sinc/getAppList";
-    let response;
-    if (creds) {
-      let client = getBasicAxiosClient(creds);
-      response = await client.get(endpoint);
-    } else {
-      response = await api.get(endpoint);
-    }
-    let apps: SN.App[] = response.data.result;
-    return apps;
-  } catch (e) {
-    throw e;
-  }
-}
-
-function getBasicAxiosClient(creds: SNInstanceCreds) {
-  let serverString = creds.instance || "NO_INSTANCE";
-  return axios.create({
-    withCredentials: true,
-    auth: {
-      username: creds.user,
-      password: creds.password
-    },
-    baseURL: `https://${serverString}/`
-  });
-}
 
 /*
   *

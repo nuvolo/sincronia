@@ -67,6 +67,11 @@ export const snClient = (
     { maxRPS: 20 }
   );
 
+  const getAppList = async()  => {
+      let endpoint = "api/x_nuvo_sinc/sinc/getAppList";
+      return (await client.get(endpoint)).data.result;
+  }
+
   const updateATFfile = (contents: string, sysId: string) => {
     const endpoint = "api/x_nuvo_sinc/pushATFfile";
     try {
@@ -146,6 +151,7 @@ export const snClient = (
   };
 
   return {
+    getAppList,
     updateRecord,
     getScopeId,
     getUserSysId,

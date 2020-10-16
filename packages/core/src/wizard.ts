@@ -1,6 +1,6 @@
 import { SN, Sinc } from "@sincronia/types";
 import inquirer from "inquirer";
-import { getAppList, getManifestWithFiles } from "./server";
+import { getManifestWithFiles } from "./server";
 import ConfigManager from "./config";
 import AppManager from "./AppManager";
 import * as AppUtils from "./appUtils";
@@ -8,12 +8,14 @@ import fs from "fs";
 const fsp = fs.promises;
 import { logger } from "./Logger";
 import path from "path";
+import {snClient} from "./snClient";
 
 export async function startWizard() {
   let loginAnswers = await getLoginInfo();
   try {
-    let { username: user, password, instance } = loginAnswers;
-    let apps = await getAppList({ user, password, instance });
+    let { username, password, instance } = loginAnswers;
+    const client = snClient(`https://${instance}/`, username, password);
+    let apps = await client.getAppList();
     await setupDotEnv(loginAnswers);
     let hasConfig = await checkConfig();
     if (!hasConfig) {
