@@ -387,3 +387,30 @@ export const pushFiles = async (
   const tablePushResults = await Promise.all(buildAndPushPromises);
   return tablePushResults.flat();
 };
+
+export const swapScope = async (currentScope: string): Promise<SN.ScopeObj> => {
+  try {
+    const client = clientFactory();
+    const scopeId = await client.getScopeId(currentScope);
+    await swapServerScope(scopeId);
+    const scopeObj = await client.getCurrentScope();
+    return scopeObj;
+  } catch (e) {
+    throw e;
+  }
+};
+
+const swapServerScope = async (scopeId: string): Promise<void> => {
+  try {
+    const client = clientFactory();
+    const userSysId = await client.getUserSysId();
+    const curAppUserPrefId = await client.getCurrentAppUserPrefSysId(userSysId);
+    // If not user pref record exists, create it.
+    if (curAppUserPrefId !== "")
+      await client.updateCurrentAppUserPref(scopeId, curAppUserPrefId);
+    else await client.createCurrentAppUserPref(scopeId, userSysId);
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+};

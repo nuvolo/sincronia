@@ -12,11 +12,8 @@ import {
   getManifest,
   deployFiles,
   getCurrentScope,
-  getScopeId,
-  swapServerScope,
   createUpdateSet,
   getCurrentUpdateSetUserPref,
-  getUserSysId,
   updateCurrentUpdateSetUserPref,
   createCurrentUpdateSetUserPref
 } from "./server";
@@ -24,6 +21,7 @@ import PluginManager from "./PluginManager";
 import * as AppUtils from "./appUtils";
 import * as fUtils from "./FileUtils";
 import ProgressBar from "progress";
+import { defaultClient as client } from "./snClient";
 
 const fsp = fs.promises;
 
@@ -302,7 +300,7 @@ class AppManager {
             manifestScope: man.scope
           };
         } else if (swapScope) {
-          const swappedScopeObj = await this.swapScope(man.scope);
+          const swappedScopeObj = await AppUtils.swapScope(man.scope);
           return {
             match: swappedScopeObj.scope === man.scope,
             sessionScope: swappedScopeObj.scope,
@@ -322,21 +320,6 @@ class AppManager {
         sessionScope: "",
         manifestScope: ""
       };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  /*
-    MOVE TO: snClient
-    Breyton: Could go either way on this between snClient and appUtils. Core logic should definitely live in snClient for the HTTP stuff anyways.
-  */
-  private async swapScope(currentScope: string): Promise<SN.ScopeObj> {
-    try {
-      const scopeId = await getScopeId(currentScope);
-      await swapServerScope(scopeId);
-      const scopeObj = await getCurrentScope();
-      return scopeObj;
     } catch (e) {
       throw e;
     }
@@ -363,7 +346,7 @@ class AppManager {
           `New Update Set Created(${updateSetName}) sys_id:${updateSetSysId}`
         );
 
-        const userSysId = await getUserSysId();
+        const userSysId = await client().getUserSysId();
 
         const curUpdateSetUserPrefId = await getCurrentUpdateSetUserPref(
           userSysId

@@ -88,8 +88,71 @@ export const snClient = (
     return client.patch(endpoint, fields);
   };
 
+  const getScopeId = async (scopeName: string) => {
+    const endpoint = "api/now/table/sys_scope";
+    return (await client.get(endpoint, {
+      params: {
+        sysparm_query: `scope=${scopeName}`,
+        sysparm_fields: "sys_id"
+      }
+    })).data.result[0].sys_id;
+  };
+
+  const getUserSysId = async (
+    userName: string = process.env.SN_USER as string
+  ) => {
+    const endpoint = "api/now/table/sys_user";
+    return (await client.get(endpoint, {
+      params: {
+        sysparm_query: `user_name=${userName}`,
+        sysparm_fields: "sys_id"
+      }
+    })).data.result[0].sys_id;
+  };
+
+  const getCurrentAppUserPrefSysId = async (userSysId: string) => {
+    const endpoint = `api/now/table/sys_user_preference`;
+    return (
+      (await client.get(endpoint, {
+        params: {
+          sysparm_query: `user=${userSysId}^name=apps.current_app`,
+          sysparm_fields: "sys_id"
+        }
+      })).data.result[0].sys_id || ""
+    );
+  };
+
+  const updateCurrentAppUserPref = (
+    appSysId: string,
+    userPrefSysId: string
+  ) => {
+    const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
+    return client.put(endpoint, { value: appSysId });
+  };
+
+  const createCurrentAppUserPref = (appSysId: string, userSysId: string) => {
+    const endpoint = `api/now/table/sys_user_preference`;
+    return client.post(endpoint, {
+      value: appSysId,
+      name: "apps.current_app",
+      type: "string",
+      user: userSysId
+    });
+  };
+
+  const getCurrentScope = async () => {
+    let endpoint = "api/x_nuvo_sinc/sinc/getCurrentScope";
+    return (await client.get(endpoint)).data.result;
+  };
+
   return {
-    updateRecord
+    updateRecord,
+    getScopeId,
+    getUserSysId,
+    getCurrentAppUserPrefSysId,
+    updateCurrentAppUserPref,
+    createCurrentAppUserPref,
+    getCurrentScope
   };
 };
 
