@@ -1,7 +1,8 @@
 import { Sinc } from "@sincronia/types";
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosPromise, AxiosResponse } from "axios";
 import rateLimit from "axios-rate-limit";
 import { wait } from "./genericUtils";
+import { logger } from "./Logger";
 
 export const retryOnErr = async <T>(
   f: () => Promise<T>,
@@ -67,9 +68,9 @@ export const snClient = (
     { maxRPS: 20 }
   );
 
-  const getAppList = async()  => {
+  const getAppList = ()  => {
       let endpoint = "api/x_nuvo_sinc/sinc/getAppList";
-      return (await client.get(endpoint)).data.result;
+      return client.get(endpoint);
   }
 
   const updateATFfile = (contents: string, sysId: string) => {
@@ -93,38 +94,35 @@ export const snClient = (
     return client.patch(endpoint, fields);
   };
 
-  const getScopeId = async (scopeName: string) => {
+  const getScopeId = (scopeName: string) => {
     const endpoint = "api/now/table/sys_scope";
-    return (await client.get(endpoint, {
+    return client.get(endpoint, {
       params: {
         sysparm_query: `scope=${scopeName}`,
         sysparm_fields: "sys_id"
       }
-    })).data.result[0].sys_id;
+    });
   };
 
-  const getUserSysId = async (
+  const getUserSysId =  (
     userName: string = process.env.SN_USER as string
   ) => {
     const endpoint = "api/now/table/sys_user";
-    return (await client.get(endpoint, {
+    return client.get(endpoint, {
       params: {
         sysparm_query: `user_name=${userName}`,
         sysparm_fields: "sys_id"
       }
-    })).data.result[0].sys_id;
-  };
-
-  const getCurrentAppUserPrefSysId = async (userSysId: string) => {
+    });
+  }
+  const getCurrentAppUserPrefSysId = (userSysId: string) => {
     const endpoint = `api/now/table/sys_user_preference`;
-    return (
-      (await client.get(endpoint, {
+    return client.get(endpoint, {
         params: {
           sysparm_query: `user=${userSysId}^name=apps.current_app`,
           sysparm_fields: "sys_id"
         }
-      })).data.result[0].sys_id || ""
-    );
+      });
   };
 
   const updateCurrentAppUserPref = (
@@ -145,10 +143,49 @@ export const snClient = (
     });
   };
 
-  const getCurrentScope = async () => {
+  const getCurrentScope = () => {
     let endpoint = "api/x_nuvo_sinc/sinc/getCurrentScope";
-    return (await client.get(endpoint)).data.result;
+    return client.get(endpoint)
   };
+
+  const createUpdateSet = (updateSetName: string)=> {
+      const endpoint = `api/now/table/sys_update_set`;
+      return client.post(endpoint, {
+        name: updateSetName
+      });
+  }
+
+  const getCurrentUpdateSetUserPref = (
+    userSysId: string
+  )=> {
+      const endpoint = `api/now/table/sys_user_preference`;
+      return client.get(endpoint, {
+        params: {
+          sysparm_query: `user=${userSysId}^name=sys_update_set`,
+          sysparm_fields: "sys_id"
+        }
+  });
+}
+const updateCurrentUpdateSetUserPref = (
+  updateSetSysId: string,
+  userPrefSysId: string
+) => {
+    const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
+    return client.put(endpoint, { value: updateSetSysId });
+}
+
+const createCurrentUpdateSetUserPref =(
+  updateSetSysId: string,
+  userSysId: string
+) => {
+    const endpoint = `api/now/table/sys_user_preference`;
+    return client.put(endpoint, {
+      value: updateSetSysId,
+      name: "sys_update_set",
+      type: "string",
+      user: userSysId
+    });
+}
 
   return {
     getAppList,
@@ -158,7 +195,11 @@ export const snClient = (
     getCurrentAppUserPrefSysId,
     updateCurrentAppUserPref,
     createCurrentAppUserPref,
-    getCurrentScope
+    getCurrentScope,
+    createUpdateSet,
+    getCurrentUpdateSetUserPref,
+    updateCurrentUpdateSetUserPref,
+    createCurrentUpdateSetUserPref
   };
 };
 
@@ -166,3 +207,16 @@ export const defaultClient = () => {
   const { SN_USER = "", SN_PASSWORD = "", SN_INSTANCE = "" } = process.env;
   return snClient(`https://${SN_INSTANCE}/`, SN_USER, SN_PASSWORD);
 };
+
+export const processSimpleResponse = async(clientPromise: AxiosPromise<any>, returnField?:string) =>{
+  try{
+    return await clientPromise.then(result =>{
+      if(returnField) return result.data[0][returnField];
+      else return result.data;
+    });
+  }catch(e){
+    logger.error("Error processing server response");
+    logger.error(e);
+    throw e;
+  }
+}

@@ -10,18 +10,12 @@ import inquirer from "inquirer";
 import {
   getManifestWithFiles,
   getManifest,
-  deployFiles,
-  getCurrentScope,
-  createUpdateSet,
-  getCurrentUpdateSetUserPref,
-  updateCurrentUpdateSetUserPref,
-  createCurrentUpdateSetUserPref
+  deployFiles
 } from "./server";
 import PluginManager from "./PluginManager";
 import * as AppUtils from "./appUtils";
 import * as fUtils from "./FileUtils";
 import ProgressBar from "progress";
-import { defaultClient as client } from "./snClient";
 
 const fsp = fs.promises;
 
@@ -282,114 +276,6 @@ class AppManager {
       }
     } catch (e) {
       throw e;
-    }
-  }
-
-  /*
-    MOVE TO: appUtils
-  */
-  async checkScope(swapScope: boolean): Promise<Sinc.ScopeCheckResult> {
-    try {
-      let man = ConfigManager.getManifest();
-      if (man) {
-        let scopeObj = await getCurrentScope();
-        if (scopeObj.scope === man.scope) {
-          return {
-            match: true,
-            sessionScope: scopeObj.scope,
-            manifestScope: man.scope
-          };
-        } else if (swapScope) {
-          const swappedScopeObj = await AppUtils.swapScope(man.scope);
-          return {
-            match: swappedScopeObj.scope === man.scope,
-            sessionScope: swappedScopeObj.scope,
-            manifestScope: man.scope
-          };
-        } else {
-          return {
-            match: false,
-            sessionScope: scopeObj.scope,
-            manifestScope: man.scope
-          };
-        }
-      }
-      //first time case
-      return {
-        match: true,
-        sessionScope: "",
-        manifestScope: ""
-      };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  /**
-   * Creates a new update set and assigns it to the current user.
-   * @param updateSetName - does not create update set if value is blank
-   * @param skipPrompt - will not prompt user to verify update set name
-   *
-   */
-  /**
-   * Breyton: Probably move to appUtils, maybe return the core information instead of logging it here
-   */
-  async createAndAssignUpdateSet(
-    updateSetName: string = "",
-    skipPrompt: boolean = false
-  ): Promise<void> {
-    if (updateSetName !== "") {
-      if (await this.promptForNewUpdateSet(updateSetName, skipPrompt)) {
-        const updateSetSysId = await createUpdateSet(updateSetName);
-
-        logger.debug(
-          `New Update Set Created(${updateSetName}) sys_id:${updateSetSysId}`
-        );
-
-        const userSysId = await client().getUserSysId();
-
-        const curUpdateSetUserPrefId = await getCurrentUpdateSetUserPref(
-          userSysId
-        );
-
-        if (curUpdateSetUserPrefId !== "") {
-          await updateCurrentUpdateSetUserPref(
-            updateSetSysId,
-            curUpdateSetUserPrefId
-          );
-        } else {
-          await createCurrentUpdateSetUserPref(updateSetSysId, userSysId);
-        }
-      } else {
-        process.exit(0);
-      }
-    }
-  }
-
-  /*
-  MOVE TO: appUtils
-  Breyton: Might be better to move this directly to commands.ts
-  */
-  private async promptForNewUpdateSet(
-    updateSetName: string,
-    skipPrompt: boolean = false
-  ): Promise<boolean> {
-    try {
-      if (skipPrompt) return true;
-      let answers: { confirmed: boolean } = await inquirer.prompt([
-        {
-          type: "confirm",
-          name: "confirmed",
-          message: `A new Update Set "${updateSetName}" will be created for these pushed changes. Do you want to proceed?`,
-          default: false
-        }
-      ]);
-      if (!answers["confirmed"]) {
-        return false;
-      }
-      return true;
-    } catch (e) {
-      return false;
     }
   }
 }

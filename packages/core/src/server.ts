@@ -284,19 +284,6 @@ export async function deployFiles(
 }
 
 /*
-  SN client endpoint
-*/
-export async function getCurrentScope(): Promise<SN.ScopeObj> {
-  let endpoint = "api/x_nuvo_sinc/sinc/getCurrentScope";
-  try {
-    let response = await api.get(endpoint);
-    return response.data.result;
-  } catch (e) {
-    throw e;
-  }
-}
-
-/*
   Move to SN sincronia types
   Breyton: Probably a useless type once migration to snClient is complete
 */
@@ -304,73 +291,4 @@ interface SNInstanceCreds {
   instance: string;
   user: string;
   password: string;
-}
-
-
-/*
-  *
-  All of the following should either be an endpoint, or util function in SN Client
-  *
-  */
-
-export async function getCurrentUpdateSetUserPref(
-  userSysId: string
-): Promise<string> {
-  try {
-    const endpoint = `api/now/table/sys_user_preference`;
-    let response = await api.get(endpoint, {
-      params: {
-        sysparm_query: `user=${userSysId}^name=sys_update_set`,
-        sysparm_fields: "sys_id"
-      }
-    });
-    return response.data.result[0].sys_id;
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
-}
-
-export async function updateCurrentUpdateSetUserPref(
-  updateSetSysId: string,
-  userPrefSysId: string
-): Promise<void> {
-  try {
-    const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
-    await api.put(endpoint, { value: updateSetSysId });
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
-}
-
-export async function createCurrentUpdateSetUserPref(
-  updateSetSysId: string,
-  userSysId: string
-): Promise<void> {
-  try {
-    const endpoint = `api/now/table/sys_user_preference`;
-    await api.put(endpoint, {
-      value: updateSetSysId,
-      name: "sys_update_set",
-      type: "string",
-      user: userSysId
-    });
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
-}
-
-export async function createUpdateSet(updateSetName: string): Promise<string> {
-  try {
-    const endpoint = `api/now/table/sys_update_set`;
-    const response = await api.post(endpoint, {
-      name: updateSetName
-    });
-    return response.data.result.sys_id;
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
 }
