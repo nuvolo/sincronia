@@ -31,8 +31,8 @@ Check out the [tutorial videos](https://www.youtube.com/watch?v=CqdppnM-FvM&list
     - [Asymmetric Source Code](#asymmetric-source-code)
     - [Power of Extensions](#power-of-extensions)
   - [Configuration](#configuration)
-    - [There are WAY too many files in here! 😱](#there-are-way-too-many-files-in-here-)
-    - [I'm not seeing all my code files! 😡](#im-not-seeing-all-my-code-files-)
+    - [There are WAY too many files in here!](#there-are-way-too-many-files-in-here)
+    - [I'm not seeing all my code files!](#im-not-seeing-all-my-code-files)
     - [Plugin Configuration](#plugin-configuration)
     - [Table Options](#table-options)
   - [FAQ](#faq)
@@ -253,11 +253,11 @@ module.exports = {
 
 If you find that your config is getting too large, you can use typical nodejs techniques for splitting it into smaller modules and loading them into the `sinc.config.js`.
 
-### There are WAY too many files in here! 😱
+### There are WAY too many files in here!
 
 **OR**
 
-### I'm not seeing all my code files! 😡
+### I'm not seeing all my code files!
 
 When you first set up your project, you may notice you may have more files than you want to manage or some files are missing. This can be easily resolved by tweaking your `includes` and `excludes` section of your `sinc.config.js`. Sincronia attempts to establish sane defaults for these values [here](https://github.com/nuvolo/sincronia/blob/master/packages/core/src/defaultManifestConfig.ts).
 
