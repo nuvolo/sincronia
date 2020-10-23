@@ -400,10 +400,8 @@ const swapServerScope = async (scopeId: string): Promise<void> => {
 /**
  * Creates a new update set and assigns it to the current user.
  * @param updateSetName - does not create update set if value is blank
- * @param skipPrompt - will not prompt user to verify update set name
- *
  */
-export const createAndAssignUpdateSet = async (updateSetName: string = "") => {
+export const createAndAssignUpdateSet = async (updateSetName = "") => {
   logger.info(`Update Set Name: ${updateSetName}`);
   const client = clientFactory();
   const updateSetSysId = await processSimpleResponse(
@@ -437,10 +435,10 @@ export const checkScope = async (
   swap: boolean
 ): Promise<Sinc.ScopeCheckResult> => {
   try {
-    let man = ConfigManager.getManifest();
+    const man = ConfigManager.getManifest();
     if (man) {
-      let client = clientFactory();
-      let scopeObj = await processSimpleResponse(client.getCurrentScope());
+      const client = clientFactory();
+      const scopeObj = await processSimpleResponse(client.getCurrentScope());
       if (scopeObj.scope === man.scope) {
         return {
           match: true,
