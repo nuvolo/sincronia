@@ -24,31 +24,9 @@ const NETWORK_RETRIES = 3;
 const TABLE_API = "api/now/table";
 const NETWORK_TIMEOUT = 3000;
 
-async function _update(obj: AxiosRequestConfig) {
-  try {
-    return await api(obj);
-  } catch (e) {
-    throw e;
-  }
-}
-
-export async function pushUpdate(requestObj: Sinc.ServerRequestConfig) {
-  try {
-    if (requestObj && requestObj.data) {
-      return _update(requestObj as AxiosRequestConfig);
-    }
-    logger.error("Attempted to push an empty data object");
-  } catch (e) {
-    throw e;
-  }
-}
-
-export async function pushUpdates(
-  arrOfResourceConfig: Sinc.ServerRequestConfig[]
-) {
-  await arrOfResourceConfig.map(pushUpdate);
-}
-
+/*
+  Combine following two manifest gets into same endpoint & functions
+*/
 export async function getManifestWithFiles(
   scope: string,
   creds?: SNInstanceCreds
@@ -62,7 +40,7 @@ export async function getManifestWithFiles(
     } = ConfigManager.getConfig();
     let response;
     if (creds) {
-      let client = getBasicAxiosClient(creds);
+      let client = api;
       response = await client.post(endpoint, {
         includes,
         excludes,
@@ -96,6 +74,9 @@ export async function getManifest(scope: string): Promise<SN.AppManifest> {
   }
 }
 
+/*
+  SN Client endpoint
+*/
 export async function getMissingFiles(
   missingFiles: SN.MissingFileTableMap
 ): Promise<SN.TableMap> {
@@ -110,6 +91,10 @@ export async function getMissingFiles(
   }
 }
 
+/*
+SN Client endpoint
+Breyton: I think this exists in the snClient now under updateATFfile
+*/
 async function pushATFfile(file: string, sys_id: string) {
   let endpoint = `api/x_nuvo_sinc/sinc/pushATFfile`;
   try {
@@ -121,11 +106,20 @@ async function pushATFfile(file: string, sys_id: string) {
   }
 }
 
+/*
+  Function is only used in function below
+  Roll into buildFileRequestObj?
+  Breyton: This function is probably useless now
+*/
 function buildFileEndpoint(payload: Sinc.FileContext) {
   const { tableName, sys_id } = payload;
   return [TABLE_API, tableName, sys_id].join("/");
 }
 
+/*
+  Util function in SN Client
+  Breyton: This function is probably useless now
+*/
 async function buildFileRequestObj(
   target_server: string,
   filePayload: Sinc.FileContext,
@@ -142,6 +136,38 @@ async function buildFileRequestObj(
     data[targetField] = fileContents;
     if (filePayload.tableName === "sys_atf_step") data = fileContents;
     return { url, data, method: "PATCH" };
+  } catch (e) {
+    throw e;
+  }
+}
+
+/*
+  Function not used anywhere, delete
+*/
+export async function pushUpdates(
+  arrOfResourceConfig: Sinc.ServerRequestConfig[]
+) {
+  await arrOfResourceConfig.map(pushUpdate);
+}
+
+/*
+  Following several functions only used for deploy. Clean up and move to appUtils
+  Breyton: Should be able to leverage the same endpoints used for the new push in snClient to accomplish the same task
+*/
+async function _update(obj: AxiosRequestConfig) {
+  try {
+    return await api(obj);
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function pushUpdate(requestObj: Sinc.ServerRequestConfig) {
+  try {
+    if (requestObj && requestObj.data) {
+      return _update(requestObj as AxiosRequestConfig);
+    }
+    logger.error("Attempted to push an empty data object");
   } catch (e) {
     throw e;
   }
@@ -257,219 +283,12 @@ export async function deployFiles(
   return await pushFiles(target_server, filesPayload, false);
 }
 
-export async function getCurrentScope(): Promise<SN.ScopeObj> {
-  let endpoint = "api/x_nuvo_sinc/sinc/getCurrentScope";
-  try {
-    let response = await api.get(endpoint);
-    return response.data.result;
-  } catch (e) {
-    throw e;
-  }
-}
-
+/*
+  Move to SN sincronia types
+  Breyton: Probably a useless type once migration to snClient is complete
+*/
 interface SNInstanceCreds {
   instance: string;
   user: string;
   password: string;
-}
-
-export async function getAppList(creds?: SNInstanceCreds): Promise<SN.App[]> {
-  try {
-    let endpoint = "api/x_nuvo_sinc/sinc/getAppList";
-    let response;
-    if (creds) {
-      let client = getBasicAxiosClient(creds);
-      response = await client.get(endpoint);
-    } else {
-      response = await api.get(endpoint);
-    }
-    let apps: SN.App[] = response.data.result;
-    return apps;
-  } catch (e) {
-    throw e;
-  }
-}
-
-function getBasicAxiosClient(creds: SNInstanceCreds) {
-  let serverString = creds.instance || "NO_INSTANCE";
-  return axios.create({
-    withCredentials: true,
-    auth: {
-      username: creds.user,
-      password: creds.password
-    },
-    baseURL: `https://${serverString}/`
-  });
-}
-
-export async function swapServerScope(
-  scopeId: string,
-  updateSetName: string = ""
-): Promise<void> {
-  try {
-    const userSysId = await getUserSysId();
-    const curAppUserPrefId = await getCurrentAppUserPrefSysId(userSysId);
-    // If not user pref record exists, create it.
-    if (curAppUserPrefId !== "") {
-      await updateCurrentAppUserPref(scopeId, curAppUserPrefId);
-    } else {
-      await createCurrentAppUserPref(scopeId, userSysId);
-    }
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
-}
-
-export async function getScopeId(scopeName: string): Promise<string> {
-  try {
-    const endpoint = "api/now/table/sys_scope";
-    let response = await api.get(endpoint, {
-      params: {
-        sysparm_query: `scope=${scopeName}`,
-        sysparm_fields: "sys_id"
-      }
-    });
-    logger.debug(`getScopeId.response = ${JSON.stringify(response.data)}`);
-    return response.data.result[0].sys_id;
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
-}
-
-export async function getUserSysId(
-  userName: string = process.env.SN_USER as string
-): Promise<string> {
-  try {
-    const endpoint = "api/now/table/sys_user";
-    let response = await api.get(endpoint, {
-      params: {
-        sysparm_query: `user_name=${userName}`,
-        sysparm_fields: "sys_id"
-      }
-    });
-    return response.data.result[0].sys_id;
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
-}
-
-export async function getCurrentAppUserPrefSysId(
-  userSysId: string
-): Promise<string> {
-  try {
-    const endpoint = `api/now/table/sys_user_preference`;
-    let response = await api.get(endpoint, {
-      params: {
-        sysparm_query: `user=${userSysId}^name=apps.current_app`,
-        sysparm_fields: "sys_id"
-      }
-    });
-    logger.debug(
-      `getCurrentAppUserPrefSysId.response = ${JSON.stringify(response.data)}`
-    );
-    if (response.data.result.length > 0) {
-      return response.data.result[0].sys_id;
-    } else {
-      return "";
-    }
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
-}
-
-export async function updateCurrentAppUserPref(
-  appSysId: string,
-  userPrefSysId: string
-): Promise<void> {
-  try {
-    const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
-    await api.put(endpoint, { value: appSysId });
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
-}
-
-export async function createCurrentAppUserPref(
-  appSysId: string,
-  userSysId: string
-): Promise<void> {
-  try {
-    const endpoint = `api/now/table/sys_user_preference`;
-    await api.post(endpoint, {
-      value: appSysId,
-      name: "apps.current_app",
-      type: "string",
-      user: userSysId
-    });
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
-}
-
-export async function getCurrentUpdateSetUserPref(
-  userSysId: string
-): Promise<string> {
-  try {
-    const endpoint = `api/now/table/sys_user_preference`;
-    let response = await api.get(endpoint, {
-      params: {
-        sysparm_query: `user=${userSysId}^name=sys_update_set`,
-        sysparm_fields: "sys_id"
-      }
-    });
-    return response.data.result[0].sys_id;
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
-}
-
-export async function updateCurrentUpdateSetUserPref(
-  updateSetSysId: string,
-  userPrefSysId: string
-): Promise<void> {
-  try {
-    const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
-    await api.put(endpoint, { value: updateSetSysId });
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
-}
-
-export async function createCurrentUpdateSetUserPref(
-  updateSetSysId: string,
-  userSysId: string
-): Promise<void> {
-  try {
-    const endpoint = `api/now/table/sys_user_preference`;
-    await api.put(endpoint, {
-      value: updateSetSysId,
-      name: "sys_update_set",
-      type: "string",
-      user: userSysId
-    });
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
-}
-
-export async function createUpdateSet(updateSetName: string): Promise<string> {
-  try {
-    const endpoint = `api/now/table/sys_update_set`;
-    const response = await api.post(endpoint, {
-      name: updateSetName
-    });
-    return response.data.result.sys_id;
-  } catch (e) {
-    logger.error(e);
-    throw e;
-  }
 }

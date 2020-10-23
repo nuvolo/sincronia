@@ -3,17 +3,19 @@ import ConfigManager from "./config";
 import { startWatching } from "./Watcher";
 import AppManager from "./AppManager";
 import * as AppUtils from "./appUtils";
+import * as GitUtils from "./gitUtils";
 import { startWizard } from "./wizard";
 import { logger } from "./Logger";
 import { scopeCheckMessage, devModeLog, logPushResults } from "./logMessages";
-import { getCurrentScope } from "./server";
+import {defaultClient, processSimpleResponse} from "./snClient"
+import inquirer from "inquirer";
 
 async function scopeCheck(
   successFunc: () => void,
   swapScopes: boolean = false
 ) {
   try {
-    const scopeCheck = await AppManager.checkScope(swapScopes);
+    const scopeCheck = await AppUtils.checkScope(swapScopes);
     if (!scopeCheck.match) {
       scopeCheckMessage(scopeCheck);
       // Throw exception to register this as an error
@@ -69,15 +71,35 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
   setLogLevel(args);
   scopeCheck(async () => {
     try {
-      const { updateSet, ci, target, diff } = args;
+      const { updateSet, ci:skipPrompt, target, diff } = args;
+
       // Does not create update set if updateSetName is blank
-      await AppManager.createAndAssignUpdateSet(updateSet, ci);
+      if(updateSet){
+        if(!skipPrompt){
+          let answers: { confirmed: boolean } = await inquirer.prompt([
+            {
+              type: "confirm",
+              name: "confirmed",
+              message: `A new Update Set "${updateSet}" will be created for these pushed changes. Do you want to proceed?`,
+              default: false
+            }
+          ]);
+          if (!answers["confirmed"]) {
+            process.exit(0);
+          }
+        }
+
+      let newUpdateSet = await AppUtils.createAndAssignUpdateSet(updateSet);
+        logger.debug(
+          `New Update Set Created(${newUpdateSet.name}) sys_id:${newUpdateSet.id}`
+        );
+      }
       const getEncodedPaths = async () => {
         if (target !== undefined && target !== "") {
           return target;
         }
         if (diff !== "") {
-          return AppManager.gitDiff(diff);
+          return GitUtils.gitDiff(diff);
         }
         return ConfigManager.getSourcePath();
       };
@@ -87,7 +109,7 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
       );
       logger.info(`${count} files to push.`);
       let canPush = true;
-      if (!ci) {
+      if (!skipPrompt) {
         canPush = await AppManager.canPush();
       }
       if (!canPush) {
@@ -121,8 +143,8 @@ export async function buildCommand(args: Sinc.BuildCmdArgs) {
   setLogLevel(args);
   try {
     if (args.diff !== "") {
-      let files = await AppManager.gitDiff(args.diff);
-      AppManager.writeDiff(files);
+      let files = await GitUtils.gitDiff(args.diff);
+      GitUtils.writeDiff(files);
     }
     await AppManager.buildFiles();
   } catch (e) {
@@ -141,7 +163,8 @@ export async function deployCommand(args: Sinc.SharedCmdArgs) {
 
 export async function statusCommand() {
   try {
-    let scopeObj = await getCurrentScope();
+    const client = defaultClient();
+    let scopeObj = await processSimpleResponse(client.getCurrentScope());
     logger.info(`Instance: ${process.env.SN_INSTANCE}`);
     logger.info(`Scope: ${scopeObj.scope}`);
     logger.info(`User: ${process.env.SN_USER}`);

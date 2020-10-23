@@ -9,7 +9,8 @@ import PluginManager from "./PluginManager";
 import {
   defaultClient as clientFactory,
   processPushResponse,
-  retryOnErr
+  retryOnErr,
+  processSimpleResponse
 } from "./snClient";
 import { logger } from "./Logger";
 import { aggregateErrorMessages, allSettled } from "./genericUtils";
@@ -387,3 +388,95 @@ export const pushFiles = async (
   const tablePushResults = await Promise.all(buildAndPushPromises);
   return tablePushResults.flat();
 };
+
+export const swapScope = async (currentScope: string): Promise<SN.ScopeObj> => {
+  try {
+    const client = clientFactory();
+    const scopeId = await processSimpleResponse(client.getScopeId(currentScope), "sys_id");
+    await swapServerScope(scopeId);
+    const scopeObj = await processSimpleResponse(client.getCurrentScope());
+    return scopeObj;
+  } catch (e) {
+    throw e;
+  }
+};
+
+const swapServerScope = async (scopeId: string): Promise<void> => {
+  try {
+    const client = clientFactory();
+    const userSysId = await processSimpleResponse(client.getUserSysId(), "sys_id");
+    const curAppUserPrefId = await processSimpleResponse(client.getCurrentAppUserPrefSysId(userSysId), "sys_id") || "";
+    // If not user pref record exists, create it.
+    if (curAppUserPrefId !== "")
+      await client.updateCurrentAppUserPref(scopeId, curAppUserPrefId);
+    else await client.createCurrentAppUserPref(scopeId, userSysId);
+  } catch (e) {
+    logger.error(e);
+    throw e;
+  }
+};
+
+
+/**
+   * Creates a new update set and assigns it to the current user.
+   * @param updateSetName - does not create update set if value is blank
+   * @param skipPrompt - will not prompt user to verify update set name
+   *
+   */
+  export const createAndAssignUpdateSet = async(
+    updateSetName: string = ""
+  ) => {
+    logger.info(`Update Set Name: ${updateSetName}`);
+      const client = clientFactory();
+      const updateSetSysId = await processSimpleResponse(client.createUpdateSet(updateSetName), "sys_id");
+      const userSysId = await processSimpleResponse(client.getUserSysId(), "sys_id");
+      const curUpdateSetUserPrefId = await processSimpleResponse(client.getCurrentUpdateSetUserPref(userSysId), "sys_id");
+
+      if (curUpdateSetUserPrefId !== "") {
+        await client.updateCurrentUpdateSetUserPref(updateSetSysId, curUpdateSetUserPrefId);
+      } else {
+        await client.createCurrentUpdateSetUserPref(updateSetSysId, userSysId);
+      }
+      return {
+        name: updateSetName,
+        id: updateSetSysId
+      }
+  }
+
+ export const checkScope = async(swap: boolean): Promise<Sinc.ScopeCheckResult>  => {
+  try {
+    let man = ConfigManager.getManifest();
+    if (man) {
+      let client = clientFactory();
+      let scopeObj = await processSimpleResponse(client.getCurrentScope());
+      if (scopeObj.scope === man.scope) {
+        return {
+          match: true,
+          sessionScope: scopeObj.scope,
+          manifestScope: man.scope
+        };
+      } else if (swap) {
+        const swappedScopeObj = await swapScope(man.scope);
+        return {
+          match: swappedScopeObj.scope === man.scope,
+          sessionScope: swappedScopeObj.scope,
+          manifestScope: man.scope
+        };
+      } else {
+        return {
+          match: false,
+          sessionScope: scopeObj.scope,
+          manifestScope: man.scope
+        };
+      }
+    }
+    //first time case
+    return {
+      match: true,
+      sessionScope: "",
+      manifestScope: ""
+    };
+  } catch (e) {
+    throw e;
+  }
+}

@@ -1,7 +1,8 @@
 import { Sinc } from "@sincronia/types";
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosPromise, AxiosResponse } from "axios";
 import rateLimit from "axios-rate-limit";
 import { wait } from "./genericUtils";
+import { logger } from "./Logger";
 
 export const retryOnErr = async <T>(
   f: () => Promise<T>,
@@ -67,6 +68,11 @@ export const snClient = (
     { maxRPS: 20 }
   );
 
+  const getAppList = ()  => {
+      let endpoint = "api/x_nuvo_sinc/sinc/getAppList";
+      return client.get(endpoint);
+  }
+
   const updateATFfile = (contents: string, sysId: string) => {
     const endpoint = "api/x_nuvo_sinc/pushATFfile";
     try {
@@ -88,8 +94,112 @@ export const snClient = (
     return client.patch(endpoint, fields);
   };
 
+  const getScopeId = (scopeName: string) => {
+    const endpoint = "api/now/table/sys_scope";
+    return client.get(endpoint, {
+      params: {
+        sysparm_query: `scope=${scopeName}`,
+        sysparm_fields: "sys_id"
+      }
+    });
+  };
+
+  const getUserSysId =  (
+    userName: string = process.env.SN_USER as string
+  ) => {
+    const endpoint = "api/now/table/sys_user";
+    return client.get(endpoint, {
+      params: {
+        sysparm_query: `user_name=${userName}`,
+        sysparm_fields: "sys_id"
+      }
+    });
+  }
+  const getCurrentAppUserPrefSysId = (userSysId: string) => {
+    const endpoint = `api/now/table/sys_user_preference`;
+    return client.get(endpoint, {
+        params: {
+          sysparm_query: `user=${userSysId}^name=apps.current_app`,
+          sysparm_fields: "sys_id"
+        }
+      });
+  };
+
+  const updateCurrentAppUserPref = (
+    appSysId: string,
+    userPrefSysId: string
+  ) => {
+    const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
+    return client.put(endpoint, { value: appSysId });
+  };
+
+  const createCurrentAppUserPref = (appSysId: string, userSysId: string) => {
+    const endpoint = `api/now/table/sys_user_preference`;
+    return client.post(endpoint, {
+      value: appSysId,
+      name: "apps.current_app",
+      type: "string",
+      user: userSysId
+    });
+  };
+
+  const getCurrentScope = () => {
+    let endpoint = "api/x_nuvo_sinc/sinc/getCurrentScope";
+    return client.get(endpoint)
+  };
+
+  const createUpdateSet = (updateSetName: string)=> {
+      const endpoint = `api/now/table/sys_update_set`;
+      return client.post(endpoint, {
+        name: updateSetName
+      });
+  }
+
+  const getCurrentUpdateSetUserPref = (
+    userSysId: string
+  )=> {
+      const endpoint = `api/now/table/sys_user_preference`;
+      return client.get(endpoint, {
+        params: {
+          sysparm_query: `user=${userSysId}^name=sys_update_set`,
+          sysparm_fields: "sys_id"
+        }
+  });
+}
+const updateCurrentUpdateSetUserPref = (
+  updateSetSysId: string,
+  userPrefSysId: string
+) => {
+    const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
+    return client.put(endpoint, { value: updateSetSysId });
+}
+
+const createCurrentUpdateSetUserPref =(
+  updateSetSysId: string,
+  userSysId: string
+) => {
+    const endpoint = `api/now/table/sys_user_preference`;
+    return client.put(endpoint, {
+      value: updateSetSysId,
+      name: "sys_update_set",
+      type: "string",
+      user: userSysId
+    });
+}
+
   return {
-    updateRecord
+    getAppList,
+    updateRecord,
+    getScopeId,
+    getUserSysId,
+    getCurrentAppUserPrefSysId,
+    updateCurrentAppUserPref,
+    createCurrentAppUserPref,
+    getCurrentScope,
+    createUpdateSet,
+    getCurrentUpdateSetUserPref,
+    updateCurrentUpdateSetUserPref,
+    createCurrentUpdateSetUserPref
   };
 };
 
@@ -97,3 +207,16 @@ export const defaultClient = () => {
   const { SN_USER = "", SN_PASSWORD = "", SN_INSTANCE = "" } = process.env;
   return snClient(`https://${SN_INSTANCE}/`, SN_USER, SN_PASSWORD);
 };
+
+export const processSimpleResponse = async(clientPromise: AxiosPromise<any>, returnField?:string) =>{
+  try{
+    return await clientPromise.then(result =>{
+      if(returnField) return result.data[0][returnField];
+      else return result.data;
+    });
+  }catch(e){
+    logger.error("Error processing server response");
+    logger.error(e);
+    throw e;
+  }
+}
