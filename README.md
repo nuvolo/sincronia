@@ -21,17 +21,20 @@ Check out the [tutorial videos](https://www.youtube.com/watch?v=CqdppnM-FvM&list
     - [Instructions](#instructions)
   - [How does it work?](#how-does-it-work)
     - [Commands](#commands)
+      - [Using the diff option](#using-the-diff-option)
     - [Workflow](#workflow)
     - [File Structure](#file-structure)
       - [sinc.config.js](#sincconfigjs)
       - [sinc.manifest.json](#sincmanifestjson)
+      - [sinc.diff.manifest.json](#sincdiffmanifestjson)
       - [.env](#env)
     - [Asymmetric Source Code](#asymmetric-source-code)
     - [Power of Extensions](#power-of-extensions)
   - [Configuration](#configuration)
-    - [There are WAY too many files in here! 😱](#there-are-way-too-many-files-in-here-%f0%9f%98%b1)
-    - [I'm not seeing all my code files! 😡](#im-not-seeing-all-my-code-files-%f0%9f%98%a1)
+    - [There are WAY too many files in here!](#there-are-way-too-many-files-in-here)
+    - [I'm not seeing all my code files!](#im-not-seeing-all-my-code-files)
     - [Plugin Configuration](#plugin-configuration)
+    - [Table Options](#table-options)
   - [FAQ](#faq)
     - [How do I Delete Something?](#how-do-i-delete-something)
     - [How do I Add New Scripts?](#how-do-i-add-new-scripts)
@@ -250,11 +253,11 @@ module.exports = {
 
 If you find that your config is getting too large, you can use typical nodejs techniques for splitting it into smaller modules and loading them into the `sinc.config.js`.
 
-### There are WAY too many files in here! 😱
+### There are WAY too many files in here!
 
 **OR**
 
-### I'm not seeing all my code files! 😡
+### I'm not seeing all my code files!
 
 When you first set up your project, you may notice you may have more files than you want to manage or some files are missing. This can be easily resolved by tweaking your `includes` and `excludes` section of your `sinc.config.js`. Sincronia attempts to establish sane defaults for these values [here](https://github.com/nuvolo/sincronia/blob/master/packages/core/src/defaultManifestConfig.ts).
 
@@ -336,6 +339,35 @@ module.exports = {
   ],
 };
 ```
+
+### Table Options
+
+**This is a relatively new feature and potentially subject to change**
+
+The `tableOptions` section allows for special setups on any table. Example:
+
+```javascript
+// sinc.config.js
+module.exports = {
+  // ...
+  tableOptions: {
+    some_table: {
+      // sets the field used for the record folder name
+      displayField: "some_field",
+      // Allows to de-duplicate records based on certain fields
+      differentiatorField: "sys_id",
+      // can be an array, if there isn't a value in a field, it moves to the next one
+      differentiatorField: ["some_field", "sys_id"],
+      // an encoded query to filter records by
+      query: "some_field=test",
+    },
+  },
+};
+```
+
+**Note on differentiatorField**
+
+This feature will currently put a colon in the filename. This will break the Windows filesystem. Use at your own risk.
 
 ## FAQ
 
