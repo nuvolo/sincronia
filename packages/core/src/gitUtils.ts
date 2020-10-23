@@ -2,7 +2,6 @@ import * as cp from "child_process";
 import path from "path";
 import { logger } from "./Logger";
 import { PATH_DELIMITER } from "./constants";
-import AppManager from "./AppManager";
 import ConfigManager from "./config";
 import fs from "fs";
 import * as fUtils from "./FileUtils";

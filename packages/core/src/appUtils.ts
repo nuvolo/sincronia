@@ -4,7 +4,7 @@ import ProgressBar from "progress";
 import * as fUtils from "./FileUtils";
 import * as SNClient from "./server";
 import ConfigManager from "./config";
-import { PATH_DELIMITER, PUSH_RETRY_LIMIT, PUSH_RETRY_WAIT } from "./constants";
+import { PUSH_RETRY_LIMIT, PUSH_RETRY_WAIT } from "./constants";
 import PluginManager from "./PluginManager";
 import {
   defaultClient as clientFactory,
