@@ -60,58 +60,6 @@ export const pathExists = async (path: string): Promise<boolean> => {
   }
 };
 
-export const getFilePaths = async (pathString: string) => {
-  let pathPromises = pathString
-    .split(PATH_DELIMITER)
-    .filter(cur => {
-      //make sure it isn't blank
-      if (cur && cur !== "") {
-        //make sure it exists
-        let resolvedPath = path.resolve(process.cwd(), cur);
-        return fs.existsSync(resolvedPath);
-      } else {
-        return false;
-      }
-    })
-    .map(async cur => {
-      let resolvedPath = path.resolve(process.cwd(), cur);
-      let stats = await fsp.stat(resolvedPath);
-      if (stats.isDirectory()) {
-        return await loadList(resolvedPath);
-      } else {
-        return [resolvedPath];
-      }
-    });
-  let pathArrays = await Promise.all(pathPromises);
-  let paths = pathArrays.reduce((acc, cur) => {
-    return acc.concat(cur);
-  }, []);
-  return paths;
-};
-
-const loadList = async (directory: string): Promise<string[]> => {
-  let list: string[] = [];
-  await loaddir(directory, list);
-  return list;
-};
-
-const loaddir = async (dirPath: string, list: string[]) => {
-  try {
-    let files = await fsp.readdir(dirPath);
-    for (let f of files) {
-      let filep = path.join(dirPath, f);
-      let stats = await fsp.stat(filep);
-      if (stats.isDirectory()) {
-        await loaddir(filep, list);
-      } else {
-        list.push(filep);
-      }
-    }
-  } catch (e) {
-    throw e;
-  }
-};
-
 export const appendToPath = (prefix: string) => (suffix: string): string =>
   path.join(prefix, suffix);
 
@@ -213,6 +161,27 @@ export const getPathsInPath = async (p: string): Promise<string[]> => {
     const stackedPaths = await Promise.all(pathPromises);
     return stackedPaths.flat();
   }
+};
+
+export const splitEncodedPaths = (encodedPaths: string): string[] =>
+  encodedPaths.split(PATH_DELIMITER).filter(p => p && p !== "");
+
+export const isValidPath = async (path: string): Promise<boolean> => {
+  return pathExists(path);
+};
+
+export const encodedPathsToFilePaths = async (
+  encodedPaths: string
+): Promise<string[]> => {
+  const pathSplits = splitEncodedPaths(encodedPaths);
+  const validChecks = await Promise.all(pathSplits.map(isValidPath));
+  const validSplits = pathSplits.filter((_, index) => validChecks[index]);
+  const splitPaths = await Promise.all(validSplits.map(getPathsInPath));
+  const deDupedPaths = splitPaths.flat().reduce((acc, cur) => {
+    acc.add(cur);
+    return acc;
+  }, new Set<string>());
+  return Array.from(deDupedPaths);
 };
 
 export const summarizeFile = (ctx: Sinc.FileContext): string => {

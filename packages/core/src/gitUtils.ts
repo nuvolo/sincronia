@@ -21,7 +21,7 @@ export const gitDiff = async (target: string): Promise<string> => {
 };
 
 export const writeDiff = async (files: string) => {
-  let paths = await fUtils.getFilePaths(files);
+  let paths = await fUtils.encodedPathsToFilePaths(files);
   logger.silly(`${paths.length} paths found...`);
   logger.silly(JSON.stringify(paths, null, 2));
   fs.promises.writeFile(
