@@ -4,7 +4,7 @@ import ProgressBar from "progress";
 import * as fUtils from "./FileUtils";
 import * as SNClient from "./server";
 import ConfigManager from "./config";
-import { PATH_DELIMITER, PUSH_RETRY_LIMIT, PUSH_RETRY_WAIT } from "./constants";
+import { PUSH_RETRY_LIMIT, PUSH_RETRY_WAIT } from "./constants";
 import PluginManager from "./PluginManager";
 import {
   defaultClient as clientFactory,
@@ -210,26 +210,6 @@ export const processMissingFiles = async (
   }
 };
 
-export const getAppFilesInPath = async (
-  path: string
-): Promise<Sinc.FileContext[]> => {
-  const filePaths = await fUtils.getPathsInPath(path);
-  const fileCtxPromises = filePaths.map(fUtils.getFileContextFromPath);
-  const maybeFileContexts = await Promise.all(fileCtxPromises);
-  const fileContexts = maybeFileContexts.filter(
-    (ctx): ctx is Sinc.FileContext => ctx !== undefined
-  );
-  return fileContexts;
-};
-
-const getAppFilesInPaths = async (
-  paths: string[]
-): Promise<Sinc.FileContext[]> => {
-  const appFilePromises = paths.map(getAppFilesInPath);
-  const appFileLists = await Promise.all(appFilePromises);
-  return appFileLists.flat();
-};
-
 const countRecsInTree = (tree: Sinc.AppFileContextTree): number => {
   return Object.keys(tree).reduce((acc, table) => {
     return acc + Object.keys(tree[table]).length;
@@ -356,22 +336,13 @@ const getProgTick = (
   return undefined;
 };
 
-export const getValidPaths = async (
-  encodedPaths: string
-): Promise<string[]> => {
-  const pathChunks = encodedPaths
-    .split(PATH_DELIMITER)
-    .filter(p => p && p !== "");
-  const pathExistsPromises = pathChunks.map(fUtils.pathExists);
-  const pathExistsCheck = await Promise.all(pathExistsPromises);
-  return pathChunks.filter((_, index) => pathExistsCheck[index]);
-};
-
 export const getFileTreeAndCount = async (
   encodedPaths: string
 ): Promise<[Sinc.AppFileContextTree, number]> => {
-  const validPaths = await getValidPaths(encodedPaths);
-  const appFileCtxs = await getAppFilesInPaths(validPaths);
+  const validPaths = await fUtils.encodedPathsToFilePaths(encodedPaths);
+  const appFileCtxs = validPaths
+    .map(fUtils.getFileContextFromPath)
+    .filter((maybeCtx): maybeCtx is Sinc.FileContext => !!maybeCtx);
   const appFileTree = groupAppFiles(appFileCtxs);
   const recordCount = countRecsInTree(appFileTree);
   return [appFileTree, recordCount];
@@ -392,7 +363,10 @@ export const pushFiles = async (
 export const swapScope = async (currentScope: string): Promise<SN.ScopeObj> => {
   try {
     const client = clientFactory();
-    const scopeId = await processSimpleResponse(client.getScopeId(currentScope), "sys_id");
+    const scopeId = await processSimpleResponse(
+      client.getScopeId(currentScope),
+      "sys_id"
+    );
     await swapServerScope(scopeId);
     const scopeObj = await processSimpleResponse(client.getCurrentScope());
     return scopeObj;
@@ -404,8 +378,15 @@ export const swapScope = async (currentScope: string): Promise<SN.ScopeObj> => {
 const swapServerScope = async (scopeId: string): Promise<void> => {
   try {
     const client = clientFactory();
-    const userSysId = await processSimpleResponse(client.getUserSysId(), "sys_id");
-    const curAppUserPrefId = await processSimpleResponse(client.getCurrentAppUserPrefSysId(userSysId), "sys_id") || "";
+    const userSysId = await processSimpleResponse(
+      client.getUserSysId(),
+      "sys_id"
+    );
+    const curAppUserPrefId =
+      (await processSimpleResponse(
+        client.getCurrentAppUserPrefSysId(userSysId),
+        "sys_id"
+      )) || "";
     // If not user pref record exists, create it.
     if (curAppUserPrefId !== "")
       await client.updateCurrentAppUserPref(scopeId, curAppUserPrefId);
@@ -416,39 +397,48 @@ const swapServerScope = async (scopeId: string): Promise<void> => {
   }
 };
 
-
 /**
-   * Creates a new update set and assigns it to the current user.
-   * @param updateSetName - does not create update set if value is blank
-   * @param skipPrompt - will not prompt user to verify update set name
-   *
-   */
-  export const createAndAssignUpdateSet = async(
-    updateSetName: string = ""
-  ) => {
-    logger.info(`Update Set Name: ${updateSetName}`);
-      const client = clientFactory();
-      const updateSetSysId = await processSimpleResponse(client.createUpdateSet(updateSetName), "sys_id");
-      const userSysId = await processSimpleResponse(client.getUserSysId(), "sys_id");
-      const curUpdateSetUserPrefId = await processSimpleResponse(client.getCurrentUpdateSetUserPref(userSysId), "sys_id");
+ * Creates a new update set and assigns it to the current user.
+ * @param updateSetName - does not create update set if value is blank
+ */
+export const createAndAssignUpdateSet = async (updateSetName = "") => {
+  logger.info(`Update Set Name: ${updateSetName}`);
+  const client = clientFactory();
+  const updateSetSysId = await processSimpleResponse(
+    client.createUpdateSet(updateSetName),
+    "sys_id"
+  );
+  const userSysId = await processSimpleResponse(
+    client.getUserSysId(),
+    "sys_id"
+  );
+  const curUpdateSetUserPrefId = await processSimpleResponse(
+    client.getCurrentUpdateSetUserPref(userSysId),
+    "sys_id"
+  );
 
-      if (curUpdateSetUserPrefId !== "") {
-        await client.updateCurrentUpdateSetUserPref(updateSetSysId, curUpdateSetUserPrefId);
-      } else {
-        await client.createCurrentUpdateSetUserPref(updateSetSysId, userSysId);
-      }
-      return {
-        name: updateSetName,
-        id: updateSetSysId
-      }
+  if (curUpdateSetUserPrefId !== "") {
+    await client.updateCurrentUpdateSetUserPref(
+      updateSetSysId,
+      curUpdateSetUserPrefId
+    );
+  } else {
+    await client.createCurrentUpdateSetUserPref(updateSetSysId, userSysId);
   }
+  return {
+    name: updateSetName,
+    id: updateSetSysId
+  };
+};
 
- export const checkScope = async(swap: boolean): Promise<Sinc.ScopeCheckResult>  => {
+export const checkScope = async (
+  swap: boolean
+): Promise<Sinc.ScopeCheckResult> => {
   try {
-    let man = ConfigManager.getManifest();
+    const man = ConfigManager.getManifest();
     if (man) {
-      let client = clientFactory();
-      let scopeObj = await processSimpleResponse(client.getCurrentScope());
+      const client = clientFactory();
+      const scopeObj = await processSimpleResponse(client.getCurrentScope());
       if (scopeObj.scope === man.scope) {
         return {
           match: true,
@@ -479,4 +469,4 @@ const swapServerScope = async (scopeId: string): Promise<void> => {
   } catch (e) {
     throw e;
   }
-}
+};

@@ -7,11 +7,7 @@ import * as Utils from "./genericUtils";
 import { logger } from "./Logger";
 import { logMultiFileBuild, logDeploy } from "./logMessages";
 import inquirer from "inquirer";
-import {
-  getManifestWithFiles,
-  getManifest,
-  deployFiles
-} from "./server";
+import { getManifestWithFiles, getManifest, deployFiles } from "./server";
 import PluginManager from "./PluginManager";
 import * as AppUtils from "./appUtils";
 import * as fUtils from "./FileUtils";
@@ -162,7 +158,7 @@ class AppManager {
     try {
       let source = ConfigManager.getSourcePath();
       let build = ConfigManager.getBuildPath();
-      let paths = await fUtils.getFilePaths(source);
+      let paths = await fUtils.encodedPathsToFilePaths(source);
       logger.silly(`${paths.length} paths found...`);
       logger.silly(JSON.stringify(paths, null, 2));
       logger.info(`Building ${paths.length} files`);
@@ -254,7 +250,7 @@ class AppManager {
       }
       if (!deployDiff) {
         const build = ConfigManager.getBuildPath();
-        paths = await fUtils.getFilePaths(build);
+        paths = await fUtils.encodedPathsToFilePaths(build);
         logger.silly(`${paths.length} paths found...`);
         logger.silly(JSON.stringify(paths, null, 2));
       }

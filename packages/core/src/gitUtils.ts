@@ -2,7 +2,6 @@ import * as cp from "child_process";
 import path from "path";
 import { logger } from "./Logger";
 import { PATH_DELIMITER } from "./constants";
-import AppManager from "./AppManager";
 import ConfigManager from "./config";
 import fs from "fs";
 import * as fUtils from "./FileUtils";
@@ -21,7 +20,7 @@ export const gitDiff = async (target: string): Promise<string> => {
 };
 
 export const writeDiff = async (files: string) => {
-  let paths = await fUtils.getFilePaths(files);
+  let paths = await fUtils.encodedPathsToFilePaths(files);
   logger.silly(`${paths.length} paths found...`);
   logger.silly(JSON.stringify(paths, null, 2));
   fs.promises.writeFile(
