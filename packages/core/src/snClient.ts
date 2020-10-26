@@ -244,7 +244,7 @@ export async function unwrapTableAPIFirstItem<T extends Record<string, string>>(
     if (!extractField) {
       return resp[0];
     }
-    return resp[0][extractField] as string;
+    return resp[0][extractField];
   } catch (e) {
     throw e;
   }
