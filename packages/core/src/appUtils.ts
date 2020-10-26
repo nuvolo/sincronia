@@ -10,7 +10,8 @@ import {
   defaultClient as clientFactory,
   processPushResponse,
   retryOnErr,
-  processSimpleResponse
+  unwrapSNResponse,
+  unwrapTableAPIFirstItem
 } from "./snClient";
 import { logger } from "./Logger";
 import { aggregateErrorMessages, allSettled } from "./genericUtils";
@@ -363,12 +364,12 @@ export const pushFiles = async (
 export const swapScope = async (currentScope: string): Promise<SN.ScopeObj> => {
   try {
     const client = clientFactory();
-    const scopeId = await processSimpleResponse(
+    const scopeId = await unwrapTableAPIFirstItem(
       client.getScopeId(currentScope),
       "sys_id"
     );
     await swapServerScope(scopeId);
-    const scopeObj = await processSimpleResponse(client.getCurrentScope());
+    const scopeObj = await unwrapSNResponse(client.getCurrentScope());
     return scopeObj;
   } catch (e) {
     throw e;
@@ -378,12 +379,12 @@ export const swapScope = async (currentScope: string): Promise<SN.ScopeObj> => {
 const swapServerScope = async (scopeId: string): Promise<void> => {
   try {
     const client = clientFactory();
-    const userSysId = await processSimpleResponse(
+    const userSysId = await unwrapTableAPIFirstItem(
       client.getUserSysId(),
       "sys_id"
     );
     const curAppUserPrefId =
-      (await processSimpleResponse(
+      (await unwrapTableAPIFirstItem(
         client.getCurrentAppUserPrefSysId(userSysId),
         "sys_id"
       )) || "";
@@ -404,15 +405,14 @@ const swapServerScope = async (scopeId: string): Promise<void> => {
 export const createAndAssignUpdateSet = async (updateSetName = "") => {
   logger.info(`Update Set Name: ${updateSetName}`);
   const client = clientFactory();
-  const updateSetSysId = await processSimpleResponse(
-    client.createUpdateSet(updateSetName),
-    "sys_id"
+  const { sys_id: updateSetSysId } = await unwrapSNResponse(
+    client.createUpdateSet(updateSetName)
   );
-  const userSysId = await processSimpleResponse(
+  const userSysId = await unwrapTableAPIFirstItem(
     client.getUserSysId(),
     "sys_id"
   );
-  const curUpdateSetUserPrefId = await processSimpleResponse(
+  const curUpdateSetUserPrefId = await unwrapTableAPIFirstItem(
     client.getCurrentUpdateSetUserPref(userSysId),
     "sys_id"
   );
@@ -438,7 +438,7 @@ export const checkScope = async (
     const man = ConfigManager.getManifest();
     if (man) {
       const client = clientFactory();
-      const scopeObj = await processSimpleResponse(client.getCurrentScope());
+      const scopeObj = await unwrapSNResponse(client.getCurrentScope());
       if (scopeObj.scope === man.scope) {
         return {
           match: true,

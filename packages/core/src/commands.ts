@@ -7,7 +7,7 @@ import * as GitUtils from "./gitUtils";
 import { startWizard } from "./wizard";
 import { logger } from "./Logger";
 import { scopeCheckMessage, devModeLog, logPushResults } from "./logMessages";
-import {defaultClient, processSimpleResponse} from "./snClient"
+import { defaultClient, unwrapSNResponse } from "./snClient";
 import inquirer from "inquirer";
 
 async function scopeCheck(
@@ -71,11 +71,11 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
   setLogLevel(args);
   scopeCheck(async () => {
     try {
-      const { updateSet, ci:skipPrompt, target, diff } = args;
+      const { updateSet, ci: skipPrompt, target, diff } = args;
 
       // Does not create update set if updateSetName is blank
-      if(updateSet){
-        if(!skipPrompt){
+      if (updateSet) {
+        if (!skipPrompt) {
           let answers: { confirmed: boolean } = await inquirer.prompt([
             {
               type: "confirm",
@@ -89,7 +89,7 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
           }
         }
 
-      let newUpdateSet = await AppUtils.createAndAssignUpdateSet(updateSet);
+        let newUpdateSet = await AppUtils.createAndAssignUpdateSet(updateSet);
         logger.debug(
           `New Update Set Created(${newUpdateSet.name}) sys_id:${newUpdateSet.id}`
         );
@@ -164,7 +164,7 @@ export async function deployCommand(args: Sinc.SharedCmdArgs) {
 export async function statusCommand() {
   try {
     const client = defaultClient();
-    let scopeObj = await processSimpleResponse(client.getCurrentScope());
+    let scopeObj = await unwrapSNResponse(client.getCurrentScope());
     logger.info(`Instance: ${process.env.SN_INSTANCE}`);
     logger.info(`Scope: ${scopeObj.scope}`);
     logger.info(`User: ${process.env.SN_USER}`);

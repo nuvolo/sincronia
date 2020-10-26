@@ -123,6 +123,10 @@ export namespace Sinc {
   type SuccessPromiseResult<T> = { status: "fulfilled"; value: T };
   type FailPromiseResult = { status: "rejected"; reason: any };
   type PromiseResult<T> = SuccessPromiseResult<T> | FailPromiseResult;
+
+  interface SNAPIResponse<T> {
+    result: T;
+  }
 }
 
 export namespace SN {
@@ -187,6 +191,22 @@ export namespace SN {
   interface App {
     scope: string;
     displayName: string;
+    sys_id: string;
+  }
+
+  interface UserRecord {
+    sys_id: string;
+  }
+
+  interface UserPrefRecord {
+    sys_id: string;
+  }
+
+  interface ScopeRecord {
+    sys_id: string;
+  }
+
+  interface UpdateSetRecord {
     sys_id: string;
   }
 }

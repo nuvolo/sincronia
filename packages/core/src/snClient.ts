@@ -1,4 +1,4 @@
-import { Sinc } from "@sincronia/types";
+import { Sinc, SN } from "@sincronia/types";
 import axios, { AxiosPromise, AxiosResponse } from "axios";
 import rateLimit from "axios-rate-limit";
 import { wait } from "./genericUtils";
@@ -68,10 +68,11 @@ export const snClient = (
     { maxRPS: 20 }
   );
 
-  const getAppList = ()  => {
-      let endpoint = "api/x_nuvo_sinc/sinc/getAppList";
-      return client.get(endpoint);
-  }
+  const getAppList = () => {
+    const endpoint = "api/x_nuvo_sinc/sinc/getAppList";
+    type AppListResponse = Sinc.SNAPIResponse<SN.App[]>;
+    return client.get<AppListResponse>(endpoint);
+  };
 
   const updateATFfile = (contents: string, sysId: string) => {
     const endpoint = "api/x_nuvo_sinc/pushATFfile";
@@ -96,7 +97,8 @@ export const snClient = (
 
   const getScopeId = (scopeName: string) => {
     const endpoint = "api/now/table/sys_scope";
-    return client.get(endpoint, {
+    type ScopeResponse = Sinc.SNAPIResponse<SN.ScopeRecord[]>;
+    return client.get<ScopeResponse>(endpoint, {
       params: {
         sysparm_query: `scope=${scopeName}`,
         sysparm_fields: "sys_id"
@@ -104,25 +106,26 @@ export const snClient = (
     });
   };
 
-  const getUserSysId =  (
-    userName: string = process.env.SN_USER as string
-  ) => {
+  const getUserSysId = (userName: string = process.env.SN_USER as string) => {
     const endpoint = "api/now/table/sys_user";
-    return client.get(endpoint, {
+    type UserResponse = Sinc.SNAPIResponse<SN.UserRecord[]>;
+    return client.get<UserResponse>(endpoint, {
       params: {
         sysparm_query: `user_name=${userName}`,
         sysparm_fields: "sys_id"
       }
     });
-  }
+  };
+
   const getCurrentAppUserPrefSysId = (userSysId: string) => {
     const endpoint = `api/now/table/sys_user_preference`;
-    return client.get(endpoint, {
-        params: {
-          sysparm_query: `user=${userSysId}^name=apps.current_app`,
-          sysparm_fields: "sys_id"
-        }
-      });
+    type UserPrefResponse = Sinc.SNAPIResponse<SN.UserPrefRecord[]>;
+    return client.get<UserPrefResponse>(endpoint, {
+      params: {
+        sysparm_query: `user=${userSysId}^name=apps.current_app`,
+        sysparm_fields: "sys_id"
+      }
+    });
   };
 
   const updateCurrentAppUserPref = (
@@ -144,40 +147,41 @@ export const snClient = (
   };
 
   const getCurrentScope = () => {
-    let endpoint = "api/x_nuvo_sinc/sinc/getCurrentScope";
-    return client.get(endpoint)
+    const endpoint = "api/x_nuvo_sinc/sinc/getCurrentScope";
+    type ScopeResponse = Sinc.SNAPIResponse<SN.ScopeObj>;
+    return client.get<ScopeResponse>(endpoint);
   };
 
-  const createUpdateSet = (updateSetName: string)=> {
-      const endpoint = `api/now/table/sys_update_set`;
-      return client.post(endpoint, {
-        name: updateSetName
-      });
-  }
+  const createUpdateSet = (updateSetName: string) => {
+    const endpoint = `api/now/table/sys_update_set`;
+    type UpdateSetCreateResponse = Sinc.SNAPIResponse<SN.UpdateSetRecord>;
+    return client.post<UpdateSetCreateResponse>(endpoint, {
+      name: updateSetName
+    });
+  };
 
-  const getCurrentUpdateSetUserPref = (
-    userSysId: string
-  )=> {
-      const endpoint = `api/now/table/sys_user_preference`;
-      return client.get(endpoint, {
-        params: {
-          sysparm_query: `user=${userSysId}^name=sys_update_set`,
-          sysparm_fields: "sys_id"
-        }
-  });
-}
-const updateCurrentUpdateSetUserPref = (
-  updateSetSysId: string,
-  userPrefSysId: string
-) => {
+  const getCurrentUpdateSetUserPref = (userSysId: string) => {
+    const endpoint = `api/now/table/sys_user_preference`;
+    type CurrentUpdateSetResponse = Sinc.SNAPIResponse<SN.UserPrefRecord[]>;
+    return client.get<CurrentUpdateSetResponse>(endpoint, {
+      params: {
+        sysparm_query: `user=${userSysId}^name=sys_update_set`,
+        sysparm_fields: "sys_id"
+      }
+    });
+  };
+  const updateCurrentUpdateSetUserPref = (
+    updateSetSysId: string,
+    userPrefSysId: string
+  ) => {
     const endpoint = `api/now/table/sys_user_preference/${userPrefSysId}`;
     return client.put(endpoint, { value: updateSetSysId });
-}
+  };
 
-const createCurrentUpdateSetUserPref =(
-  updateSetSysId: string,
-  userSysId: string
-) => {
+  const createCurrentUpdateSetUserPref = (
+    updateSetSysId: string,
+    userSysId: string
+  ) => {
     const endpoint = `api/now/table/sys_user_preference`;
     return client.put(endpoint, {
       value: updateSetSysId,
@@ -185,7 +189,7 @@ const createCurrentUpdateSetUserPref =(
       type: "string",
       user: userSysId
     });
-}
+  };
 
   return {
     getAppList,
@@ -208,15 +212,40 @@ export const defaultClient = () => {
   return snClient(`https://${SN_INSTANCE}/`, SN_USER, SN_PASSWORD);
 };
 
-export const processSimpleResponse = async(clientPromise: AxiosPromise<any>, returnField?:string) =>{
-  try{
-    return await clientPromise.then(result =>{
-      if(returnField) return result.data[0][returnField];
-      else return result.data;
-    });
-  }catch(e){
+export const unwrapSNResponse = async <T>(
+  clientPromise: AxiosPromise<Sinc.SNAPIResponse<T>>
+): Promise<T> => {
+  try {
+    const resp = await clientPromise;
+    return resp.data.result;
+  } catch (e) {
     logger.error("Error processing server response");
     logger.error(e);
+    throw e;
+  }
+};
+
+export async function unwrapTableAPIFirstItem<T>(
+  clientPromise: AxiosPromise<Sinc.SNAPIResponse<T[]>>
+): Promise<T>;
+export async function unwrapTableAPIFirstItem<T>(
+  clientPromise: AxiosPromise<Sinc.SNAPIResponse<T[]>>,
+  extractField: keyof T
+): Promise<string>;
+export async function unwrapTableAPIFirstItem<T extends Record<string, string>>(
+  clientPromise: AxiosPromise<Sinc.SNAPIResponse<T[]>>,
+  extractField?: keyof T
+): Promise<T | string> {
+  try {
+    const resp = await unwrapSNResponse(clientPromise);
+    if (resp.length === 0) {
+      throw new Error("Response was not a populated array!");
+    }
+    if (!extractField) {
+      return resp[0];
+    }
+    return resp[0][extractField];
+  } catch (e) {
     throw e;
   }
 }
