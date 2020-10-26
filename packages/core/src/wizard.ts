@@ -7,14 +7,14 @@ import fs from "fs";
 const fsp = fs.promises;
 import { logger } from "./Logger";
 import path from "path";
-import {snClient, processSimpleResponse} from "./snClient";
+import { snClient, unwrapSNResponse } from "./snClient";
 
 export async function startWizard() {
   let loginAnswers = await getLoginInfo();
   try {
     let { username, password, instance } = loginAnswers;
     const client = snClient(`https://${instance}/`, username, password);
-    let apps = await processSimpleResponse(client.getAppList());
+    const apps = await unwrapSNResponse(client.getAppList());
     await setupDotEnv(loginAnswers);
     let hasConfig = await checkConfig();
     if (!hasConfig) {
