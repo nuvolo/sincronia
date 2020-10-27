@@ -3,10 +3,14 @@ import ConfigManager from "./config";
 import { startWatching } from "./Watcher";
 import AppManager from "./AppManager";
 import * as AppUtils from "./appUtils";
-import * as GitUtils from "./gitUtils";
 import { startWizard } from "./wizard";
 import { logger } from "./Logger";
-import { scopeCheckMessage, devModeLog, logPushResults } from "./logMessages";
+import {
+  scopeCheckMessage,
+  devModeLog,
+  logPushResults,
+  logBuildResults
+} from "./logMessages";
 import { defaultClient, unwrapSNResponse } from "./snClient";
 import inquirer from "inquirer";
 import { getEncodedPaths } from "./FileUtils";
@@ -146,13 +150,13 @@ export async function initCommand(args: Sinc.SharedCmdArgs) {
 export async function buildCommand(args: Sinc.BuildCmdArgs) {
   setLogLevel(args);
   try {
-    if (args.diff !== "") {
-      let files = await GitUtils.gitDiff(args.diff);
-      GitUtils.writeDiff(files);
-    }
-    await AppManager.buildFiles();
+    const encodedPaths = await getEncodedPaths("", args.diff);
+    const [fileTree, count] = await AppUtils.getFileTreeAndCount(encodedPaths);
+    logger.info(`${count} files to push.`);
+    let results = await AppUtils.buildFiles(fileTree, count);
+    logBuildResults(results);
   } catch (e) {
-    throw e;
+    process.exit(1);
   }
 }
 

@@ -1,6 +1,6 @@
 import { SN, Sinc } from "@sincronia/types";
 import { PATH_DELIMITER } from "./constants";
-import {gitDiff} from "./gitUtils"
+import { gitDiff } from "./gitUtils";
 import fs, { promises as fsp } from "fs";
 import path from "path";
 import ConfigManager from "./config";
@@ -163,7 +163,10 @@ export const getPathsInPath = async (p: string): Promise<string[]> => {
   }
 };
 
-export const getEncodedPaths = async (target:string | undefined, diff:string) => {
+export const getEncodedPaths = async (
+  target: string | undefined,
+  diff: string
+) => {
   if (target !== undefined && target !== "") return target;
   if (diff !== "") return gitDiff(diff);
   return ConfigManager.getSourcePath();
@@ -193,6 +196,23 @@ export const encodedPathsToFilePaths = async (
 export const summarizeFile = (ctx: Sinc.FileContext): string => {
   const { tableName, name: recordName, sys_id } = ctx;
   return `${tableName}/${recordName}/${sys_id}`;
+};
+
+export const writeBuildFile = async (
+  folderPath: string,
+  newPath: string,
+  fileContents: string
+) => {
+  try {
+    await fsp.access(folderPath, fs.constants.F_OK);
+  } catch (e) {
+    await fsp.mkdir(folderPath, { recursive: true });
+  }
+  try {
+    await fsp.writeFile(newPath, fileContents);
+  } catch (e) {
+    throw e;
+  }
 };
 
 export const writeSNFileIfNotExists = writeSNFileCurry(true);

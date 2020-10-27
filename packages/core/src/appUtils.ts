@@ -2,7 +2,6 @@ import { SN, Sinc } from "@sincronia/types";
 import path from "path";
 import ProgressBar from "progress";
 import * as fUtils from "./FileUtils";
-import * as SNClient from "./server";
 import ConfigManager from "./config";
 import { PUSH_RETRY_LIMIT, PUSH_RETRY_WAIT } from "./constants";
 import PluginManager from "./PluginManager";
@@ -362,6 +361,77 @@ export const pushFiles = async (
   );
   const tablePushResults = await Promise.all(buildAndPushPromises);
   return tablePushResults.flat();
+};
+
+const buildHelper = async (
+  table: string,
+  tableTree: Sinc.TableContextTree,
+  sourcePath: string,
+  buildPath: string,
+  tick?: () => void
+) => {
+  const recIds = Object.keys(tableTree);
+  const buildPromises = recIds.map(sysId => buildRec(tableTree[sysId]));
+  const builtRecs = await allSettled(buildPromises);
+  const writePromises = builtRecs.map(
+    async (buildRes, index): Promise<Sinc.BuildResult> => {
+      const recMap = tableTree[recIds[index]];
+      const recFields = Object.keys(recMap);
+      const recDesc = recMap[recFields[0]].name || recIds[index];
+      const recSummary = summarizeRecord(table, recDesc);
+      if (buildRes.status === "rejected") {
+        return {
+          success: false,
+          message: `${recSummary} : ${buildRes.reason.message}`
+        };
+      }
+
+      try {
+        const filePath = recMap[recFields[0]].filePath;
+        const targetField = recMap[recFields[0]].targetField;
+        const fileContents = buildRes.value[Object.keys(buildRes.value)[0]];
+
+        /**
+         * TODO: File extension function
+         * Breyton: May want to write a function for determining the extension. I believe there are other types of files that we can build to besides these three. XML for example.
+         */
+        let ext = "js";
+        if (targetField === "css") ext = "css";
+        if (targetField === "html") ext = "html";
+        let pathArr = path
+          .join(buildPath, path.relative(sourcePath, filePath))
+          .split(".")
+          .slice(0, -1);
+        pathArr.push(ext);
+
+        const newPath = pathArr.join(".");
+        const folderPath = path.dirname(newPath);
+        await fUtils.writeBuildFile(folderPath, newPath, fileContents);
+        return { success: true, message: `${recSummary} built successfully` };
+      } catch (e) {
+        const errMsg = e.message;
+        return { success: false, message: `${recSummary} : ${errMsg}` };
+      } finally {
+        if (tick) tick();
+      }
+    }
+  );
+  const buildResults = await Promise.all(writePromises);
+  return buildResults;
+};
+
+export const buildFiles = async (
+  fileTree: Sinc.AppFileContextTree,
+  count: number
+): Promise<Sinc.BuildResult[]> => {
+  const source = ConfigManager.getSourcePath();
+  const build = ConfigManager.getBuildPath();
+  const tick = getProgTick(logger.getLogLevel(), count);
+  const buildPromises = Object.keys(fileTree).map(table =>
+    buildHelper(table, fileTree[table], source, build, tick)
+  );
+  const results = await Promise.all(buildPromises);
+  return results.flat();
 };
 
 export const swapScope = async (currentScope: string): Promise<SN.ScopeObj> => {
