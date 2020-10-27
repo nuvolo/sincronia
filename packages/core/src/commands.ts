@@ -3,12 +3,17 @@ import ConfigManager from "./config";
 import { startWatching } from "./Watcher";
 import AppManager from "./AppManager";
 import * as AppUtils from "./appUtils";
-import * as GitUtils from "./gitUtils";
 import { startWizard } from "./wizard";
 import { logger } from "./Logger";
-import { scopeCheckMessage, devModeLog, logPushResults } from "./logMessages";
+import {
+  scopeCheckMessage,
+  devModeLog,
+  logPushResults,
+  logBuildResults
+} from "./logMessages";
 import { defaultClient, unwrapSNResponse } from "./snClient";
 import inquirer from "inquirer";
+import { gitDiffToEncodedPaths } from "./gitUtils";
 
 async function scopeCheck(
   successFunc: () => void,
@@ -72,6 +77,32 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
   scopeCheck(async () => {
     try {
       const { updateSet, ci: skipPrompt, target, diff } = args;
+      let encodedPaths;
+      if (target !== undefined && target !== "") encodedPaths = target;
+      else encodedPaths = await gitDiffToEncodedPaths(diff);
+
+      const [fileTree, count] = await AppUtils.getFileTreeAndCount(
+        encodedPaths
+      );
+      logger.info(`${count} files to push.`);
+
+      if (!skipPrompt) {
+        const targetServer = process.env.SN_INSTANCE;
+        if (!targetServer) {
+          logger.error("No server configured for push!");
+          return;
+        }
+        let answers: { confirmed: boolean } = await inquirer.prompt([
+          {
+            type: "confirm",
+            name: "confirmed",
+            message:
+              "Pushing will overwrite code in your instance. Are you sure?",
+            default: false
+          }
+        ]);
+        if (!answers["confirmed"]) return;
+      }
 
       // Does not create update set if updateSetName is blank
       if (updateSet) {
@@ -93,27 +124,6 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
         logger.debug(
           `New Update Set Created(${newUpdateSet.name}) sys_id:${newUpdateSet.id}`
         );
-      }
-      const getEncodedPaths = async () => {
-        if (target !== undefined && target !== "") {
-          return target;
-        }
-        if (diff !== "") {
-          return GitUtils.gitDiff(diff);
-        }
-        return ConfigManager.getSourcePath();
-      };
-      const encodedPaths = await getEncodedPaths();
-      const [fileTree, count] = await AppUtils.getFileTreeAndCount(
-        encodedPaths
-      );
-      logger.info(`${count} files to push.`);
-      let canPush = true;
-      if (!skipPrompt) {
-        canPush = await AppManager.canPush();
-      }
-      if (!canPush) {
-        return;
       }
       const pushResults = await AppUtils.pushFiles(fileTree, count);
       logPushResults(pushResults);
@@ -142,13 +152,13 @@ export async function initCommand(args: Sinc.SharedCmdArgs) {
 export async function buildCommand(args: Sinc.BuildCmdArgs) {
   setLogLevel(args);
   try {
-    if (args.diff !== "") {
-      let files = await GitUtils.gitDiff(args.diff);
-      GitUtils.writeDiff(files);
-    }
-    await AppManager.buildFiles();
+    const encodedPaths = await gitDiffToEncodedPaths(args.diff);
+    const [fileTree, count] = await AppUtils.getFileTreeAndCount(encodedPaths);
+    logger.info(`${count} files to push.`);
+    let results = await AppUtils.buildFiles(fileTree, count);
+    logBuildResults(results);
   } catch (e) {
-    throw e;
+    process.exit(1);
   }
 }
 

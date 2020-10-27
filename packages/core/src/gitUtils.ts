@@ -6,7 +6,12 @@ import ConfigManager from "./config";
 import fs from "fs";
 import * as fUtils from "./FileUtils";
 
-export const gitDiff = async (target: string): Promise<string> => {
+export const gitDiffToEncodedPaths = async (diff: string) => {
+  if (diff !== "") return gitDiff(diff);
+  return ConfigManager.getSourcePath();
+};
+
+const gitDiff = async (target: string): Promise<string> => {
   return new Promise<string>((resolve, reject) => {
     const cmdStr = `git diff --name-status ${target}...`;
     cp.exec(cmdStr, (err, stdout, stderr) => {

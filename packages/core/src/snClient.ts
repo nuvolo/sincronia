@@ -191,6 +191,15 @@ export const snClient = (
     });
   };
 
+  const getMissingFiles = (
+    missingFiles: SN.MissingFileTableMap,
+    tableOptions: Sinc.ITableOptionsMap
+  ) => {
+    const endpoint = `api/x_nuvo_sinc/sinc/bulkDownload`;
+    type TableMap = Sinc.SNAPIResponse<SN.TableMap>;
+    return client.post<TableMap>(endpoint, { missingFiles, tableOptions });
+  };
+
   return {
     getAppList,
     updateRecord,
@@ -203,7 +212,8 @@ export const snClient = (
     createUpdateSet,
     getCurrentUpdateSetUserPref,
     updateCurrentUpdateSetUserPref,
-    createCurrentUpdateSetUserPref
+    createCurrentUpdateSetUserPref,
+    getMissingFiles
   };
 };
 

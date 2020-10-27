@@ -188,6 +188,23 @@ export const summarizeFile = (ctx: Sinc.FileContext): string => {
   return `${tableName}/${recordName}/${sys_id}`;
 };
 
+export const writeBuildFile = async (
+  folderPath: string,
+  newPath: string,
+  fileContents: string
+) => {
+  try {
+    await fsp.access(folderPath, fs.constants.F_OK);
+  } catch (e) {
+    await fsp.mkdir(folderPath, { recursive: true });
+  }
+  try {
+    await fsp.writeFile(newPath, fileContents);
+  } catch (e) {
+    throw e;
+  }
+};
+
 export const writeSNFileIfNotExists = writeSNFileCurry(true);
 export const writeSNFileForce = writeSNFileCurry(false);
 

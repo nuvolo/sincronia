@@ -120,6 +120,9 @@ export namespace Sinc {
     success: boolean;
     message: string;
   }
+
+  interface BuildResult extends PushResult {}
+
   type SuccessPromiseResult<T> = { status: "fulfilled"; value: T };
   type FailPromiseResult = { status: "rejected"; reason: any };
   type PromiseResult<T> = SuccessPromiseResult<T> | FailPromiseResult;
