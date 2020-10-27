@@ -204,7 +204,10 @@ export const processMissingFiles = async (
 ): Promise<void> => {
   try {
     const missing = await findMissingFiles(newManifest);
-    const filesToProcess = await SNClient.getMissingFiles(missing);
+    const { tableOptions = {} } = ConfigManager.getConfig();
+    const client = clientFactory();
+    const response = await client.getMissingFiles(missing, tableOptions);
+    const filesToProcess = response.data.result as SN.TableMap;
     await processTablesInManifest(filesToProcess, false);
   } catch (e) {
     throw e;

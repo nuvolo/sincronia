@@ -75,38 +75,6 @@ export async function getManifest(scope: string): Promise<SN.AppManifest> {
 }
 
 /*
-  SN Client endpoint
-*/
-export async function getMissingFiles(
-  missingFiles: SN.MissingFileTableMap
-): Promise<SN.TableMap> {
-  let endpoint = `api/x_nuvo_sinc/sinc/bulkDownload`;
-  try {
-    const { tableOptions = {} } = ConfigManager.getConfig();
-    const payload = { missingFiles, tableOptions };
-    let response = await api.post(endpoint, payload);
-    return response.data.result as SN.TableMap;
-  } catch (e) {
-    throw e;
-  }
-}
-
-/*
-SN Client endpoint
-Breyton: I think this exists in the snClient now under updateATFfile
-*/
-async function pushATFfile(file: string, sys_id: string) {
-  let endpoint = `api/x_nuvo_sinc/sinc/pushATFfile`;
-  try {
-    let payload = { file, sys_id };
-    let response = await api.post(endpoint, payload);
-    return response;
-  } catch (e) {
-    throw e;
-  }
-}
-
-/*
   Function is only used in function below
   Roll into buildFileRequestObj?
   Breyton: This function is probably useless now
@@ -139,15 +107,6 @@ async function buildFileRequestObj(
   } catch (e) {
     throw e;
   }
-}
-
-/*
-  Function not used anywhere, delete
-*/
-export async function pushUpdates(
-  arrOfResourceConfig: Sinc.ServerRequestConfig[]
-) {
-  await arrOfResourceConfig.map(pushUpdate);
 }
 
 /*
@@ -227,9 +186,12 @@ export async function pushFile(
         processFile
       );
       let response =
-        fileContext.tableName === "sys_atf_step"
-          ? await pushATFfile(requestObj.data, fileContext.sys_id)
-          : await pushUpdate(requestObj);
+        // fileContext.tableName === "sys_atf_step"
+          // ? await defaultClient().updateATFfile(requestObj.data, fileContext.sys_id)
+          await pushUpdate(requestObj);
+    /*
+      requires rewrite based on new push
+    */
 
       logger.debug(`Attempting to push ${fileSummary}`);
       if (response) {
