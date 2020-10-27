@@ -13,7 +13,7 @@ import {
 } from "./logMessages";
 import { defaultClient, unwrapSNResponse } from "./snClient";
 import inquirer from "inquirer";
-import { getEncodedPaths } from "./FileUtils";
+import { gitDiffToEncodedPaths } from "./gitUtils";
 
 async function scopeCheck(
   successFunc: () => void,
@@ -77,8 +77,10 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
   scopeCheck(async () => {
     try {
       const { updateSet, ci: skipPrompt, target, diff } = args;
+      let encodedPaths;
+      if (target !== undefined && target !== "") encodedPaths = target;
+      else encodedPaths = await gitDiffToEncodedPaths(diff);
 
-      const encodedPaths = await getEncodedPaths(target, diff);
       const [fileTree, count] = await AppUtils.getFileTreeAndCount(
         encodedPaths
       );
@@ -150,7 +152,7 @@ export async function initCommand(args: Sinc.SharedCmdArgs) {
 export async function buildCommand(args: Sinc.BuildCmdArgs) {
   setLogLevel(args);
   try {
-    const encodedPaths = await getEncodedPaths("", args.diff);
+    const encodedPaths = await gitDiffToEncodedPaths(args.diff);
     const [fileTree, count] = await AppUtils.getFileTreeAndCount(encodedPaths);
     logger.info(`${count} files to push.`);
     let results = await AppUtils.buildFiles(fileTree, count);

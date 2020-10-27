@@ -1,6 +1,5 @@
 import { SN, Sinc } from "@sincronia/types";
 import { PATH_DELIMITER } from "./constants";
-import { gitDiff } from "./gitUtils";
 import fs, { promises as fsp } from "fs";
 import path from "path";
 import ConfigManager from "./config";
@@ -161,15 +160,6 @@ export const getPathsInPath = async (p: string): Promise<string[]> => {
     const stackedPaths = await Promise.all(pathPromises);
     return stackedPaths.flat();
   }
-};
-
-export const getEncodedPaths = async (
-  target: string | undefined,
-  diff: string
-) => {
-  if (target !== undefined && target !== "") return target;
-  if (diff !== "") return gitDiff(diff);
-  return ConfigManager.getSourcePath();
 };
 
 export const splitEncodedPaths = (encodedPaths: string): string[] =>
