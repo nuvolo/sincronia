@@ -1,6 +1,5 @@
-import { SN, Sinc } from "@sincronia/types";
+import { Sinc } from "@sincronia/types";
 import fs from "fs";
-import * as cp from "child_process";
 import path from "path";
 import ConfigManager from "./config";
 import * as Utils from "./genericUtils";
@@ -81,34 +80,6 @@ class AppManager {
   */
   async parseFileParams(files: string[]) {
     return await Utils.getParsedFilesPayload(files);
-  }
-
-  /*
-  MOVE TO: push command
-  */
-  async canPush() {
-    const targetServer = process.env.SN_INSTANCE || "";
-    if (!targetServer) {
-      logger.error("No server configured for push!");
-      return false;
-    }
-    try {
-      let answers: { confirmed: boolean } = await inquirer.prompt([
-        {
-          type: "confirm",
-          name: "confirmed",
-          message:
-            "Pushing will overwrite code in your instance. Are you sure?",
-          default: false
-        }
-      ]);
-      if (!answers["confirmed"]) {
-        return false;
-      }
-      return true;
-    } catch (e) {
-      return false;
-    }
   }
 
   /*

@@ -9,6 +9,7 @@ import { logger } from "./Logger";
 import { scopeCheckMessage, devModeLog, logPushResults } from "./logMessages";
 import { defaultClient, unwrapSNResponse } from "./snClient";
 import inquirer from "inquirer";
+import { getEncodedPaths } from "./FileUtils";
 
 async function scopeCheck(
   successFunc: () => void,
@@ -73,6 +74,30 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
     try {
       const { updateSet, ci: skipPrompt, target, diff } = args;
 
+      const encodedPaths = await getEncodedPaths(target, diff);
+      const [fileTree, count] = await AppUtils.getFileTreeAndCount(
+        encodedPaths
+      );
+      logger.info(`${count} files to push.`);
+
+      if (!skipPrompt) {
+        const targetServer = process.env.SN_INSTANCE;
+        if (!targetServer) {
+          logger.error("No server configured for push!");
+          return;
+        }
+        let answers: { confirmed: boolean } = await inquirer.prompt([
+          {
+            type: "confirm",
+            name: "confirmed",
+            message:
+              "Pushing will overwrite code in your instance. Are you sure?",
+            default: false
+          }
+        ]);
+        if (!answers["confirmed"]) return;
+      }
+
       // Does not create update set if updateSetName is blank
       if (updateSet) {
         if (!skipPrompt) {
@@ -93,27 +118,6 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
         logger.debug(
           `New Update Set Created(${newUpdateSet.name}) sys_id:${newUpdateSet.id}`
         );
-      }
-      const getEncodedPaths = async () => {
-        if (target !== undefined && target !== "") {
-          return target;
-        }
-        if (diff !== "") {
-          return GitUtils.gitDiff(diff);
-        }
-        return ConfigManager.getSourcePath();
-      };
-      const encodedPaths = await getEncodedPaths();
-      const [fileTree, count] = await AppUtils.getFileTreeAndCount(
-        encodedPaths
-      );
-      logger.info(`${count} files to push.`);
-      let canPush = true;
-      if (!skipPrompt) {
-        canPush = await AppManager.canPush();
-      }
-      if (!canPush) {
-        return;
       }
       const pushResults = await AppUtils.pushFiles(fileTree, count);
       logPushResults(pushResults);
