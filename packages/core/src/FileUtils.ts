@@ -91,6 +91,13 @@ const getFileExtension = (filePath: string): string => {
   }
 };
 
+export const getBuildExtension = (targetField: string): string => {
+  let ext = "js";
+  if (targetField === "css") ext = "css";
+  if (targetField === "html") ext = "html";
+  return ext;
+};
+
 const getTargetFieldFromPath = (
   filePath: string,
   table: string,

@@ -275,42 +275,54 @@ export const buildRec = async (
 export const summarizeRecord = (table: string, recDescriptor: string): string =>
   `${table} > ${recDescriptor}`;
 
+const buildRecords = async (
+  table: string,
+  tableTree: Sinc.TableContextTree
+) => {
+  const recIds = Object.keys(tableTree);
+  const buildPromises = recIds.map(sysId => buildRec(tableTree[sysId]));
+  const builtRecs = await allSettled(buildPromises);
+  return builtRecs.map((buildRes, index) => {
+    const recMap = tableTree[recIds[index]];
+    const recFields = Object.keys(recMap);
+    const recDesc = recMap[recFields[0]].name || recIds[index];
+    const recSummary = summarizeRecord(table, recDesc);
+    const context = recMap[recFields[0]];
+    return { ...buildRes, summary: recSummary, context: context };
+  });
+};
+
 const buildAndPush = async (
   table: string,
   tableTree: Sinc.TableContextTree,
   tick?: () => void
 ): Promise<Sinc.PushResult[]> => {
-  const recIds = Object.keys(tableTree);
-  const buildPromises = recIds.map(sysId => buildRec(tableTree[sysId]));
-  const builtRecs = await allSettled(buildPromises);
+  const builtRecs = await buildRecords(table, tableTree);
   const client = clientFactory();
   const pushPromises = builtRecs.map(
-    async (buildRes, index): Promise<Sinc.PushResult> => {
-      const recMap = tableTree[recIds[index]];
-      const recFields = Object.keys(recMap);
-      const recDesc = recMap[recFields[0]].name || recIds[index];
-      const recSummary = summarizeRecord(table, recDesc);
+    async (buildRes): Promise<Sinc.PushResult> => {
       if (buildRes.status === "rejected") {
         return {
           success: false,
-          message: `${recSummary} : ${buildRes.reason.message}`
+          message: `${buildRes.summary} : ${buildRes.reason.message}`
         };
       }
       try {
         const res = await retryOnErr(
-          () => client.updateRecord(table, recIds[index], buildRes.value),
+          () =>
+            client.updateRecord(table, buildRes.context.sys_id, buildRes.value),
           PUSH_RETRY_LIMIT,
           PUSH_RETRY_WAIT,
           (numTries: number) => {
             logger.debug(
-              `Failed to push ${recSummary}! Retrying with ${numTries} left...`
+              `Failed to push ${buildRes.summary}! Retrying with ${numTries} left...`
             );
           }
         );
-        return processPushResponse(res, recSummary);
+        return processPushResponse(res, buildRes.summary);
       } catch (e) {
         const errMsg = e.message || "Too many retries";
-        return { success: false, message: `${recSummary} : ${errMsg}` };
+        return { success: false, message: `${buildRes.summary} : ${errMsg}` };
       } finally {
         // this block always runs, even if we return
         if (tick) {
@@ -364,54 +376,45 @@ export const pushFiles = async (
   return tablePushResults.flat();
 };
 
-const buildHelper = async (
+const buildAndWrite = async (
   table: string,
   tableTree: Sinc.TableContextTree,
   sourcePath: string,
   buildPath: string,
   tick?: () => void
 ) => {
-  const recIds = Object.keys(tableTree);
-  const buildPromises = recIds.map(sysId => buildRec(tableTree[sysId]));
-  const builtRecs = await allSettled(buildPromises);
+  const builtRecs = await buildRecords(table, tableTree);
   const writePromises = builtRecs.map(
-    async (buildRes, index): Promise<Sinc.BuildResult> => {
-      const recMap = tableTree[recIds[index]];
-      const recFields = Object.keys(recMap);
-      const recDesc = recMap[recFields[0]].name || recIds[index];
-      const recSummary = summarizeRecord(table, recDesc);
+    async (buildRes): Promise<Sinc.BuildResult> => {
       if (buildRes.status === "rejected") {
         return {
           success: false,
-          message: `${recSummary} : ${buildRes.reason.message}`
+          message: `${buildRes.summary} : ${buildRes.reason.message}`
         };
       }
 
       try {
-        const filePath = recMap[recFields[0]].filePath;
-        const targetField = recMap[recFields[0]].targetField;
+        const filePath = buildRes.context.filePath;
+        const targetField = buildRes.context.targetField;
         const fileContents = buildRes.value[Object.keys(buildRes.value)[0]];
 
-        /**
-         * TODO: File extension function
-         * Breyton: May want to write a function for determining the extension. I believe there are other types of files that we can build to besides these three. XML for example.
-         */
-        let ext = "js";
-        if (targetField === "css") ext = "css";
-        if (targetField === "html") ext = "html";
         let pathArr = path
           .join(buildPath, path.relative(sourcePath, filePath))
           .split(".")
           .slice(0, -1);
+        const ext = fUtils.getBuildExtension(targetField);
         pathArr.push(ext);
 
         const newPath = pathArr.join(".");
         const folderPath = path.dirname(newPath);
         await fUtils.writeBuildFile(folderPath, newPath, fileContents);
-        return { success: true, message: `${recSummary} built successfully` };
+        return {
+          success: true,
+          message: `${buildRes.summary} built successfully`
+        };
       } catch (e) {
         const errMsg = e.message;
-        return { success: false, message: `${recSummary} : ${errMsg}` };
+        return { success: false, message: `${buildRes.summary} : ${errMsg}` };
       } finally {
         if (tick) tick();
       }
@@ -429,7 +432,7 @@ export const buildFiles = async (
   const build = ConfigManager.getBuildPath();
   const tick = getProgTick(logger.getLogLevel(), count);
   const buildPromises = Object.keys(fileTree).map(table =>
-    buildHelper(table, fileTree[table], source, build, tick)
+    buildAndWrite(table, fileTree[table], source, build, tick)
   );
   const results = await Promise.all(buildPromises);
   return results.flat();

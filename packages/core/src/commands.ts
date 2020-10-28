@@ -154,7 +154,7 @@ export async function buildCommand(args: Sinc.BuildCmdArgs) {
   try {
     const encodedPaths = await gitDiffToEncodedPaths(args.diff);
     const [fileTree, count] = await AppUtils.getFileTreeAndCount(encodedPaths);
-    logger.info(`${count} files to push.`);
+    logger.info(`${count} files to build.`);
     let results = await AppUtils.buildFiles(fileTree, count);
     logBuildResults(results);
   } catch (e) {
