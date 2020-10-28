@@ -1,16 +1,12 @@
-import { Sinc } from "@sincronia/types";
 import fs from "fs";
-import path from "path";
 import ConfigManager from "./config";
 import * as Utils from "./genericUtils";
 import { logger } from "./Logger";
-import { logMultiFileBuild, logDeploy } from "./logMessages";
+import { logDeploy } from "./logMessages";
 import inquirer from "inquirer";
 import { getManifestWithFiles, getManifest, deployFiles } from "./server";
-import PluginManager from "./PluginManager";
 import * as AppUtils from "./appUtils";
 import * as fUtils from "./FileUtils";
-import ProgressBar from "progress";
 
 const fsp = fs.promises;
 

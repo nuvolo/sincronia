@@ -73,38 +73,6 @@ function multiLog(
   spacer();
 }
 
-export function logMultiFilePush(
-  files: Sinc.FileContext[],
-  success: boolean,
-  resultSet: boolean[],
-  err?: Error
-) {
-  multiLog(
-    files,
-    success,
-    resultSet,
-    "successfully pushed to server",
-    "Failed to push files to server",
-    err
-  );
-}
-
-export function logMultiFileBuild(
-  files: Sinc.FileContext[],
-  success: boolean,
-  resultSet: boolean[],
-  err?: Error
-) {
-  multiLog(
-    files,
-    success,
-    resultSet,
-    "successfully built",
-    "Failed to build files",
-    err
-  );
-}
-
 export function logDeploy(
   files: Sinc.FileContext[],
   success: boolean,
@@ -125,7 +93,10 @@ function spacer() {
   logger.info("");
 }
 
-export const logPushResults = (results: Sinc.PushResult[]): void => {
+const logOperationResults = (
+  results: Sinc.PushResult[] | Sinc.BuildResult[],
+  operation: string
+): void => {
   const unsuccessful = results.filter(r => !r.success);
   const logr = logger.getInternalLogger();
   const label = (content: string) => chalk.bold.blue(content);
@@ -133,11 +104,13 @@ export const logPushResults = (results: Sinc.PushResult[]): void => {
   const fail = (content: string) => chalk.bold.red(content);
   logr.info(`${label("Total Records:")} ${results.length}`);
   logr.info(
-    `${label("Successful Pushes:")} ${success(
+    `${label(`Successful ${operation}:`)} ${success(
       results.length - unsuccessful.length + ""
     )}`
   );
-  logr.info(`${label("Failed Pushes:")} ${fail(unsuccessful.length + "")}`);
+  logr.info(
+    `${label(`Failed ${operation}:`)} ${fail(unsuccessful.length + "")}`
+  );
   if (unsuccessful.length === 0) {
     return;
   }
@@ -152,29 +125,10 @@ export const logPushResults = (results: Sinc.PushResult[]): void => {
   });
 };
 
+export const logPushResults = (results: Sinc.PushResult[]): void => {
+  logOperationResults(results, "Pushes");
+};
+
 export const logBuildResults = (results: Sinc.BuildResult[]): void => {
-  const unsuccessful = results.filter(r => !r.success);
-  const logr = logger.getInternalLogger();
-  const label = (content: string) => chalk.bold.blue(content);
-  const success = (content: string) => chalk.bold.green(content);
-  const fail = (content: string) => chalk.bold.red(content);
-  logr.info(`${label("Total Records:")} ${results.length}`);
-  logr.info(
-    `${label("Successful Builds:")} ${success(
-      results.length - unsuccessful.length + ""
-    )}`
-  );
-  logr.info(`${label("Failed Builds:")} ${fail(unsuccessful.length + "")}`);
-  if (unsuccessful.length === 0) {
-    return;
-  }
-  logger.error("-".repeat(60));
-  logger.error(fail("Error Summary"));
-  logger.error("-".repeat(60));
-  unsuccessful.forEach(({ message }, index) => {
-    if (unsuccessful.length === 1) {
-      logr.error(message);
-    }
-    logr.error(`${index + 1}. ${message}`);
-  });
+  logOperationResults(results, "Builds");
 };
