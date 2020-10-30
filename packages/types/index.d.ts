@@ -123,6 +123,12 @@ export namespace Sinc {
 
   interface BuildResult extends PushResult {}
 
+  interface BuildRecord {
+    result: Sinc.PromiseResult<Record<string, string>>;
+    summary: string;
+    context: Sinc.FileContext;
+  }
+
   type SuccessPromiseResult<T> = { status: "fulfilled"; value: T };
   type FailPromiseResult = { status: "rejected"; reason: any };
   type PromiseResult<T> = SuccessPromiseResult<T> | FailPromiseResult;

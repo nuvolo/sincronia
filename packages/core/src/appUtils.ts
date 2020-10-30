@@ -278,7 +278,7 @@ export const summarizeRecord = (table: string, recDescriptor: string): string =>
 const buildRecords = async (
   table: string,
   tableTree: Sinc.TableContextTree
-) => {
+): Promise<Sinc.BuildRecord[]> => {
   const recIds = Object.keys(tableTree);
   const buildPromises = recIds.map(sysId => buildRec(tableTree[sysId]));
   const builtRecs = await allSettled(buildPromises);
@@ -288,7 +288,7 @@ const buildRecords = async (
     const recDesc = recMap[recFields[0]].name || recIds[index];
     const recSummary = summarizeRecord(table, recDesc);
     const context = recMap[recFields[0]];
-    return { ...buildRes, summary: recSummary, context: context };
+    return { result: buildRes, summary: recSummary, context: context };
   });
 };
 
@@ -300,29 +300,30 @@ const buildAndPush = async (
   const builtRecs = await buildRecords(table, tableTree);
   const client = clientFactory();
   const pushPromises = builtRecs.map(
-    async (buildRes): Promise<Sinc.PushResult> => {
+    async (record): Promise<Sinc.PushResult> => {
+      const buildRes = record.result;
       if (buildRes.status === "rejected") {
         return {
           success: false,
-          message: `${buildRes.summary} : ${buildRes.reason.message}`
+          message: `${record.summary} : ${buildRes.reason.message}`
         };
       }
       try {
         const res = await retryOnErr(
           () =>
-            client.updateRecord(table, buildRes.context.sys_id, buildRes.value),
+            client.updateRecord(table, record.context.sys_id, buildRes.value),
           PUSH_RETRY_LIMIT,
           PUSH_RETRY_WAIT,
           (numTries: number) => {
             logger.debug(
-              `Failed to push ${buildRes.summary}! Retrying with ${numTries} left...`
+              `Failed to push ${record.summary}! Retrying with ${numTries} left...`
             );
           }
         );
-        return processPushResponse(res, buildRes.summary);
+        return processPushResponse(res, record.summary);
       } catch (e) {
         const errMsg = e.message || "Too many retries";
-        return { success: false, message: `${buildRes.summary} : ${errMsg}` };
+        return { success: false, message: `${record.summary} : ${errMsg}` };
       } finally {
         // this block always runs, even if we return
         if (tick) {
@@ -385,36 +386,49 @@ const buildAndWrite = async (
 ) => {
   const builtRecs = await buildRecords(table, tableTree);
   const writePromises = builtRecs.map(
-    async (buildRes): Promise<Sinc.BuildResult> => {
+    async (record): Promise<Sinc.BuildResult> => {
+      const buildRes = record.result;
       if (buildRes.status === "rejected") {
         return {
           success: false,
-          message: `${buildRes.summary} : ${buildRes.reason.message}`
+          message: `${record.summary} : ${buildRes.reason.message}`
         };
       }
 
       try {
-        const filePath = buildRes.context.filePath;
-        const targetField = buildRes.context.targetField;
-        const fileContents = buildRes.value[Object.keys(buildRes.value)[0]];
-
+        const filePath = record.context.filePath;
         let pathArr = path
           .join(buildPath, path.relative(sourcePath, filePath))
           .split(".")
           .slice(0, -1);
-        const ext = fUtils.getBuildExtension(targetField);
-        pathArr.push(ext);
 
-        const newPath = pathArr.join(".");
-        const folderPath = path.dirname(newPath);
-        await fUtils.writeBuildFile(folderPath, newPath, fileContents);
+        const basePath = pathArr.join(".");
+        const folderPath = path.dirname(basePath);
+        const exts = fUtils.getBuildExtensions(record.context);
+
+        const fileWritePromsies = Object.keys(buildRes.value).map(file => {
+          const newPath = path.join(folderPath, file + "." + exts[file]);
+          const fileContents = buildRes.value[file];
+          return fUtils.writeBuildFile(folderPath, newPath, fileContents);
+        });
+
+        const results = await allSettled(fileWritePromsies);
+        results.forEach(res => {
+          if (res.status == "rejected") {
+            return {
+              success: false,
+              message: `${record.summary} : ${res.reason}`
+            };
+          }
+        });
+
         return {
           success: true,
-          message: `${buildRes.summary} built successfully`
+          message: `${record.summary} built successfully`
         };
       } catch (e) {
         const errMsg = e.message;
-        return { success: false, message: `${buildRes.summary} : ${errMsg}` };
+        return { success: false, message: `${record.summary} : ${errMsg}` };
       } finally {
         if (tick) tick();
       }

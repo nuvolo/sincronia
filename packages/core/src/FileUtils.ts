@@ -91,11 +91,24 @@ const getFileExtension = (filePath: string): string => {
   }
 };
 
-export const getBuildExtension = (targetField: string): string => {
-  let ext = "js";
-  if (targetField === "css") ext = "css";
-  if (targetField === "html") ext = "html";
-  return ext;
+export const getBuildExtensions = (context: Sinc.FileContext): SN.TypeMap => {
+  const manifest = ConfigManager.getManifest();
+  if (!manifest) {
+    throw new Error("Error reading manifest");
+  }
+  const { tables } = manifest;
+  const table = tables[context.tableName];
+  const recordName = path
+    .dirname(context.filePath)
+    .split(path.sep)
+    .slice(-1)[0];
+  const record = table.records[recordName];
+  const { files } = record;
+  const extArr = files.map(file => {
+    return [file.name, file.type];
+  });
+  const exts = Object.fromEntries(extArr);
+  return exts;
 };
 
 const getTargetFieldFromPath = (
