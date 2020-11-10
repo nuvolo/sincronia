@@ -98,10 +98,7 @@ export const getBuildExtensions = (context: Sinc.FileContext): SN.TypeMap => {
   }
   const { tables } = manifest;
   const table = tables[context.tableName];
-  const recordName = path
-    .dirname(context.filePath)
-    .split(path.sep)
-    .slice(-1)[0];
+  const recordName = context.name;
   const record = table.records[recordName];
   const { files } = record;
   const extArr = files.map(file => {
