@@ -65,7 +65,8 @@ export async function refreshCommand(
   scopeCheck(async () => {
     try {
       if (!log) setLogLevel({ logLevel: "warn" });
-      await AppManager.syncManifest();
+      await AppUtils.syncManifest();
+      logger.success("Refresh complete! ✅");
       setLogLevel(args);
     } catch (e) {
       throw e;
@@ -135,7 +136,26 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
 export async function downloadCommand(args: Sinc.CmdDownloadArgs) {
   setLogLevel(args);
   try {
-    await AppManager.downloadWithFiles(args.scope as string);
+    let answers: { confirmed: boolean } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "confirmed",
+        message: "Downloading will overwrite manifest and files. Are you sure?",
+        default: false
+      }
+    ]);
+    if (!answers["confirmed"]) {
+      return;
+    }
+    logger.info("Downloading manifest and files...");
+    const client = defaultClient();
+    const config = ConfigManager.getConfig();
+    const man = await unwrapSNResponse(
+      client.getManifest(args.scope, config, true)
+    );
+    logger.info("Creating local files from manifest...");
+    await AppUtils.processManifest(man, true);
+    logger.success("Download complete ✅");
   } catch (e) {
     throw e;
   }
