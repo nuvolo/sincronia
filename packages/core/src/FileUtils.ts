@@ -101,10 +101,10 @@ export const getBuildExtensions = (context: Sinc.FileContext): SN.TypeMap => {
   const recordName = context.name;
   const record = table.records[recordName];
   const { files } = record;
-  const extArr = files.map(file => {
-    return [file.name, file.type];
-  });
-  const exts = Object.fromEntries(extArr);
+
+  const exts = files.reduce((acc, file) => {
+    return { ...acc, [file.name]: file.type };
+  }, {});
   return exts;
 };
 
