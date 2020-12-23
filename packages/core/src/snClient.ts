@@ -212,7 +212,7 @@ export const snClient = (
       includes,
       excludes,
       tableOptions,
-      withFiles: withFiles
+      withFiles
     });
   };
 
