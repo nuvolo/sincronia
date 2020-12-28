@@ -91,6 +91,23 @@ const getFileExtension = (filePath: string): string => {
   }
 };
 
+export const getBuildExtensions = (context: Sinc.FileContext): SN.TypeMap => {
+  const manifest = ConfigManager.getManifest();
+  if (!manifest) {
+    throw new Error("Error reading manifest");
+  }
+  const { tables } = manifest;
+  const table = tables[context.tableName];
+  const recordName = context.name;
+  const record = table.records[recordName];
+  const { files } = record;
+
+  const exts = files.reduce((acc, file) => {
+    return { ...acc, [file.name]: file.type };
+  }, {});
+  return exts;
+};
+
 const getTargetFieldFromPath = (
   filePath: string,
   table: string,
