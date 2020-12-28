@@ -80,6 +80,29 @@ export const processManifest = async (
   );
 };
 
+export const syncManifest = async () => {
+  try {
+    let curManifest = await ConfigManager.getManifest();
+    if (!curManifest) throw new Error("No manifest file loaded!");
+    logger.info("Downloading fresh manifest...");
+    const client = clientFactory();
+    const config = ConfigManager.getConfig();
+    const newManifest = await unwrapSNResponse(
+      client.getManifest(curManifest.scope, config)
+    );
+
+    logger.info("Writing new manifest file...");
+    fUtils.writeManifestFile(newManifest);
+
+    logger.info("Finding and creating missing files...");
+    await processMissingFiles(newManifest);
+    ConfigManager.updateManifest(newManifest);
+  } catch (e) {
+    logger.error("Encountered error while refreshing! ❌");
+    logger.error(e.toString());
+  }
+};
+
 const markFileMissing = (missingObj: SN.MissingFileTableMap) => (
   table: string
 ) => (recordId: string) => (file: SN.File) => {

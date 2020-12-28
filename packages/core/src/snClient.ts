@@ -200,6 +200,22 @@ export const snClient = (
     return client.post<TableMap>(endpoint, { missingFiles, tableOptions });
   };
 
+  const getManifest = (
+    scope: string,
+    config: Sinc.Config,
+    withFiles = false
+  ) => {
+    const endpoint = `api/x_nuvo_sinc/sinc/getManifest/${scope}`;
+    const { includes = {}, excludes = {}, tableOptions = {} } = config;
+    type AppResponse = Sinc.SNAPIResponse<SN.AppManifest>;
+    return client.post<AppResponse>(endpoint, {
+      includes,
+      excludes,
+      tableOptions,
+      withFiles
+    });
+  };
+
   return {
     getAppList,
     updateRecord,
@@ -213,7 +229,8 @@ export const snClient = (
     getCurrentUpdateSetUserPref,
     updateCurrentUpdateSetUserPref,
     createCurrentUpdateSetUserPref,
-    getMissingFiles
+    getMissingFiles,
+    getManifest
   };
 };
 

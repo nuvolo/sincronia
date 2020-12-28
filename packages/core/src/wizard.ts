@@ -1,13 +1,12 @@
 import { SN, Sinc } from "@sincronia/types";
 import inquirer from "inquirer";
-import { getManifestWithFiles } from "./server";
 import ConfigManager from "./config";
 import * as AppUtils from "./appUtils";
 import fs from "fs";
 const fsp = fs.promises;
 import { logger } from "./Logger";
 import path from "path";
-import { snClient, unwrapSNResponse } from "./snClient";
+import { snClient, unwrapSNResponse, defaultClient } from "./snClient";
 
 export async function startWizard() {
   let loginAnswers = await getLoginInfo();
@@ -124,8 +123,9 @@ async function showAppList(apps: SN.App[]): Promise<string | undefined> {
 
 async function downloadApp(answers: Sinc.LoginAnswers, scope: string) {
   try {
-    let { username: user, password, instance } = answers;
-    let man = await getManifestWithFiles(scope, { user, password, instance });
+    const client = defaultClient();
+    const config = ConfigManager.getConfig();
+    const man = await unwrapSNResponse(client.getManifest(scope, config, true));
     await AppUtils.processManifest(man);
   } catch (e) {
     logger.error(e.toString());

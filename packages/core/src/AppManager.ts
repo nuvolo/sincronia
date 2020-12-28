@@ -4,71 +4,13 @@ import * as Utils from "./genericUtils";
 import { logger } from "./Logger";
 import { logDeploy } from "./logMessages";
 import inquirer from "inquirer";
-import { getManifestWithFiles, getManifest, deployFiles } from "./server";
-import * as AppUtils from "./appUtils";
+import { deployFiles } from "./server";
 import * as fUtils from "./FileUtils";
 
 const fsp = fs.promises;
 
 class AppManager {
   constructor() {}
-
-  /*
-    MOVE TO: appUtils
-    Split inquirer into download command
-  */
-  async downloadWithFiles(scope: string): Promise<any> {
-    try {
-      let answers: { confirmed: boolean } = await inquirer.prompt([
-        {
-          type: "confirm",
-          name: "confirmed",
-          message:
-            "Downloading will overwrite manifest and files. Are you sure?",
-          default: false
-        }
-      ]);
-      if (!answers["confirmed"]) {
-        return;
-      }
-      logger.info("Downloading manifest and files...");
-      let man = await getManifestWithFiles(scope);
-      logger.info("Creating local files from manifest...");
-      await AppUtils.processManifest(man, true);
-      logger.success("Download complete ✅");
-    } catch (e) {
-      logger.error("Encountered error while performing download ❌");
-      logger.error(e.toString());
-    }
-  }
-
-  /*
-    MOVE TO: appUtils
-  */
-  async syncManifest() {
-    try {
-      let curManifest = await ConfigManager.getManifest();
-      if (!curManifest) {
-        throw new Error("No manifest file loaded!");
-      }
-      try {
-        logger.info("Downloading fresh manifest...");
-        let newManifest = await getManifest(curManifest.scope);
-        logger.info("Writing new manifest file...");
-        fUtils.writeManifestFile(newManifest);
-        logger.info("Finding and creating missing files...");
-        await AppUtils.processMissingFiles(newManifest);
-        ConfigManager.updateManifest(newManifest);
-        logger.success("Refresh complete! ✅");
-      } catch (e) {
-        logger.error("Encountered error while refreshing! ❌");
-        logger.error(e.toString());
-      }
-    } catch (e) {
-      logger.error("Encountered error while refreshing! ❌");
-      logger.error(e.toString());
-    }
-  }
 
   /*
   MOVE TO: genericUtils

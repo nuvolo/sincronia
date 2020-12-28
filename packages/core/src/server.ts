@@ -1,9 +1,8 @@
-import { SN, Sinc } from "@sincronia/types";
+import { Sinc } from "@sincronia/types";
 import axios, { AxiosRequestConfig } from "axios";
 import { wait, chunkArr } from "./genericUtils";
 import PluginManager from "./PluginManager";
 import { logger } from "./Logger";
-import ConfigManager from "./config";
 import ProgressBar from "progress";
 
 const axiosConfig: AxiosRequestConfig = {
@@ -23,56 +22,6 @@ const CHUNK_SIZE = 10;
 const NETWORK_RETRIES = 3;
 const TABLE_API = "api/now/table";
 const NETWORK_TIMEOUT = 3000;
-
-/*
-  Combine following two manifest gets into same endpoint & functions
-*/
-export async function getManifestWithFiles(
-  scope: string,
-  creds?: SNInstanceCreds
-): Promise<SN.AppManifest> {
-  let endpoint = `api/x_nuvo_sinc/sinc/getManifestWithFiles/${scope}`;
-  try {
-    const {
-      includes = {},
-      excludes = {},
-      tableOptions = {}
-    } = ConfigManager.getConfig();
-    let response;
-    if (creds) {
-      let client = api;
-      response = await client.post(endpoint, {
-        includes,
-        excludes,
-        tableOptions
-      });
-    } else {
-      response = await api.post(endpoint, { includes, excludes, tableOptions });
-    }
-    return response.data.result as SN.AppManifest;
-  } catch (e) {
-    throw e;
-  }
-}
-
-export async function getManifest(scope: string): Promise<SN.AppManifest> {
-  let endpoint = `api/x_nuvo_sinc/sinc/getManifest/${scope}`;
-  try {
-    const {
-      includes = {},
-      excludes = {},
-      tableOptions = {}
-    } = ConfigManager.getConfig();
-    let response = await api.post(endpoint, {
-      includes,
-      excludes,
-      tableOptions
-    });
-    return response.data.result as SN.AppManifest;
-  } catch (e) {
-    throw e;
-  }
-}
 
 /*
   Function is only used in function below
@@ -187,9 +136,9 @@ export async function pushFile(
       );
       let response =
         // fileContext.tableName === "sys_atf_step"
-          // ? await defaultClient().updateATFfile(requestObj.data, fileContext.sys_id)
-          await pushUpdate(requestObj);
-    /*
+        // ? await defaultClient().updateATFfile(requestObj.data, fileContext.sys_id)
+        await pushUpdate(requestObj);
+      /*
       requires rewrite based on new push
     */
 
