@@ -163,7 +163,10 @@ export const isDirectory = async (p: string): Promise<boolean> => {
 };
 
 export const getPathsInPath = async (p: string): Promise<string[]> => {
-  if (!isUnderPath(ConfigManager.getSourcePath(), p)) {
+  if (
+    !isUnderPath(ConfigManager.getSourcePath(), p) &&
+    !isUnderPath(ConfigManager.getBuildPath(), p)
+  ) {
     return [];
   }
   const isDir = await isDirectory(p);

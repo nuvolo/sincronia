@@ -375,11 +375,17 @@ const getProgTick = (
   // no-op at other log levels
   return undefined;
 };
-
+/**
+ * Gets a tree of files and the count for logging purposes.
+ * @param paths a string containing encoded paths or a list of valid paths
+ */
 export const getFileTreeAndCount = async (
-  encodedPaths: string
+  paths: string | string[]
 ): Promise<[Sinc.AppFileContextTree, number]> => {
-  const validPaths = await fUtils.encodedPathsToFilePaths(encodedPaths);
+  const validPaths =
+    typeof paths === "object"
+      ? paths
+      : await fUtils.encodedPathsToFilePaths(paths);
   const appFileCtxs = validPaths
     .map(fUtils.getFileContextFromPath)
     .filter((maybeCtx): maybeCtx is Sinc.FileContext => !!maybeCtx);
