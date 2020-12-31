@@ -14,6 +14,7 @@ import {
 import { defaultClient, unwrapSNResponse } from "./snClient";
 import inquirer from "inquirer";
 import { gitDiffToEncodedPaths } from "./gitUtils";
+import { encodedPathsToFilePaths } from "./FileUtils";
 
 async function scopeCheck(
   successFunc: () => void,
@@ -182,13 +183,57 @@ export async function buildCommand(args: Sinc.BuildCmdArgs) {
   }
 }
 
-export async function deployCommand(args: Sinc.SharedCmdArgs) {
-  setLogLevel(args);
+async function getDeployPaths(): Promise<string[]> {
+  let changedPaths: string[] = [];
   try {
-    await AppManager.deployFiles();
-  } catch (e) {
-    throw e;
+    changedPaths = ConfigManager.getDiffFile().changed || [];
+  } catch (e) {}
+  if (changedPaths.length > 0) {
+    const { confirmed } = await inquirer.prompt<{ confirmed: boolean }>([
+      {
+        type: "confirm",
+        name: "confirmed",
+        message:
+          "Would you like to deploy only files changed in your diff file?",
+        default: false
+      }
+    ]);
+    if (confirmed) return changedPaths;
   }
+  return encodedPathsToFilePaths(ConfigManager.getBuildPath());
+}
+
+export async function deployCommand(args: Sinc.SharedCmdArgs): Promise<void> {
+  setLogLevel(args);
+  scopeCheck(async () => {
+    try {
+      const targetServer = process.env.SN_INSTANCE || "";
+      if (!targetServer) {
+        logger.error("No server configured for deploy!");
+        return;
+      }
+      const { confirmed } = await inquirer.prompt<{ confirmed: boolean }>([
+        {
+          type: "confirm",
+          name: "confirmed",
+          message:
+            "Deploying will overwrite code in your instance. Are you sure?",
+          default: false
+        }
+      ]);
+      if (!confirmed) {
+        return;
+      }
+      const paths = await getDeployPaths();
+      logger.silly(`${paths.length} paths found...`);
+      logger.silly(JSON.stringify(paths, null, 2));
+      const [fileTree, count] = await AppUtils.getFileTreeAndCount(paths);
+      const pushResults = await AppUtils.pushFiles(fileTree, count);
+      logPushResults(pushResults);
+    } catch (e) {
+      throw e;
+    }
+  });
 }
 
 export async function statusCommand() {
