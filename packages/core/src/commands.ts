@@ -8,7 +8,7 @@ import {
   scopeCheckMessage,
   devModeLog,
   logPushResults,
-  logBuildResults
+  logBuildResults,
 } from "./logMessages";
 import { defaultClient, unwrapSNResponse } from "./snClient";
 import inquirer from "inquirer";
@@ -82,10 +82,8 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
       if (target !== undefined && target !== "") encodedPaths = target;
       else encodedPaths = await gitDiffToEncodedPaths(diff);
 
-      const [fileTree, count] = await AppUtils.getFileTreeAndCount(
-        encodedPaths
-      );
-      logger.info(`${count} files to push.`);
+      const fileList = await AppUtils.getAppFileList(encodedPaths);
+      logger.info(`${fileList.length} files to push.`);
 
       if (!skipPrompt) {
         const targetServer = process.env.SN_INSTANCE;
@@ -93,14 +91,14 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
           logger.error("No server configured for push!");
           return;
         }
-        let answers: { confirmed: boolean } = await inquirer.prompt([
+        const answers: { confirmed: boolean } = await inquirer.prompt([
           {
             type: "confirm",
             name: "confirmed",
             message:
               "Pushing will overwrite code in your instance. Are you sure?",
-            default: false
-          }
+            default: false,
+          },
         ]);
         if (!answers["confirmed"]) return;
       }
@@ -113,20 +111,20 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
               type: "confirm",
               name: "confirmed",
               message: `A new Update Set "${updateSet}" will be created for these pushed changes. Do you want to proceed?`,
-              default: false
-            }
+              default: false,
+            },
           ]);
           if (!answers["confirmed"]) {
             process.exit(0);
           }
         }
 
-        let newUpdateSet = await AppUtils.createAndAssignUpdateSet(updateSet);
+        const newUpdateSet = await AppUtils.createAndAssignUpdateSet(updateSet);
         logger.debug(
           `New Update Set Created(${newUpdateSet.name}) sys_id:${newUpdateSet.id}`
         );
       }
-      const pushResults = await AppUtils.pushFiles(fileTree, count);
+      const pushResults = await AppUtils.pushFiles2(fileList);
       logPushResults(pushResults);
     } catch (e) {
       process.exit(1);
@@ -141,8 +139,8 @@ export async function downloadCommand(args: Sinc.CmdDownloadArgs) {
         type: "confirm",
         name: "confirmed",
         message: "Downloading will overwrite manifest and files. Are you sure?",
-        default: false
-      }
+        default: false,
+      },
     ]);
     if (!answers["confirmed"]) {
       return;
@@ -194,8 +192,8 @@ async function getDeployPaths(): Promise<string[]> {
         name: "confirmed",
         message:
           "Would you like to deploy only files changed in your diff file?",
-        default: false
-      }
+        default: false,
+      },
     ]);
     if (confirmed) return changedPaths;
   }
@@ -217,8 +215,8 @@ export async function deployCommand(args: Sinc.SharedCmdArgs): Promise<void> {
           name: "confirmed",
           message:
             "Deploying will overwrite code in your instance. Are you sure?",
-          default: false
-        }
+          default: false,
+        },
       ]);
       if (!confirmed) {
         return;
@@ -226,8 +224,8 @@ export async function deployCommand(args: Sinc.SharedCmdArgs): Promise<void> {
       const paths = await getDeployPaths();
       logger.silly(`${paths.length} paths found...`);
       logger.silly(JSON.stringify(paths, null, 2));
-      const [fileTree, count] = await AppUtils.getFileTreeAndCount(paths);
-      const pushResults = await AppUtils.pushFiles(fileTree, count);
+      const appFileList = await AppUtils.getAppFileList(paths);
+      const pushResults = await AppUtils.pushFiles2(appFileList);
       logPushResults(pushResults);
     } catch (e) {
       throw e;
