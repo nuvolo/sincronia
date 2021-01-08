@@ -240,12 +240,6 @@ export const processMissingFiles = async (
   }
 };
 
-const countRecsInTree = (tree: Sinc.AppFileContextTree): number => {
-  return Object.keys(tree).reduce((acc, table) => {
-    return acc + Object.keys(tree[table]).length;
-  }, 0);
-};
-
 export const groupAppFiles = (
   fileCtxs: Sinc.FileContext[]
 ): Sinc.AppFileContextTree => {
@@ -281,7 +275,7 @@ interface BuildSuccess {
 
 type BuildRes2 = BuildFail | BuildSuccess;
 
-const groupAppFiles2 = (fileCtxs: Sinc.FileContext[]) => {
+export const groupAppFiles2 = (fileCtxs: Sinc.FileContext[]) => {
   const combinedFiles = fileCtxs.reduce((groupMap, cur) => {
     const { tableName, targetField, sys_id } = cur;
     const key = `${tableName}-${sys_id}`;
@@ -384,6 +378,7 @@ export const pushFiles2 = async (
     const buildRes = await buildRec2(rec);
     tick();
     if (!buildRes.success) {
+      tick();
       return { success: false, message: `${recSummary} : ${buildRes.message}` };
     }
     const pushRes = await pushRec(
@@ -399,54 +394,8 @@ export const pushFiles2 = async (
   return Promise.all(pushResultPromises);
 };
 
-export const buildRec = async (
-  rec: Sinc.RecordContextMap
-): Promise<Record<string, string>> => {
-  const fields = Object.keys(rec);
-  const buildPromises = fields.map((field) => {
-    return PluginManager.getFinalFileContents(rec[field]);
-  });
-  const builtFiles = await allSettled(buildPromises);
-  const buildSuccess = !builtFiles.find(
-    (buildRes) => buildRes.status === "rejected"
-  );
-  if (!buildSuccess) {
-    throw new Error(
-      aggregateErrorMessages(
-        builtFiles
-          .filter((b): b is Sinc.FailPromiseResult => b.status === "rejected")
-          .map((b) => b.reason),
-        "Failed to build!",
-        (_, index) => `${index}`
-      )
-    );
-  }
-  return builtFiles.reduce((acc, buildRes, index) => {
-    const { value: content } = buildRes as Sinc.SuccessPromiseResult<string>;
-    const fieldName = fields[index];
-    return { ...acc, [fieldName]: content };
-  }, {} as Record<string, string>);
-};
-
 export const summarizeRecord = (table: string, recDescriptor: string): string =>
   `${table} > ${recDescriptor}`;
-
-const buildRecords = async (
-  table: string,
-  tableTree: Sinc.TableContextTree
-): Promise<Sinc.BuildRecord[]> => {
-  const recIds = Object.keys(tableTree);
-  const buildPromises = recIds.map((sysId) => buildRec(tableTree[sysId]));
-  const builtRecs = await allSettled(buildPromises);
-  return builtRecs.map((buildRes, index) => {
-    const recMap = tableTree[recIds[index]];
-    const recFields = Object.keys(recMap);
-    const recDesc = recMap[recFields[0]].name || recIds[index];
-    const recSummary = summarizeRecord(table, recDesc);
-    const context = recMap[recFields[0]];
-    return { result: buildRes, summary: recSummary, context: context };
-  });
-};
 
 const getProgTick = (
   logLevel: string,
@@ -464,98 +413,68 @@ const getProgTick = (
   // no-op at other log levels
   return undefined;
 };
-/**
- * Gets a tree of files and the count for logging purposes.
- * @param paths a string containing encoded paths or a list of valid paths
- */
-export const getFileTreeAndCount = async (
-  paths: string | string[]
-): Promise<[Sinc.AppFileContextTree, number]> => {
-  const validPaths =
-    typeof paths === "object"
-      ? paths
-      : await fUtils.encodedPathsToFilePaths(paths);
-  const appFileCtxs = validPaths
-    .map(fUtils.getFileContextFromPath)
-    .filter((maybeCtx): maybeCtx is Sinc.FileContext => !!maybeCtx);
-  const appFileTree = groupAppFiles(appFileCtxs);
-  const recordCount = countRecsInTree(appFileTree);
-  return [appFileTree, recordCount];
+
+const writeBuildFile = async (
+  preBuild: BuildableRecord,
+  buildRes: BuildSuccess,
+  summary?: string
+): Promise<Sinc.BuildResult> => {
+  const { fields, table, sysId } = preBuild;
+  const recSummary = summary ?? `${table} > ${sysId}`;
+  const sourcePath = ConfigManager.getSourcePath();
+  const buildPath = ConfigManager.getBuildPath();
+  const fieldNames = Object.keys(fields);
+  const writePromises = fieldNames.map(async (field) => {
+    const fieldCtx = fields[field];
+    const srcFilePath = fieldCtx.filePath;
+    const relativePath = path.relative(sourcePath, srcFilePath);
+    const relPathNoExt = relativePath.split(".").slice(0, -1).join();
+    const buildExt = fUtils.getBuildExt(
+      fieldCtx.tableName,
+      fieldCtx.name,
+      fieldCtx.targetField
+    );
+    const relPathNewExt = `${relPathNoExt}.${buildExt}`;
+    const buildFilePath = path.join(buildPath, relPathNewExt);
+    await fUtils.createDirRecursively(path.dirname(buildFilePath));
+    const writeResult = await fUtils.writeFileForce(
+      buildFilePath,
+      buildRes.builtRec[fieldCtx.targetField]
+    );
+    return writeResult;
+  });
+  try {
+    await Promise.all(writePromises);
+    return { success: true, message: `${recSummary} built successfully` };
+  } catch (e) {
+    return {
+      success: false,
+      message: `${recSummary} : ${e}`,
+    };
+  }
 };
 
-const buildAndWrite = async (
-  table: string,
-  tableTree: Sinc.TableContextTree,
-  sourcePath: string,
-  buildPath: string,
-  tick?: () => void
-) => {
-  const builtRecs = await buildRecords(table, tableTree);
-  const writePromises = builtRecs.map(
-    async (record): Promise<Sinc.BuildResult> => {
-      const buildRes = record.result;
-      if (buildRes.status === "rejected") {
-        return {
-          success: false,
-          message: `${record.summary} : ${buildRes.reason.message}`,
-        };
-      }
-
-      try {
-        const filePath = record.context.filePath;
-        let pathArr = path
-          .join(buildPath, path.relative(sourcePath, filePath))
-          .split(".")
-          .slice(0, -1);
-
-        const basePath = pathArr.join(".");
-        const folderPath = path.dirname(basePath);
-        const exts = fUtils.getBuildExtensions(record.context);
-
-        const fileWritePromsies = Object.keys(buildRes.value).map((file) => {
-          const newPath = path.join(folderPath, file + "." + exts[file]);
-          const fileContents = buildRes.value[file];
-          return fUtils.writeBuildFile(folderPath, newPath, fileContents);
-        });
-
-        const results = await allSettled(fileWritePromsies);
-        results.forEach((res) => {
-          if (res.status == "rejected") {
-            return {
-              success: false,
-              message: `${record.summary} : ${res.reason}`,
-            };
-          }
-        });
-
-        return {
-          success: true,
-          message: `${record.summary} built successfully`,
-        };
-      } catch (e) {
-        const errMsg = e.message;
-        return { success: false, message: `${record.summary} : ${errMsg}` };
-      } finally {
-        if (tick) tick();
-      }
-    }
-  );
-  const buildResults = await Promise.all(writePromises);
-  return buildResults;
-};
-
-export const buildFiles = async (
-  fileTree: Sinc.AppFileContextTree,
-  count: number
+export const buildFiles2 = async (
+  fileList: BuildableRecord[]
 ): Promise<Sinc.BuildResult[]> => {
-  const source = ConfigManager.getSourcePath();
-  const build = ConfigManager.getBuildPath();
-  const tick = getProgTick(logger.getLogLevel(), count);
-  const buildPromises = Object.keys(fileTree).map((table) =>
-    buildAndWrite(table, fileTree[table], source, build, tick)
-  );
-  const results = await Promise.all(buildPromises);
-  return results.flat();
+  const tick =
+    getProgTick(logger.getLogLevel(), fileList.length * 2) || (() => {});
+  const buildPromises = fileList.map(async (rec) => {
+    const { fields, table } = rec;
+    const fieldNames = Object.keys(fields);
+    const recSummary = summarizeRecord(table, fields[fieldNames[0]].name);
+    const buildRes = await buildRec2(rec);
+    tick();
+    if (!buildRes.success) {
+      tick();
+      return { success: false, message: `${recSummary} : ${buildRes.message}` };
+    }
+    // writeFile
+    const writeRes = await writeBuildFile(rec, buildRes, recSummary);
+    tick();
+    return writeRes;
+  });
+  return Promise.all(buildPromises);
 };
 
 export const swapScope = async (currentScope: string): Promise<SN.ScopeObj> => {

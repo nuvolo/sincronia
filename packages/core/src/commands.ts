@@ -171,9 +171,9 @@ export async function buildCommand(args: Sinc.BuildCmdArgs) {
   setLogLevel(args);
   try {
     const encodedPaths = await gitDiffToEncodedPaths(args.diff);
-    const [fileTree, count] = await AppUtils.getFileTreeAndCount(encodedPaths);
-    logger.info(`${count} files to build.`);
-    let results = await AppUtils.buildFiles(fileTree, count);
+    const fileList = await AppUtils.getAppFileList(encodedPaths);
+    logger.info(`${fileList.length} files to build.`);
+    const results = await AppUtils.buildFiles2(fileList);
     logBuildResults(results);
   } catch (e) {
     process.exit(1);
