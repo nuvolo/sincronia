@@ -124,7 +124,7 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
           `New Update Set Created(${newUpdateSet.name}) sys_id:${newUpdateSet.id}`
         );
       }
-      const pushResults = await AppUtils.pushFiles2(fileList);
+      const pushResults = await AppUtils.pushFiles(fileList);
       logPushResults(pushResults);
     } catch (e) {
       process.exit(1);
@@ -173,7 +173,7 @@ export async function buildCommand(args: Sinc.BuildCmdArgs) {
     const encodedPaths = await gitDiffToEncodedPaths(args.diff);
     const fileList = await AppUtils.getAppFileList(encodedPaths);
     logger.info(`${fileList.length} files to build.`);
-    const results = await AppUtils.buildFiles2(fileList);
+    const results = await AppUtils.buildFiles(fileList);
     logBuildResults(results);
   } catch (e) {
     process.exit(1);
@@ -225,7 +225,7 @@ export async function deployCommand(args: Sinc.SharedCmdArgs): Promise<void> {
       logger.silly(`${paths.length} paths found...`);
       logger.silly(JSON.stringify(paths, null, 2));
       const appFileList = await AppUtils.getAppFileList(paths);
-      const pushResults = await AppUtils.pushFiles2(appFileList);
+      const pushResults = await AppUtils.pushFiles(appFileList);
       logPushResults(pushResults);
     } catch (e) {
       throw e;

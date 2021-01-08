@@ -16,7 +16,6 @@ import {
 } from "./snClient";
 import { logger } from "./Logger";
 import { aggregateErrorMessages, allSettled } from "./genericUtils";
-import { logPushResults } from "./logMessages";
 
 const processFilesInManRec = async (
   recPath: string,
@@ -240,62 +239,27 @@ export const processMissingFiles = async (
   }
 };
 
-export const groupAppFiles = (
-  fileCtxs: Sinc.FileContext[]
-): Sinc.AppFileContextTree => {
-  const fillIfNotExists = (rec: Record<string, unknown>, key: string) => {
-    if (!rec[key]) {
-      rec[key] = {};
-    }
-  };
-  return fileCtxs.reduce((tree, cur) => {
-    const { tableName, sys_id, targetField } = cur;
-    fillIfNotExists(tree, tableName);
-    fillIfNotExists(tree[tableName], sys_id);
-    tree[tableName][sys_id][targetField] = cur;
-    return tree;
-  }, {} as Sinc.AppFileContextTree);
-};
-
-interface BuildableRecord {
-  table: string;
-  sysId: string;
-  fields: Record<string, Sinc.FileContext>;
-}
-
-interface BuildFail {
-  success: false;
-  message: string;
-}
-
-interface BuildSuccess {
-  success: true;
-  builtRec: Record<string, string>;
-}
-
-type BuildRes2 = BuildFail | BuildSuccess;
-
-export const groupAppFiles2 = (fileCtxs: Sinc.FileContext[]) => {
+export const groupAppFiles = (fileCtxs: Sinc.FileContext[]) => {
   const combinedFiles = fileCtxs.reduce((groupMap, cur) => {
     const { tableName, targetField, sys_id } = cur;
     const key = `${tableName}-${sys_id}`;
-    const entry: BuildableRecord = groupMap[key] ?? {
+    const entry: Sinc.BuildableRecord = groupMap[key] ?? {
       table: tableName,
       sysId: sys_id,
       fields: {},
     };
-    const newEntry: BuildableRecord = {
+    const newEntry: Sinc.BuildableRecord = {
       ...entry,
       fields: { ...entry.fields, [targetField]: cur ?? "" },
     };
     return { ...groupMap, [key]: newEntry };
-  }, {} as Record<string, BuildableRecord>);
+  }, {} as Record<string, Sinc.BuildableRecord>);
   return Object.values(combinedFiles);
 };
 
 export const getAppFileList = async (
   paths: string | string[]
-): Promise<BuildableRecord[]> => {
+): Promise<Sinc.BuildableRecord[]> => {
   const validPaths =
     typeof paths === "object"
       ? paths
@@ -303,10 +267,12 @@ export const getAppFileList = async (
   const appFileCtxs = validPaths
     .map(fUtils.getFileContextFromPath)
     .filter((maybeCtx): maybeCtx is Sinc.FileContext => !!maybeCtx);
-  return groupAppFiles2(appFileCtxs);
+  return groupAppFiles(appFileCtxs);
 };
 
-const buildRec2 = async (rec: BuildableRecord): Promise<BuildRes2> => {
+const buildRec = async (
+  rec: Sinc.BuildableRecord
+): Promise<Sinc.RecBuildRes> => {
   const fields = Object.keys(rec.fields);
   const buildPromises = fields.map((field) => {
     return PluginManager.getFinalFileContents(rec.fields[field]);
@@ -364,8 +330,8 @@ const pushRec = async (
   }
 };
 
-export const pushFiles2 = async (
-  recs: BuildableRecord[]
+export const pushFiles = async (
+  recs: Sinc.BuildableRecord[]
 ): Promise<Sinc.PushResult[]> => {
   const client = defaultClient();
   const tick = getProgTick(logger.getLogLevel(), recs.length * 2) || (() => {});
@@ -375,7 +341,7 @@ export const pushFiles2 = async (
       rec.table,
       rec.fields[fieldNames[0]].name
     );
-    const buildRes = await buildRec2(rec);
+    const buildRes = await buildRec(rec);
     tick();
     if (!buildRes.success) {
       tick();
@@ -415,8 +381,8 @@ const getProgTick = (
 };
 
 const writeBuildFile = async (
-  preBuild: BuildableRecord,
-  buildRes: BuildSuccess,
+  preBuild: Sinc.BuildableRecord,
+  buildRes: Sinc.RecBuildSuccess,
   summary?: string
 ): Promise<Sinc.BuildResult> => {
   const { fields, table, sysId } = preBuild;
@@ -454,8 +420,8 @@ const writeBuildFile = async (
   }
 };
 
-export const buildFiles2 = async (
-  fileList: BuildableRecord[]
+export const buildFiles = async (
+  fileList: Sinc.BuildableRecord[]
 ): Promise<Sinc.BuildResult[]> => {
   const tick =
     getProgTick(logger.getLogLevel(), fileList.length * 2) || (() => {});
@@ -463,7 +429,7 @@ export const buildFiles2 = async (
     const { fields, table } = rec;
     const fieldNames = Object.keys(fields);
     const recSummary = summarizeRecord(table, fields[fieldNames[0]].name);
-    const buildRes = await buildRec2(rec);
+    const buildRes = await buildRec(rec);
     tick();
     if (!buildRes.success) {
       tick();

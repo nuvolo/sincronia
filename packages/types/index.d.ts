@@ -78,9 +78,11 @@ export namespace Sinc {
   }
 
   interface PluginFunc {
-    (context: FileContext, content: string, options: any): Promise<
-      PluginResults
-    >;
+    (
+      context: FileContext,
+      content: string,
+      options: any
+    ): Promise<PluginResults>;
   }
 
   interface PluginResults {
@@ -136,6 +138,24 @@ export namespace Sinc {
   interface SNAPIResponse<T> {
     result: T;
   }
+
+  interface BuildableRecord {
+    table: string;
+    sysId: string;
+    fields: Record<string, Sinc.FileContext>;
+  }
+
+  interface RecBuildFail {
+    success: false;
+    message: string;
+  }
+
+  interface RecBuildSuccess {
+    success: true;
+    builtRec: Record<string, string>;
+  }
+
+  type RecBuildRes = RecBuildFail | RecBuildSuccess;
 }
 
 export namespace SN {

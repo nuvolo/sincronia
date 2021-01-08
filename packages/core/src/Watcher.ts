@@ -3,7 +3,7 @@ import { logFilePush } from "./logMessages";
 import { debounce } from "lodash";
 import { getFileContextFromPath } from "./FileUtils";
 import { Sinc } from "@sincronia/types";
-import { groupAppFiles2, pushFiles2 } from "./appUtils";
+import { groupAppFiles, pushFiles } from "./appUtils";
 const DEBOUNCE_MS = 300;
 let pushQueue: string[] = [];
 let watcher: chokidar.FSWatcher | undefined = undefined;
@@ -16,8 +16,8 @@ const processQueue = debounce(async () => {
     const fileContexts = toProcess
       .map(getFileContextFromPath)
       .filter((ctx): ctx is Sinc.FileContext => !!ctx);
-    const buildables = groupAppFiles2(fileContexts);
-    const updateResults = await pushFiles2(buildables);
+    const buildables = groupAppFiles(fileContexts);
+    const updateResults = await pushFiles(buildables);
     updateResults.forEach((res, index) => {
       logFilePush(fileContexts[index], res);
     });
