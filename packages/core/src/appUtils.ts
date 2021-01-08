@@ -368,7 +368,7 @@ const getProgTick = (
   total: number
 ): (() => void) | undefined => {
   if (logLevel === "info") {
-    const progBar = new ProgressBar(":bar :current/:total (:percent)", {
+    const progBar = new ProgressBar(":bar (:percent)", {
       total,
       width: 60,
     });
