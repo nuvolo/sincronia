@@ -33,18 +33,18 @@ export const processPushResponse = (
   if (status === 404) {
     return {
       success: false,
-      message: `Could not find ${recSummary} on the server.`
+      message: `Could not find ${recSummary} on the server.`,
     };
   }
   if (status < 200 || status > 299) {
     return {
       success: false,
-      message: `Failed to push ${recSummary}. Recieved an unexpected response (${status})`
+      message: `Failed to push ${recSummary}. Recieved an unexpected response (${status})`,
     };
   }
   return {
     success: true,
-    message: `${recSummary} pushed successfully!`
+    message: `${recSummary} pushed successfully!`,
   };
 };
 
@@ -58,12 +58,12 @@ export const snClient = (
       withCredentials: true,
       auth: {
         username,
-        password
+        password,
       },
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
-      baseURL
+      baseURL,
     }),
     { maxRPS: 20 }
   );
@@ -101,8 +101,8 @@ export const snClient = (
     return client.get<ScopeResponse>(endpoint, {
       params: {
         sysparm_query: `scope=${scopeName}`,
-        sysparm_fields: "sys_id"
-      }
+        sysparm_fields: "sys_id",
+      },
     });
   };
 
@@ -112,8 +112,8 @@ export const snClient = (
     return client.get<UserResponse>(endpoint, {
       params: {
         sysparm_query: `user_name=${userName}`,
-        sysparm_fields: "sys_id"
-      }
+        sysparm_fields: "sys_id",
+      },
     });
   };
 
@@ -123,8 +123,8 @@ export const snClient = (
     return client.get<UserPrefResponse>(endpoint, {
       params: {
         sysparm_query: `user=${userSysId}^name=apps.current_app`,
-        sysparm_fields: "sys_id"
-      }
+        sysparm_fields: "sys_id",
+      },
     });
   };
 
@@ -142,7 +142,7 @@ export const snClient = (
       value: appSysId,
       name: "apps.current_app",
       type: "string",
-      user: userSysId
+      user: userSysId,
     });
   };
 
@@ -156,7 +156,7 @@ export const snClient = (
     const endpoint = `api/now/table/sys_update_set`;
     type UpdateSetCreateResponse = Sinc.SNAPIResponse<SN.UpdateSetRecord>;
     return client.post<UpdateSetCreateResponse>(endpoint, {
-      name: updateSetName
+      name: updateSetName,
     });
   };
 
@@ -166,8 +166,8 @@ export const snClient = (
     return client.get<CurrentUpdateSetResponse>(endpoint, {
       params: {
         sysparm_query: `user=${userSysId}^name=sys_update_set`,
-        sysparm_fields: "sys_id"
-      }
+        sysparm_fields: "sys_id",
+      },
     });
   };
   const updateCurrentUpdateSetUserPref = (
@@ -187,7 +187,7 @@ export const snClient = (
       value: updateSetSysId,
       name: "sys_update_set",
       type: "string",
-      user: userSysId
+      user: userSysId,
     });
   };
 
@@ -212,7 +212,7 @@ export const snClient = (
       includes,
       excludes,
       tableOptions,
-      withFiles
+      withFiles,
     });
   };
 
@@ -230,7 +230,7 @@ export const snClient = (
     updateCurrentUpdateSetUserPref,
     createCurrentUpdateSetUserPref,
     getMissingFiles,
-    getManifest
+    getManifest,
   };
 };
 
@@ -238,6 +238,8 @@ export const defaultClient = () => {
   const { SN_USER = "", SN_PASSWORD = "", SN_INSTANCE = "" } = process.env;
   return snClient(`https://${SN_INSTANCE}/`, SN_USER, SN_PASSWORD);
 };
+
+export type SNClient = ReturnType<typeof snClient>;
 
 export const unwrapSNResponse = async <T>(
   clientPromise: AxiosPromise<Sinc.SNAPIResponse<T>>

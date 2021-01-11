@@ -10,7 +10,7 @@ export const SNFileExists = (parentDirPath: string) => async (
   try {
     const files = await fsp.readdir(parentDirPath);
     const reg = new RegExp(`${file.name}\..*$`);
-    return !!files.find(f => reg.test(f));
+    return !!files.find((f) => reg.test(f));
   } catch (e) {
     return false;
   }
@@ -78,34 +78,27 @@ export const isUnderPath = (
 
 const getFileExtension = (filePath: string): string => {
   try {
-    return (
-      "." +
-      path
-        .basename(filePath)
-        .split(".")
-        .slice(1)
-        .join(".")
-    );
+    return "." + path.basename(filePath).split(".").slice(1).join(".");
   } catch (e) {
     return "";
   }
 };
 
-export const getBuildExtensions = (context: Sinc.FileContext): SN.TypeMap => {
+export const getBuildExt = (
+  table: string,
+  recordName: string,
+  field: string
+): string => {
   const manifest = ConfigManager.getManifest();
   if (!manifest) {
-    throw new Error("Error reading manifest");
+    throw new Error("Failed to retrieve manifest");
   }
-  const { tables } = manifest;
-  const table = tables[context.tableName];
-  const recordName = context.name;
-  const record = table.records[recordName];
-  const { files } = record;
-
-  const exts = files.reduce((acc, file) => {
-    return { ...acc, [file.name]: file.type };
-  }, {});
-  return exts;
+  const files = manifest.tables[table].records[recordName].files;
+  const file = files.find((f) => f.name === field);
+  if (!file) {
+    throw new Error("Unable to find file");
+  }
+  return file.type;
 };
 
 const getTargetFieldFromPath = (
@@ -136,7 +129,7 @@ export const getFileContextFromPath = (
     const { records } = tables[tableName];
     const record = records[recordName];
     const { files, sys_id } = record;
-    const field = files.find(file => file.name === targetField);
+    const field = files.find((file) => file.name === targetField);
     if (!field) {
       return undefined;
     }
@@ -147,7 +140,7 @@ export const getFileContextFromPath = (
       name: recordName,
       scope,
       tableName,
-      targetField
+      targetField,
     };
   } catch (e) {
     return undefined;
@@ -174,7 +167,7 @@ export const getPathsInPath = async (p: string): Promise<string[]> => {
     return [p];
   } else {
     const childPaths = await fsp.readdir(p);
-    const pathPromises = childPaths.map(childPath =>
+    const pathPromises = childPaths.map((childPath) =>
       getPathsInPath(path.resolve(p, childPath))
     );
     const stackedPaths = await Promise.all(pathPromises);
@@ -183,7 +176,7 @@ export const getPathsInPath = async (p: string): Promise<string[]> => {
 };
 
 export const splitEncodedPaths = (encodedPaths: string): string[] =>
-  encodedPaths.split(PATH_DELIMITER).filter(p => p && p !== "");
+  encodedPaths.split(PATH_DELIMITER).filter((p) => p && p !== "");
 
 export const isValidPath = async (path: string): Promise<boolean> => {
   return pathExists(path);

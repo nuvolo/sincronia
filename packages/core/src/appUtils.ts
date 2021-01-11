@@ -7,10 +7,12 @@ import { PUSH_RETRY_LIMIT, PUSH_RETRY_WAIT } from "./constants";
 import PluginManager from "./PluginManager";
 import {
   defaultClient as clientFactory,
+  defaultClient,
   processPushResponse,
   retryOnErr,
+  SNClient,
   unwrapSNResponse,
-  unwrapTableAPIFirstItem
+  unwrapTableAPIFirstItem,
 } from "./snClient";
 import { logger } from "./Logger";
 import { aggregateErrorMessages, allSettled } from "./genericUtils";
@@ -21,10 +23,10 @@ const processFilesInManRec = async (
   forceWrite: boolean
 ) => {
   const fileWrite = fUtils.writeSNFileCurry(forceWrite);
-  const filePromises = rec.files.map(file => fileWrite(file, recPath));
+  const filePromises = rec.files.map((file) => fileWrite(file, recPath));
   await Promise.all(filePromises);
   // Side effect, remove content from files so it doesn't get written to manifest
-  rec.files.forEach(file => {
+  rec.files.forEach((file) => {
     delete file.content;
   });
 };
@@ -46,7 +48,7 @@ const processRecsInManTable = async (
     (acc: Promise<void>[], recKey: string) => {
       return [
         ...acc,
-        processFilesInManRec(recKeyToPath(recKey), records[recKey], forceWrite)
+        processFilesInManRec(recKeyToPath(recKey), records[recKey], forceWrite),
       ];
     },
     [] as Promise<void>[]
@@ -59,7 +61,7 @@ const processTablesInManifest = async (
   forceWrite: boolean
 ) => {
   const tableNames = Object.keys(tables);
-  const tablePromises = tableNames.map(tableName => {
+  const tablePromises = tableNames.map((tableName) => {
     return processRecsInManTable(
       path.join(ConfigManager.getSourcePath(), tableName),
       tables[tableName],
@@ -123,7 +125,7 @@ const markRecordMissing = (
   record: SN.MetaRecord,
   missingFunc: MarkRecordMissingFunc
 ) => {
-  record.files.forEach(file => {
+  record.files.forEach((file) => {
     missingFunc(record.sys_id)(file);
   });
 };
@@ -133,7 +135,7 @@ const markTableMissing = (
   tableName: string,
   missingFunc: MarkTableMissingFunc
 ) => {
-  Object.keys(table.records).forEach(recName => {
+  Object.keys(table.records).forEach((recName) => {
     markRecordMissing(table.records[recName], missingFunc(tableName));
   });
 };
@@ -237,136 +239,138 @@ export const processMissingFiles = async (
   }
 };
 
-const countRecsInTree = (tree: Sinc.AppFileContextTree): number => {
-  return Object.keys(tree).reduce((acc, table) => {
-    return acc + Object.keys(tree[table]).length;
-  }, 0);
+export const groupAppFiles = (fileCtxs: Sinc.FileContext[]) => {
+  const combinedFiles = fileCtxs.reduce((groupMap, cur) => {
+    const { tableName, targetField, sys_id } = cur;
+    const key = `${tableName}-${sys_id}`;
+    const entry: Sinc.BuildableRecord = groupMap[key] ?? {
+      table: tableName,
+      sysId: sys_id,
+      fields: {},
+    };
+    const newEntry: Sinc.BuildableRecord = {
+      ...entry,
+      fields: { ...entry.fields, [targetField]: cur ?? "" },
+    };
+    return { ...groupMap, [key]: newEntry };
+  }, {} as Record<string, Sinc.BuildableRecord>);
+  return Object.values(combinedFiles);
 };
 
-export const groupAppFiles = (
-  fileCtxs: Sinc.FileContext[]
-): Sinc.AppFileContextTree => {
-  const fillIfNotExists = (rec: Record<string, unknown>, key: string) => {
-    if (!rec[key]) {
-      rec[key] = {};
-    }
-  };
-  return fileCtxs.reduce(
-    (tree, cur) => {
-      const { tableName, sys_id, targetField } = cur;
-      fillIfNotExists(tree, tableName);
-      fillIfNotExists(tree[tableName], sys_id);
-      tree[tableName][sys_id][targetField] = cur;
-      return tree;
-    },
-    {} as Sinc.AppFileContextTree
-  );
+export const getAppFileList = async (
+  paths: string | string[]
+): Promise<Sinc.BuildableRecord[]> => {
+  const validPaths =
+    typeof paths === "object"
+      ? paths
+      : await fUtils.encodedPathsToFilePaths(paths);
+  const appFileCtxs = validPaths
+    .map(fUtils.getFileContextFromPath)
+    .filter((maybeCtx): maybeCtx is Sinc.FileContext => !!maybeCtx);
+  return groupAppFiles(appFileCtxs);
 };
 
-export const buildRec = async (
-  rec: Sinc.RecordContextMap
-): Promise<Record<string, string>> => {
-  const fields = Object.keys(rec);
-  const buildPromises = fields.map(field => {
-    return PluginManager.getFinalFileContents(rec[field]);
+const buildRec = async (
+  rec: Sinc.BuildableRecord
+): Promise<Sinc.RecBuildRes> => {
+  const fields = Object.keys(rec.fields);
+  const buildPromises = fields.map((field) => {
+    return PluginManager.getFinalFileContents(rec.fields[field]);
   });
   const builtFiles = await allSettled(buildPromises);
   const buildSuccess = !builtFiles.find(
-    buildRes => buildRes.status === "rejected"
+    (buildRes) => buildRes.status === "rejected"
   );
   if (!buildSuccess) {
-    throw new Error(
-      aggregateErrorMessages(
+    return {
+      success: false,
+      message: aggregateErrorMessages(
         builtFiles
           .filter((b): b is Sinc.FailPromiseResult => b.status === "rejected")
-          .map(b => b.reason),
+          .map((b) => b.reason),
         "Failed to build!",
         (_, index) => `${index}`
-      )
-    );
+      ),
+    };
   }
-  return builtFiles.reduce(
-    (acc, buildRes, index) => {
-      const { value: content } = buildRes as Sinc.SuccessPromiseResult<string>;
-      const fieldName = fields[index];
-      return { ...acc, [fieldName]: content };
-    },
-    {} as Record<string, string>
-  );
+  const builtRec = builtFiles.reduce((acc, buildRes, index) => {
+    const { value: content } = buildRes as Sinc.SuccessPromiseResult<string>;
+    const fieldName = fields[index];
+    return { ...acc, [fieldName]: content };
+  }, {} as Record<string, string>);
+  return {
+    success: true,
+    builtRec,
+  };
+};
+
+const pushRec = async (
+  client: SNClient,
+  table: string,
+  sysId: string,
+  builtRec: Record<string, string>,
+  summary?: string
+) => {
+  const recSummary = summary ?? `${table} > ${sysId}`;
+  try {
+    const pushRes = await retryOnErr(
+      () => client.updateRecord(table, sysId, builtRec),
+      PUSH_RETRY_LIMIT,
+      PUSH_RETRY_WAIT,
+      (numTries: number) => {
+        logger.debug(
+          `Failed to push ${recSummary}! Retrying with ${numTries} left...`
+        );
+      }
+    );
+    return processPushResponse(pushRes, recSummary);
+  } catch (e) {
+    const errMsg = e.message || "Too many retries";
+    return { success: false, message: `${recSummary} : ${errMsg}` };
+  }
+};
+
+export const pushFiles = async (
+  recs: Sinc.BuildableRecord[]
+): Promise<Sinc.PushResult[]> => {
+  const client = defaultClient();
+  const tick = getProgTick(logger.getLogLevel(), recs.length * 2) || (() => {});
+  const pushResultPromises = recs.map(async (rec) => {
+    const fieldNames = Object.keys(rec.fields);
+    const recSummary = summarizeRecord(
+      rec.table,
+      rec.fields[fieldNames[0]].name
+    );
+    const buildRes = await buildRec(rec);
+    tick();
+    if (!buildRes.success) {
+      tick();
+      return { success: false, message: `${recSummary} : ${buildRes.message}` };
+    }
+    const pushRes = await pushRec(
+      client,
+      rec.table,
+      rec.sysId,
+      buildRes.builtRec,
+      recSummary
+    );
+    tick();
+    return pushRes;
+  });
+  return Promise.all(pushResultPromises);
 };
 
 export const summarizeRecord = (table: string, recDescriptor: string): string =>
   `${table} > ${recDescriptor}`;
-
-const buildRecords = async (
-  table: string,
-  tableTree: Sinc.TableContextTree
-): Promise<Sinc.BuildRecord[]> => {
-  const recIds = Object.keys(tableTree);
-  const buildPromises = recIds.map(sysId => buildRec(tableTree[sysId]));
-  const builtRecs = await allSettled(buildPromises);
-  return builtRecs.map((buildRes, index) => {
-    const recMap = tableTree[recIds[index]];
-    const recFields = Object.keys(recMap);
-    const recDesc = recMap[recFields[0]].name || recIds[index];
-    const recSummary = summarizeRecord(table, recDesc);
-    const context = recMap[recFields[0]];
-    return { result: buildRes, summary: recSummary, context: context };
-  });
-};
-
-const buildAndPush = async (
-  table: string,
-  tableTree: Sinc.TableContextTree,
-  tick?: () => void
-): Promise<Sinc.PushResult[]> => {
-  const builtRecs = await buildRecords(table, tableTree);
-  const client = clientFactory();
-  const pushPromises = builtRecs.map(
-    async (record): Promise<Sinc.PushResult> => {
-      const buildRes = record.result;
-      if (buildRes.status === "rejected") {
-        return {
-          success: false,
-          message: `${record.summary} : ${buildRes.reason.message}`
-        };
-      }
-      try {
-        const res = await retryOnErr(
-          () =>
-            client.updateRecord(table, record.context.sys_id, buildRes.value),
-          PUSH_RETRY_LIMIT,
-          PUSH_RETRY_WAIT,
-          (numTries: number) => {
-            logger.debug(
-              `Failed to push ${record.summary}! Retrying with ${numTries} left...`
-            );
-          }
-        );
-        return processPushResponse(res, record.summary);
-      } catch (e) {
-        const errMsg = e.message || "Too many retries";
-        return { success: false, message: `${record.summary} : ${errMsg}` };
-      } finally {
-        // this block always runs, even if we return
-        if (tick) {
-          tick();
-        }
-      }
-    }
-  );
-  const pushResults = await Promise.all(pushPromises);
-  return pushResults;
-};
 
 const getProgTick = (
   logLevel: string,
   total: number
 ): (() => void) | undefined => {
   if (logLevel === "info") {
-    const progBar = new ProgressBar(":bar :current/:total (:percent)", {
+    const progBar = new ProgressBar(":bar (:percent)", {
       total,
-      width: 60
+      width: 60,
     });
     return () => {
       progBar.tick();
@@ -375,110 +379,68 @@ const getProgTick = (
   // no-op at other log levels
   return undefined;
 };
-/**
- * Gets a tree of files and the count for logging purposes.
- * @param paths a string containing encoded paths or a list of valid paths
- */
-export const getFileTreeAndCount = async (
-  paths: string | string[]
-): Promise<[Sinc.AppFileContextTree, number]> => {
-  const validPaths =
-    typeof paths === "object"
-      ? paths
-      : await fUtils.encodedPathsToFilePaths(paths);
-  const appFileCtxs = validPaths
-    .map(fUtils.getFileContextFromPath)
-    .filter((maybeCtx): maybeCtx is Sinc.FileContext => !!maybeCtx);
-  const appFileTree = groupAppFiles(appFileCtxs);
-  const recordCount = countRecsInTree(appFileTree);
-  return [appFileTree, recordCount];
-};
 
-export const pushFiles = async (
-  appFileTree: Sinc.AppFileContextTree,
-  recordCount: number
-): Promise<Sinc.PushResult[]> => {
-  const tick = getProgTick(logger.getLogLevel(), recordCount);
-  const buildAndPushPromises = Object.keys(appFileTree).map(table =>
-    buildAndPush(table, appFileTree[table], tick)
-  );
-  const tablePushResults = await Promise.all(buildAndPushPromises);
-  return tablePushResults.flat();
-};
-
-const buildAndWrite = async (
-  table: string,
-  tableTree: Sinc.TableContextTree,
-  sourcePath: string,
-  buildPath: string,
-  tick?: () => void
-) => {
-  const builtRecs = await buildRecords(table, tableTree);
-  const writePromises = builtRecs.map(
-    async (record): Promise<Sinc.BuildResult> => {
-      const buildRes = record.result;
-      if (buildRes.status === "rejected") {
-        return {
-          success: false,
-          message: `${record.summary} : ${buildRes.reason.message}`
-        };
-      }
-
-      try {
-        const filePath = record.context.filePath;
-        let pathArr = path
-          .join(buildPath, path.relative(sourcePath, filePath))
-          .split(".")
-          .slice(0, -1);
-
-        const basePath = pathArr.join(".");
-        const folderPath = path.dirname(basePath);
-        const exts = fUtils.getBuildExtensions(record.context);
-
-        const fileWritePromsies = Object.keys(buildRes.value).map(file => {
-          const newPath = path.join(folderPath, file + "." + exts[file]);
-          const fileContents = buildRes.value[file];
-          return fUtils.writeBuildFile(folderPath, newPath, fileContents);
-        });
-
-        const results = await allSettled(fileWritePromsies);
-        results.forEach(res => {
-          if (res.status == "rejected") {
-            return {
-              success: false,
-              message: `${record.summary} : ${res.reason}`
-            };
-          }
-        });
-
-        return {
-          success: true,
-          message: `${record.summary} built successfully`
-        };
-      } catch (e) {
-        const errMsg = e.message;
-        return { success: false, message: `${record.summary} : ${errMsg}` };
-      } finally {
-        if (tick) tick();
-      }
-    }
-  );
-  const buildResults = await Promise.all(writePromises);
-  return buildResults;
+const writeBuildFile = async (
+  preBuild: Sinc.BuildableRecord,
+  buildRes: Sinc.RecBuildSuccess,
+  summary?: string
+): Promise<Sinc.BuildResult> => {
+  const { fields, table, sysId } = preBuild;
+  const recSummary = summary ?? `${table} > ${sysId}`;
+  const sourcePath = ConfigManager.getSourcePath();
+  const buildPath = ConfigManager.getBuildPath();
+  const fieldNames = Object.keys(fields);
+  const writePromises = fieldNames.map(async (field) => {
+    const fieldCtx = fields[field];
+    const srcFilePath = fieldCtx.filePath;
+    const relativePath = path.relative(sourcePath, srcFilePath);
+    const relPathNoExt = relativePath.split(".").slice(0, -1).join();
+    const buildExt = fUtils.getBuildExt(
+      fieldCtx.tableName,
+      fieldCtx.name,
+      fieldCtx.targetField
+    );
+    const relPathNewExt = `${relPathNoExt}.${buildExt}`;
+    const buildFilePath = path.join(buildPath, relPathNewExt);
+    await fUtils.createDirRecursively(path.dirname(buildFilePath));
+    const writeResult = await fUtils.writeFileForce(
+      buildFilePath,
+      buildRes.builtRec[fieldCtx.targetField]
+    );
+    return writeResult;
+  });
+  try {
+    await Promise.all(writePromises);
+    return { success: true, message: `${recSummary} built successfully` };
+  } catch (e) {
+    return {
+      success: false,
+      message: `${recSummary} : ${e}`,
+    };
+  }
 };
 
 export const buildFiles = async (
-  fileTree: Sinc.AppFileContextTree,
-  count: number
+  fileList: Sinc.BuildableRecord[]
 ): Promise<Sinc.BuildResult[]> => {
-  const source = ConfigManager.getSourcePath();
-  const build = ConfigManager.getBuildPath();
-  const tick = getProgTick(logger.getLogLevel(), count);
-  const buildPromises = Object.keys(fileTree).map(table =>
-    buildAndWrite(table, fileTree[table], source, build, tick)
-  );
-  const results = await Promise.all(buildPromises);
-  return results.flat();
+  const tick =
+    getProgTick(logger.getLogLevel(), fileList.length * 2) || (() => {});
+  const buildPromises = fileList.map(async (rec) => {
+    const { fields, table } = rec;
+    const fieldNames = Object.keys(fields);
+    const recSummary = summarizeRecord(table, fields[fieldNames[0]].name);
+    const buildRes = await buildRec(rec);
+    tick();
+    if (!buildRes.success) {
+      tick();
+      return { success: false, message: `${recSummary} : ${buildRes.message}` };
+    }
+    // writeFile
+    const writeRes = await writeBuildFile(rec, buildRes, recSummary);
+    tick();
+    return writeRes;
+  });
+  return Promise.all(buildPromises);
 };
 
 export const swapScope = async (currentScope: string): Promise<SN.ScopeObj> => {
@@ -547,7 +509,7 @@ export const createAndAssignUpdateSet = async (updateSetName = "") => {
   }
   return {
     name: updateSetName,
-    id: updateSetSysId
+    id: updateSetSysId,
   };
 };
 
@@ -563,20 +525,20 @@ export const checkScope = async (
         return {
           match: true,
           sessionScope: scopeObj.scope,
-          manifestScope: man.scope
+          manifestScope: man.scope,
         };
       } else if (swap) {
         const swappedScopeObj = await swapScope(man.scope);
         return {
           match: swappedScopeObj.scope === man.scope,
           sessionScope: swappedScopeObj.scope,
-          manifestScope: man.scope
+          manifestScope: man.scope,
         };
       } else {
         return {
           match: false,
           sessionScope: scopeObj.scope,
-          manifestScope: man.scope
+          manifestScope: man.scope,
         };
       }
     }
@@ -584,7 +546,7 @@ export const checkScope = async (
     return {
       match: true,
       sessionScope: "",
-      manifestScope: ""
+      manifestScope: "",
     };
   } catch (e) {
     throw e;
