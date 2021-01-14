@@ -127,6 +127,7 @@ export async function pushCommand(args: Sinc.PushCmdArgs): Promise<void> {
       const pushResults = await AppUtils.pushFiles(fileList);
       logPushResults(pushResults);
     } catch (e) {
+      logger.getInternalLogger().error(e);
       process.exit(1);
     }
   }, args.scopeSwap);
