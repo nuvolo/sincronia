@@ -1,6 +1,6 @@
 import { SN, Sinc } from "@sincronia/types";
 import path from "path";
-import ConfigManager from "./config";
+import * as ConfigManager from "./config";
 
 async function _getConfigFromPath(
   params: Sinc.FileSyncParams
@@ -31,7 +31,7 @@ async function _getConfigFromPath(
 }
 
 function fieldExists(record: SN.MetaRecord, context: Sinc.FileSyncParams) {
-  let matches = record.files.filter(cur => {
+  let matches = record.files.filter((cur) => {
     return cur.name === context.targetField;
   });
   return matches.length === 1;
@@ -39,13 +39,7 @@ function fieldExists(record: SN.MetaRecord, context: Sinc.FileSyncParams) {
 
 function getExtension(filePath: string) {
   try {
-    let ext =
-      "." +
-      path
-        .basename(filePath)
-        .split(".")
-        .slice(1)
-        .join(".");
+    let ext = "." + path.basename(filePath).split(".").slice(1).join(".");
     return ext;
   } catch (e) {
     return "";
@@ -65,7 +59,7 @@ export async function parseFileNameParams(filePath: string) {
     tableName,
     name,
     targetField,
-    ext
+    ext,
   });
 }
 
@@ -105,18 +99,18 @@ export const allSettled = <T>(
   promises: Promise<T>[]
 ): Promise<Sinc.PromiseResult<T>[]> => {
   return Promise.all(
-    promises.map(prom =>
+    promises.map((prom) =>
       prom
         .then(
           (value): Sinc.PromiseResult<T> => ({
             status: "fulfilled",
-            value
+            value,
           })
         )
         .catch(
           (reason): Sinc.PromiseResult<T> => ({
             status: "rejected",
-            reason
+            reason,
           })
         )
     )

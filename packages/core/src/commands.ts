@@ -1,5 +1,5 @@
 import { Sinc } from "@sincronia/types";
-import ConfigManager from "./config";
+import * as ConfigManager from "./config";
 import { startWatching } from "./Watcher";
 import * as AppUtils from "./appUtils";
 import { startWizard } from "./wizard";

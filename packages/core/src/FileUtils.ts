@@ -2,7 +2,7 @@ import { SN, Sinc } from "@sincronia/types";
 import { PATH_DELIMITER } from "./constants";
 import fs, { promises as fsp } from "fs";
 import path from "path";
-import ConfigManager from "./config";
+import * as ConfigManager from "./config";
 
 export const SNFileExists = (parentDirPath: string) => async (
   file: SN.File

@@ -2,7 +2,7 @@ import { SN, Sinc } from "@sincronia/types";
 import path from "path";
 import ProgressBar from "progress";
 import * as fUtils from "./FileUtils";
-import ConfigManager from "./config";
+import * as ConfigManager from "./config";
 import { PUSH_RETRY_LIMIT, PUSH_RETRY_WAIT } from "./constants";
 import PluginManager from "./PluginManager";
 import {
