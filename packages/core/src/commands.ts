@@ -146,7 +146,7 @@ export async function downloadCommand(args: Sinc.CmdDownloadArgs) {
       return;
     }
     logger.info("Downloading manifest and files...");
-    const client = defaultClient;
+    const client = defaultClient();
     const config = ConfigManager.getConfig();
     const man = await unwrapSNResponse(
       client.getManifest(args.scope, config, true)
@@ -235,7 +235,7 @@ export async function deployCommand(args: Sinc.SharedCmdArgs): Promise<void> {
 
 export async function statusCommand() {
   try {
-    const client = defaultClient;
+    const client = defaultClient();
     let scopeObj = await unwrapSNResponse(client.getCurrentScope());
     logger.info(`Instance: ${process.env.SN_INSTANCE}`);
     logger.info(`Scope: ${scopeObj.scope}`);
