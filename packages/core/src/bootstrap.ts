@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import ConfigManager from "./config";
+import * as ConfigManager from "./config";
 
 export async function init() {
   try {
@@ -10,7 +10,7 @@ export async function init() {
 
   let path = ConfigManager.getEnvPath();
   dotenv.config({
-    path
+    path,
   });
   (await import("./commander")).initCommands();
 }

@@ -2,7 +2,7 @@ import * as cp from "child_process";
 import path from "path";
 import { logger } from "./Logger";
 import { PATH_DELIMITER } from "./constants";
-import ConfigManager from "./config";
+import * as ConfigManager from "./config";
 import fs from "fs";
 import * as fUtils from "./FileUtils";
 
@@ -39,7 +39,7 @@ const formatGitFiles = async (gitFiles: string) => {
   const workspaceDir = process.cwd();
   const fileSplit = gitFiles.split(/\r?\n/);
   const fileArray: string[] = [];
-  fileSplit.forEach(diffFile => {
+  fileSplit.forEach((diffFile) => {
     if (diffFile !== "") {
       const modCode = diffFile.charAt(0);
 

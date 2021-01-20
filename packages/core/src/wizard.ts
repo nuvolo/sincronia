@@ -1,6 +1,6 @@
 import { SN, Sinc } from "@sincronia/types";
 import inquirer from "inquirer";
-import ConfigManager from "./config";
+import * as ConfigManager from "./config";
 import * as AppUtils from "./appUtils";
 import fs from "fs";
 const fsp = fs.promises;
@@ -47,18 +47,18 @@ async function getLoginInfo(): Promise<Sinc.LoginAnswers> {
       type: "input",
       name: "instance",
       message:
-        "What instance would you like to connect to?(ex. test123.service-now.com)"
+        "What instance would you like to connect to?(ex. test123.service-now.com)",
     },
     {
       type: "input",
       name: "username",
-      message: "What is your username on that instance?"
+      message: "What is your username on that instance?",
     },
     {
       type: "password",
       name: "password",
-      message: "What is your password on that instance?"
-    }
+      message: "What is your password on that instance?",
+    },
   ]);
 }
 
@@ -109,14 +109,14 @@ async function showAppList(apps: SN.App[]): Promise<string | undefined> {
       type: "list",
       name: "app",
       message: "Which app would you like to work with?",
-      choices: apps.map(app => {
+      choices: apps.map((app) => {
         return {
           name: `${app.displayName}(${app.scope})`,
           value: app.scope,
-          short: app.displayName
+          short: app.displayName,
         };
-      })
-    }
+      }),
+    },
   ]);
   return appSelection.app;
 }

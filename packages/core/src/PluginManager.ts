@@ -1,5 +1,5 @@
 import { Sinc } from "@sincronia/types";
-import ConfigManager from "./config";
+import * as ConfigManager from "./config";
 import fs from "fs";
 import path from "path";
 const fsp = fs.promises;
@@ -48,14 +48,14 @@ class PluginManager {
         if (!results.success) {
           return {
             success: false,
-            content: ""
+            content: "",
           };
         }
         output = results.output;
       }
       return {
         success: true,
-        content: output
+        content: output,
       };
     } catch (e) {
       throw e;
