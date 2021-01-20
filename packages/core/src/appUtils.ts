@@ -6,7 +6,6 @@ import * as ConfigManager from "./config";
 import { PUSH_RETRY_LIMIT, PUSH_RETRY_WAIT } from "./constants";
 import PluginManager from "./PluginManager";
 import {
-  defaultClient as clientFactory,
   defaultClient,
   processPushResponse,
   retryOnErr,
@@ -87,7 +86,7 @@ export const syncManifest = async () => {
     let curManifest = await ConfigManager.getManifest();
     if (!curManifest) throw new Error("No manifest file loaded!");
     logger.info("Downloading fresh manifest...");
-    const client = clientFactory();
+    const client = defaultClient;
     const config = ConfigManager.getConfig();
     const newManifest = await unwrapSNResponse(
       client.getManifest(curManifest.scope, config)
@@ -229,7 +228,7 @@ export const processMissingFiles = async (
   try {
     const missing = await findMissingFiles(newManifest);
     const { tableOptions = {} } = ConfigManager.getConfig();
-    const client = clientFactory();
+    const client = defaultClient;
     const filesToProcess = await unwrapSNResponse(
       client.getMissingFiles(missing, tableOptions)
     );
@@ -333,7 +332,7 @@ const pushRec = async (
 export const pushFiles = async (
   recs: Sinc.BuildableRecord[]
 ): Promise<Sinc.PushResult[]> => {
-  const client = defaultClient();
+  const client = defaultClient;
   const tick = getProgTick(logger.getLogLevel(), recs.length * 2) || (() => {});
   const pushResultPromises = recs.map(async (rec) => {
     const fieldNames = Object.keys(rec.fields);
@@ -445,7 +444,7 @@ export const buildFiles = async (
 
 export const swapScope = async (currentScope: string): Promise<SN.ScopeObj> => {
   try {
-    const client = clientFactory();
+    const client = defaultClient;
     const scopeId = await unwrapTableAPIFirstItem(
       client.getScopeId(currentScope),
       "sys_id"
@@ -460,7 +459,7 @@ export const swapScope = async (currentScope: string): Promise<SN.ScopeObj> => {
 
 const swapServerScope = async (scopeId: string): Promise<void> => {
   try {
-    const client = clientFactory();
+    const client = defaultClient;
     const userSysId = await unwrapTableAPIFirstItem(
       client.getUserSysId(),
       "sys_id"
@@ -486,7 +485,7 @@ const swapServerScope = async (scopeId: string): Promise<void> => {
  */
 export const createAndAssignUpdateSet = async (updateSetName = "") => {
   logger.info(`Update Set Name: ${updateSetName}`);
-  const client = clientFactory();
+  const client = defaultClient;
   const { sys_id: updateSetSysId } = await unwrapSNResponse(
     client.createUpdateSet(updateSetName)
   );
@@ -519,7 +518,7 @@ export const checkScope = async (
   try {
     const man = ConfigManager.getManifest();
     if (man) {
-      const client = clientFactory();
+      const client = defaultClient;
       const scopeObj = await unwrapSNResponse(client.getCurrentScope());
       if (scopeObj.scope === man.scope) {
         return {

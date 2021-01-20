@@ -234,9 +234,15 @@ export const snClient = (
   };
 };
 
-export const defaultClient = () => {
+export const initClient = () => {
   const { SN_USER = "", SN_PASSWORD = "", SN_INSTANCE = "" } = process.env;
   return snClient(`https://${SN_INSTANCE}/`, SN_USER, SN_PASSWORD);
+};
+export let defaultClient = initClient();
+
+export const updateClient = () => {
+  const { SN_USER = "", SN_PASSWORD = "", SN_INSTANCE = "" } = process.env;
+  defaultClient = snClient(`https://${SN_INSTANCE}/`, SN_USER, SN_PASSWORD);
 };
 
 export type SNClient = ReturnType<typeof snClient>;

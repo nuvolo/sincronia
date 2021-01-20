@@ -6,7 +6,12 @@ import fs from "fs";
 const fsp = fs.promises;
 import { logger } from "./Logger";
 import path from "path";
-import { snClient, unwrapSNResponse, defaultClient } from "./snClient";
+import {
+  snClient,
+  unwrapSNResponse,
+  defaultClient,
+  updateClient,
+} from "./snClient";
 
 export async function startWizard() {
   let loginAnswers = await getLoginInfo();
@@ -15,6 +20,7 @@ export async function startWizard() {
     const client = snClient(`https://${instance}/`, username, password);
     const apps = await unwrapSNResponse(client.getAppList());
     await setupDotEnv(loginAnswers);
+    updateClient();
     let hasConfig = await checkConfig();
     if (!hasConfig) {
       logger.info("Generating config...");
@@ -123,7 +129,7 @@ async function showAppList(apps: SN.App[]): Promise<string | undefined> {
 
 async function downloadApp(answers: Sinc.LoginAnswers, scope: string) {
   try {
-    const client = defaultClient();
+    const client = defaultClient;
     const config = ConfigManager.getConfig();
     const man = await unwrapSNResponse(client.getManifest(scope, config, true));
     await AppUtils.processManifest(man);
