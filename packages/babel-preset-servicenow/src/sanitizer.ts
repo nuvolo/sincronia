@@ -17,12 +17,24 @@ export default function() {
           isReservedWord(path.node.property.name) &&
           !path.node.computed
         ) {
-          let replacement = t.memberExpression(
+          const replacement = t.memberExpression(
             path.node.object,
             t.stringLiteral(path.node.property.name),
             true
           );
           path.replaceWith(replacement);
+        }
+      },
+      //remove use strict
+      Program: {
+        exit: function exit(path) {
+            const list = path.node.directives;
+            for(let i=list.length-1, it; i>=0 ; i--){
+                it = list[i];
+                if (it.value.value==='use strict'){
+                    list.splice(i,1);
+                }
+            }
         }
       }
     }
