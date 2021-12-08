@@ -6,7 +6,7 @@ interface webpackPluginOpts {
   configGenerator?: (context: Sinc.FileContext) => webpack.Configuration;
   webpackConfig?: webpack.Configuration;
 }
-const run: Sinc.PluginFunc = async function(
+const run: Sinc.PluginFunc = async function (
   context: Sinc.FileContext,
   content: string,
   options: webpackPluginOpts
@@ -30,7 +30,7 @@ const run: Sinc.PluginFunc = async function(
   wpOptions.entry = context.filePath;
   wpOptions.output = {
     path: "/",
-    filename: "bundle.js"
+    filename: "bundle.js",
   };
   let compiler = webpack(wpOptions);
   compiler.outputFileSystem = memFS;
@@ -52,10 +52,10 @@ const run: Sinc.PluginFunc = async function(
     let output = await compilePromise;
     return {
       output,
-      success: true
+      success: true,
     };
   } catch (e) {
-    throw new Error(e);
+    throw new Error(`${e}`);
   }
   function getWebpackConfigPath() {
     let pathChunks = context.filePath.split(path.sep);
