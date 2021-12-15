@@ -7,13 +7,13 @@ import fs from "fs";
 import * as fUtils from "./FileUtils";
 
 export const gitDiffToEncodedPaths = async (diff: string) => {
-  if (diff !== "") return gitDiff(diff);
+  if (diff !== "") return gitDiff(diff, ConfigManager.getSourcePath());
   return ConfigManager.getSourcePath();
 };
 
-const gitDiff = async (target: string): Promise<string> => {
+const gitDiff = async (target: string, sourcePath: string): Promise<string> => {
   return new Promise<string>((resolve, reject) => {
-    const cmdStr = `git diff --name-status ${target}...`;
+    const cmdStr = `git diff --name-status ${target}... -- ${sourcePath}`;
     cp.exec(cmdStr, (err, stdout, stderr) => {
       if (err) {
         reject(err);
