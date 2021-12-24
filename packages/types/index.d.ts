@@ -180,6 +180,7 @@ export namespace SN {
     files: File[];
     name: string;
     sys_id: string;
+    is_repetead: boolean;
   }
 
   interface File {
