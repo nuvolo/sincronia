@@ -28,6 +28,9 @@ const processFilesInManRec = async (
   rec.files.forEach((file) => {
     delete file.content;
   });
+  
+  if (rec.is_repetead) 
+    logger.warn("⚠️  " + rec.name + " is duplicated!");
 };
 
 const processRecsInManTable = async (
