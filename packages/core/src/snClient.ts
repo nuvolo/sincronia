@@ -160,6 +160,17 @@ export const snClient = (
     });
   };
 
+  const getCurrentUpdateSetId = async (userSysId: string) => {
+    const endpoint = `api/now/table/sys_user_preference`;
+    const res = await client.get(endpoint, {
+      params: {
+        sysparm_query: `user=${userSysId}^name=sys_update_set`,
+        sysparm_fields: "value",
+      },
+    });
+    return res.data.result[0].value;
+  };
+
   const getCurrentUpdateSetUserPref = (userSysId: string) => {
     const endpoint = `api/now/table/sys_user_preference`;
     type CurrentUpdateSetResponse = Sinc.SNAPIResponse<SN.UserPrefRecord[]>;
@@ -216,6 +227,65 @@ export const snClient = (
     });
   };
 
+  const getCurrentUpdateSetChanges = async () => {
+    const userData = await getUserSysId();
+    const updateSetId = await getCurrentUpdateSetId(
+      userData.data.result[0].sys_id
+    );
+
+    const changeTypes = [
+      "Parameter Variable",
+      "Test Step Config",
+      "Data Source",
+      "Decision Input",
+      "Email Client Template",
+      "Extension Point",
+      "Action Inputs",
+      "Action Outputs",
+      "Flow Inputs",
+      "Extended Step Input Variable",
+      "Extended Step Output Variable",
+      "Navigation Handler",
+      "Processor",
+      "Recipient Qualifier",
+      "Business Rule",
+      "Client Script",
+      "Email Script",
+      "Fix Script",
+      "Script Include",
+      "UI Action",
+      "Context Menu",
+      "Embedded List Control",
+      "Macro",
+      "UI Page",
+      "UI Script",
+      "Scripted REST Resource",
+    ];
+
+    const changesTable = "sys_update_xml";
+    const endpoint = `api/now/table/${changesTable}`;
+    const query =
+      `update_set=${updateSetId}^action!=DELETE^typeIN` + changeTypes.join(",");
+    const changesData = await client.get(endpoint, {
+      params: {
+        sysparm_query: query,
+        sysparm_fields: "name",
+      },
+    });
+    const changes: Record<string, string[]> = {};
+    changesData.data.result.map((change: { name: string }) => {
+      const nameArray = change.name.split("_");
+
+      const table = nameArray.slice(0, -1).join("_");
+      const id = nameArray.slice(-1)[0];
+      if (!changes[table]) {
+        changes[table] = [];
+      }
+      changes[table].push(id);
+    });
+    return changes;
+  };
+
   return {
     getAppList,
     updateRecord,
@@ -231,6 +301,7 @@ export const snClient = (
     createCurrentUpdateSetUserPref,
     getMissingFiles,
     getManifest,
+    getCurrentUpdateSetChanges,
   };
 };
 
