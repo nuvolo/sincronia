@@ -61,10 +61,6 @@ export async function refreshCommand(
   args: Sinc.SharedCmdArgs,
   log: boolean = true
 ) {
-  const client = defaultClient();
-  const usChanges = await client.getCurrentUpdateSetChanges();
-  console.log("usChanges ", usChanges);
-  return 1;
   setLogLevel(args);
   scopeCheck(async () => {
     try {

@@ -81,9 +81,9 @@ export const processManifest = async (
   );
 };
 
-export const syncManifest = async () => {
+export const syncManifest = async (): Promise<void> => {
   try {
-    let curManifest = await ConfigManager.getManifest();
+    const curManifest = await ConfigManager.getManifest();
     if (!curManifest) throw new Error("No manifest file loaded!");
     logger.info("Downloading fresh manifest...");
     const client = defaultClient();
@@ -92,12 +92,32 @@ export const syncManifest = async () => {
       client.getManifest(curManifest.scope, config)
     );
 
+    const currentUpdateSetOnly = process.env.CURRENT_UPDATE_SET_ONLY === "1";
+    if (currentUpdateSetOnly) {
+      const httpClient = defaultClient();
+      const updateSetChanges = await httpClient.getCurrentUpdateSetChanges();
+
+      for (const tableName in newManifest.tables) {
+        if (updateSetChanges[tableName]) {
+          for (const scriptName in newManifest.tables[tableName].records) {
+            const sysId =
+              newManifest.tables[tableName].records[scriptName].sys_id;
+            if (updateSetChanges[tableName].indexOf(sysId) > -1) {
+              const script = newManifest.tables[tableName].records[scriptName];
+              curManifest.tables[tableName].records[scriptName] = script;
+            }
+          }
+        }
+      }
+    }
+    const manifestContent = currentUpdateSetOnly ? curManifest : newManifest;
+
     logger.info("Writing new manifest file...");
-    fUtils.writeManifestFile(newManifest);
+    fUtils.writeManifestFile(manifestContent);
 
     logger.info("Finding and creating missing files...");
-    await processMissingFiles(newManifest);
-    ConfigManager.updateManifest(newManifest);
+    await processMissingFiles(manifestContent);
+    ConfigManager.updateManifest(manifestContent);
   } catch (e) {
     logger.error("Encountered error while refreshing! ❌");
     logger.error(e.toString());
