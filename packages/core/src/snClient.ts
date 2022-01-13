@@ -3,6 +3,7 @@ import axios, { AxiosPromise, AxiosResponse } from "axios";
 import rateLimit from "axios-rate-limit";
 import { wait } from "./genericUtils";
 import { logger } from "./Logger";
+import * as ConfigManager from "./config";
 
 export const retryOnErr = async <T>(
   f: () => Promise<T>,
@@ -227,45 +228,23 @@ export const snClient = (
     });
   };
 
-  const getCurrentUpdateSetChanges = async () => {
+  const getCurrentUpdateSetChanges = async (): Promise<
+    Record<string, string[]>
+  > => {
+    const { updateSetChangeTypes = [] } = ConfigManager.getConfig();
+    if (!updateSetChangeTypes.length) {
+      return {};
+    }
     const userData = await getUserSysId();
     const updateSetId = await getCurrentUpdateSetId(
       userData.data.result[0].sys_id
     );
 
-    const changeTypes = [
-      "Parameter Variable",
-      "Test Step Config",
-      "Data Source",
-      "Decision Input",
-      "Email Client Template",
-      "Extension Point",
-      "Action Inputs",
-      "Action Outputs",
-      "Flow Inputs",
-      "Extended Step Input Variable",
-      "Extended Step Output Variable",
-      "Navigation Handler",
-      "Processor",
-      "Recipient Qualifier",
-      "Business Rule",
-      "Client Script",
-      "Email Script",
-      "Fix Script",
-      "Script Include",
-      "UI Action",
-      "Context Menu",
-      "Embedded List Control",
-      "Macro",
-      "UI Page",
-      "UI Script",
-      "Scripted REST Resource",
-    ];
-
     const changesTable = "sys_update_xml";
     const endpoint = `api/now/table/${changesTable}`;
     const query =
-      `update_set=${updateSetId}^action!=DELETE^typeIN` + changeTypes.join(",");
+      `update_set=${updateSetId}^action!=DELETE^typeIN` +
+      updateSetChangeTypes.join(",");
     const changesData = await client.get(endpoint, {
       params: {
         sysparm_query: query,

@@ -117,6 +117,7 @@ export function getDefaultConfigFile(): string {
       sourceDirectory: "src",
       buildDirectory: "build",
       rules: [],
+      updateSetChangeTypes: [],
       excludes:{},
       includes:{},
       tableOptions:{},
