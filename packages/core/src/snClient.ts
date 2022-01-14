@@ -231,7 +231,8 @@ export const snClient = (
   const getCurrentUpdateSetChanges = async (): Promise<
     Record<string, string[]>
   > => {
-    const { updateSetChangeTypes = [] } = ConfigManager.getConfig();
+    const { updateSetChangeTypes = [] } = await ConfigManager.getUsSincConfig();
+
     if (!updateSetChangeTypes.length) {
       return {};
     }

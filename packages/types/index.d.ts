@@ -25,7 +25,6 @@ export namespace Sinc {
     excludes?: TablePropMap;
     tableOptions: ITableOptionsMap;
     refreshInterval: number;
-    updateSetChangeTypes?: string[];
   }
 
   interface ITableOptionsMap {

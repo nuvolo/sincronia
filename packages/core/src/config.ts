@@ -117,13 +117,26 @@ export function getDefaultConfigFile(): string {
       sourceDirectory: "src",
       buildDirectory: "build",
       rules: [],
-      updateSetChangeTypes: [],
       excludes:{},
       includes:{},
       tableOptions:{},
       refreshInterval:30
     };
     `.trim();
+}
+
+export async function getUsSincConfig(): Promise<any> {
+  try {
+    const usSincConfigPath = await loadUsConfigPath();
+    if (usSincConfigPath) {
+      const projectConfig: any = (await import(usSincConfigPath)).default;
+      return projectConfig;
+    }
+  } catch (e) {
+    logger.warn(e);
+    logger.warn("Couldn't find config file. Loading default...");
+  }
+  return {};
 }
 
 async function loadConfig(skipConfigPath = false): Promise<Sinc.Config> {
@@ -167,6 +180,25 @@ async function loadManifest() {
 
 export function updateManifest(man: SN.AppManifest) {
   manifest = man;
+}
+
+async function loadUsConfigPath(pth?: string): Promise<string | false> {
+  if (!pth) {
+    pth = process.cwd();
+  }
+  // check to see if us-config is found
+  let files = await fsp.readdir(pth);
+  if (files.includes("us-sinc.config.js")) {
+    return path.join(pth, "us-sinc.config.js");
+  } else {
+    if (isRoot(pth)) {
+      return false;
+    }
+    return loadUsConfigPath(path.dirname(pth));
+  }
+  function isRoot(pth: string) {
+    return path.parse(pth).root === pth;
+  }
 }
 
 async function loadConfigPath(pth?: string): Promise<string | false> {

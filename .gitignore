@@ -72,9 +72,3 @@ junit.xml
 
 #DSstore
 .DS_Store
-
-#Generated scopes if needed (the dist dir for the scopes can be outside the repo)
-scopes/
-
-# the generated sinc.manifest
-packages/core/sinc.manifest.json
