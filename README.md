@@ -78,6 +78,16 @@ npx sinc init
 npx sinc dev
 ```
 
+8. Mode - **Current Update Set**. Sometimes downloading all the scripts from a scope can mean deleting a lot of them in order to have the ones that you actually work on. If you which to download only the scripts(objects) created in you current update set, you can do that by adding the -c option to the refresh and dev command.
+
+```bash
+npx sinc refresh -c
+```
+
+```bash
+npx sinc dev -c
+```
+
 ## How does it work?
 
 Sincronia takes a two-pronged approach to managing your ServiceNow scoped app. Architecture, creation of records, deletion of records, metadata and other ServiceNow objects besides your actual source code will be managed normally. Your _source code itself_ will be managed inside of your Sincronia project.
@@ -128,6 +138,10 @@ Records are shown as folders because there are times where there are multiple co
 #### sinc.config.js
 
 This is the configuration file for Sincronia. [Learn More](#configuration)
+
+#### us-sinc.config.js
+
+This is the configuration file the changes type that will be downloaded for the current update set. [Learn More](#Setting-Update-Set-Types)
 
 #### sinc.manifest.json
 
@@ -224,6 +238,51 @@ As long as the main filename stays the same, you can add as many extensions as y
 **EXAMPLE**
 
 `script.js` becomes `script.servicenow.js` or `script.ts` or `script.what.ever.you.want.js`
+
+## Setting Update Set Types
+
+```javascript
+module.exports = {
+  updateSetChangeTypes: [
+    "Business Rule",
+    "Client Script",
+    "Fix Script",
+    "Script Include",
+    "UI Action",
+    "UI Script",
+    "Scripted REST Resource",
+  ],
+};
+```
+
+| Table                        | Type                            |
+| ---------------------------- | ------------------------------- |
+| sys_atf_parameter_variable   | "Parameter Variable"            |
+| sys_atf_step_config          | "Test Step Config"              |
+| sys_data_source              | "Data Source"                   |
+| sys_decision_input           | "Decision Input"                |
+| sys_email_client_template    | "Email Client Template"         |
+| sys_extension_point          | "Extension Point"               |
+| sys_hub_action_input         | "Action Inputs"                 |
+| sys_hub_action_output        | "Action Outputs"                |
+| sys_hub_flow_input           | "Flow Inputs"                   |
+| sys_hub_step_ext_input       | "Extended Step Input Variable"  |
+| sys_hub_step_ext_output      | "Extended Step Output Variable" |
+| sys_navigator                | "Navigation Handler"            |
+| sys_processor                | "Processor"                     |
+| sys_recipient_qualifier      | "Recipient Qualifier"           |
+| sys_script                   | "Business Rule"                 |
+| sys_script_client            | "Client Script"                 |
+| sys_script_email             | "Email Script"                  |
+| sys_script_fix               | "Fix Script"                    |
+| sys_script_include           | "Script Include"                |
+| sys_ui_action                | "UI Action"                     |
+| sys_ui_context_menu          | "Context Menu"                  |
+| sys_ui_list_control_embedded | "Embedded List Control"         |
+| sys_ui_macro                 | "Macro"                         |
+| sys_ui_page                  | "UI Page"                       |
+| sys_ui_script                | "UI Script"                     |
+| sys_ws_operation             | "Scripted REST Resource"        |
 
 ## Configuration
 
