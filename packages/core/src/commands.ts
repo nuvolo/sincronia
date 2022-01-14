@@ -61,11 +61,12 @@ export async function refreshCommand(
   args: Sinc.SharedCmdArgs,
   log: boolean = true
 ) {
+  const { currentUs = false } = args;
   setLogLevel(args);
   scopeCheck(async () => {
     try {
       if (!log) setLogLevel({ logLevel: "warn" });
-      await AppUtils.syncManifest();
+      await AppUtils.syncManifest(currentUs);
       logger.success("Refresh complete! ✅");
       setLogLevel(args);
     } catch (e) {

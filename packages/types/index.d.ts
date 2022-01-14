@@ -1,6 +1,7 @@
 export namespace Sinc {
   interface SharedCmdArgs {
     logLevel: string;
+    currentUs?: boolean;
   }
 
   interface CmdDownloadArgs extends SharedCmdArgs {

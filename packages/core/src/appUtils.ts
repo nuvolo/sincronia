@@ -81,7 +81,9 @@ export const processManifest = async (
   );
 };
 
-export const syncManifest = async (): Promise<void> => {
+export const syncManifest = async (
+  currentUpdateSetOnly = false
+): Promise<void> => {
   try {
     const curManifest = await ConfigManager.getManifest();
     if (!curManifest) throw new Error("No manifest file loaded!");
@@ -92,7 +94,6 @@ export const syncManifest = async (): Promise<void> => {
       client.getManifest(curManifest.scope, config)
     );
 
-    const currentUpdateSetOnly = process.env.CURRENT_UPDATE_SET_ONLY === "1";
     if (currentUpdateSetOnly) {
       const httpClient = defaultClient();
       const updateSetChanges = await httpClient.getCurrentUpdateSetChanges();
@@ -104,6 +105,11 @@ export const syncManifest = async (): Promise<void> => {
               newManifest.tables[tableName].records[scriptName].sys_id;
             if (updateSetChanges[tableName].indexOf(sysId) > -1) {
               const script = newManifest.tables[tableName].records[scriptName];
+              if (!curManifest.tables[tableName]) {
+                curManifest.tables[tableName] = {
+                  records: {},
+                };
+              }
               curManifest.tables[tableName].records[scriptName] = script;
             }
           }
