@@ -7,55 +7,69 @@ import {
   initCommand,
   buildCommand,
   deployCommand,
-  statusCommand
+  statusCommand,
 } from "./commands";
 import yargs from "yargs";
 export async function initCommands() {
   const sharedOptions = {
     logLevel: {
-      default: "info"
-    }
+      default: "info",
+    },
   };
 
   yargs
     .command(["dev", "d"], "Start Development Mode", sharedOptions, devCommand)
+    .option("current-us", {
+      alias: "c",
+      type: "boolean",
+      default: false,
+      description:
+        "Download the files created or changed in the current update set",
+    })
     .command(
       ["refresh", "r"],
       "Refresh Manifest and download new files since last refresh",
       sharedOptions,
       refreshCommand
     )
+    .option("current-us", {
+      alias: "c",
+      type: "boolean",
+      default: false,
+      description:
+        "Download the files created or changed in the current update set",
+    })
     .command(
       ["push [target]"],
       "[DESTRUCTIVE] Push all files from current local files to ServiceNow instance.",
-      cmdArgs => {
+      (cmdArgs) => {
         cmdArgs.options({
           ...sharedOptions,
           diff: {
             alias: "d",
             type: "string",
             default: "",
-            describe: "Specify branch to do git diff against"
+            describe: "Specify branch to do git diff against",
           },
           scopeSwap: {
             alias: "ss",
             type: "boolean",
             default: false,
             describe:
-              "Will auto-swap to the correct scope for the files being pushed"
+              "Will auto-swap to the correct scope for the files being pushed",
           },
           updateSet: {
             alias: "us",
             type: "string",
             default: "",
             describe:
-              "Will create a new update set with the provided anme to store all changes into"
+              "Will create a new update set with the provided anme to store all changes into",
           },
           ci: {
             type: "boolean",
             default: false,
-            describe: "Will skip confirmation prompts during the push process"
-          }
+            describe: "Will skip confirmation prompts during the push process",
+          },
         });
         return cmdArgs;
       },
@@ -80,15 +94,15 @@ export async function initCommands() {
     .command(
       "build",
       "Build application files locally",
-      cmdArgs => {
+      (cmdArgs) => {
         cmdArgs.options({
           ...sharedOptions,
           diff: {
             alias: "d",
             type: "string",
             default: "",
-            describe: "Specify branch to do git diff against"
-          }
+            describe: "Specify branch to do git diff against",
+          },
         });
         return cmdArgs;
       },

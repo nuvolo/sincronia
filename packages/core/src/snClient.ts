@@ -3,6 +3,7 @@ import axios, { AxiosPromise, AxiosResponse } from "axios";
 import rateLimit from "axios-rate-limit";
 import { wait } from "./genericUtils";
 import { logger } from "./Logger";
+import * as ConfigManager from "./config";
 
 export const retryOnErr = async <T>(
   f: () => Promise<T>,
@@ -160,6 +161,17 @@ export const snClient = (
     });
   };
 
+  const getCurrentUpdateSetId = async (userSysId: string): Promise<string> => {
+    const endpoint = `api/now/table/sys_user_preference`;
+    const res = await client.get(endpoint, {
+      params: {
+        sysparm_query: `user=${userSysId}^name=sys_update_set`,
+        sysparm_fields: "value",
+      },
+    });
+    return res.data?.result[0]?.value || "";
+  };
+
   const getCurrentUpdateSetUserPref = (userSysId: string) => {
     const endpoint = `api/now/table/sys_user_preference`;
     type CurrentUpdateSetResponse = Sinc.SNAPIResponse<SN.UserPrefRecord[]>;
@@ -216,6 +228,44 @@ export const snClient = (
     });
   };
 
+  const getCurrentUpdateSetChanges = async (): Promise<
+    Record<string, string[]>
+  > => {
+    const { updateSetChangeTypes = [] } = await ConfigManager.getUsSincConfig();
+
+    if (!updateSetChangeTypes.length) {
+      return {};
+    }
+    const userData = await getUserSysId();
+    const updateSetId = await getCurrentUpdateSetId(
+      userData.data.result[0].sys_id
+    );
+
+    const changesTable = "sys_update_xml";
+    const endpoint = `api/now/table/${changesTable}`;
+    const query =
+      `update_set=${updateSetId}^action!=DELETE^typeIN` +
+      updateSetChangeTypes.join(",");
+    const changesData = await client.get(endpoint, {
+      params: {
+        sysparm_query: query,
+        sysparm_fields: "name",
+      },
+    });
+    const changes: Record<string, string[]> = {};
+    changesData.data.result.map((change: { name: string }) => {
+      const nameArray = change.name.split("_");
+
+      const table = nameArray.slice(0, -1).join("_");
+      const id = nameArray.slice(-1)[0];
+      if (!changes[table]) {
+        changes[table] = [];
+      }
+      changes[table].push(id);
+    });
+    return changes;
+  };
+
   return {
     getAppList,
     updateRecord,
@@ -231,6 +281,7 @@ export const snClient = (
     createCurrentUpdateSetUserPref,
     getMissingFiles,
     getManifest,
+    getCurrentUpdateSetChanges,
   };
 };
 
