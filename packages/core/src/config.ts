@@ -3,6 +3,7 @@ import path from "path";
 import { promises as fsp } from "fs";
 import { logger } from "./Logger";
 import { includes, excludes, tableOptions } from "./defaultOptions";
+import { isRoot } from "./FileUtils";
 
 const DEFAULT_CONFIG: Sinc.Config = {
   sourceDirectory: "src",
@@ -135,6 +136,7 @@ export async function getUsSincConfig(): Promise<any> {
   } catch (e) {
     logger.warn(e);
     logger.warn("Couldn't find config file. Loading default...");
+    throw e;
   }
   return {};
 }
@@ -196,9 +198,6 @@ async function loadUsConfigPath(pth?: string): Promise<string | false> {
     }
     return loadUsConfigPath(path.dirname(pth));
   }
-  function isRoot(pth: string) {
-    return path.parse(pth).root === pth;
-  }
 }
 
 async function loadConfigPath(pth?: string): Promise<string | false> {
@@ -214,9 +213,6 @@ async function loadConfigPath(pth?: string): Promise<string | false> {
       return false;
     }
     return loadConfigPath(path.dirname(pth));
-  }
-  function isRoot(pth: string) {
-    return path.parse(pth).root === pth;
   }
 }
 

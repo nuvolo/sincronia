@@ -161,7 +161,7 @@ export const snClient = (
     });
   };
 
-  const getCurrentUpdateSetId = async (userSysId: string) => {
+  const getCurrentUpdateSetId = async (userSysId: string): Promise<string> => {
     const endpoint = `api/now/table/sys_user_preference`;
     const res = await client.get(endpoint, {
       params: {
@@ -169,7 +169,7 @@ export const snClient = (
         sysparm_fields: "value",
       },
     });
-    return res.data.result[0].value;
+    return res.data?.result[0]?.value || "";
   };
 
   const getCurrentUpdateSetUserPref = (userSysId: string) => {

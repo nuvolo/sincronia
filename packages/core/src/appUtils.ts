@@ -95,6 +95,7 @@ export const syncManifest = async (
     );
 
     if (currentUpdateSetOnly) {
+      logger.info("Downloading files only from the current update set.");
       const httpClient = defaultClient();
       const updateSetChanges = await httpClient.getCurrentUpdateSetChanges();
 

@@ -23,6 +23,8 @@ export const writeManifestFile = async (man: SN.AppManifest) => {
   );
 };
 
+export const isRoot = (pth: string): boolean => path.parse(pth).root === pth;
+
 export const writeSNFileCurry = (checkExists: boolean) => async (
   file: SN.File,
   parentPath: string

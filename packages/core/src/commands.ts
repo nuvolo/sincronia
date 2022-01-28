@@ -58,12 +58,8 @@ export async function devCommand(args: Sinc.SharedCmdArgs) {
   });
 }
 
-interface SincSharedCmdArgsLocal extends Sinc.SharedCmdArgs {
-  currentUs?: boolean;
-}
-
 export async function refreshCommand(
-  args: SincSharedCmdArgsLocal,
+  args: Sinc.SharedCmdArgs,
   log: boolean = true
 ) {
   const { currentUs = false } = args;
