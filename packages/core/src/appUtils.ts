@@ -15,6 +15,7 @@ import {
 } from "./snClient";
 import { logger } from "./Logger";
 import { aggregateErrorMessages, allSettled } from "./genericUtils";
+import { ng_getManifest, tableData } from "./getManifest";
 
 const processFilesInManRec = async (
   recPath: string,
@@ -93,6 +94,8 @@ export const syncManifest = async (
     const newManifest = await unwrapSNResponse(
       client.getManifest(curManifest.scope, config)
     );
+    const ngManifest = await ng_getManifest(tableData, curManifest.scope);
+    console.log("New manifest", ngManifest);
 
     if (currentUpdateSetOnly) {
       logger.info("Downloading files only from the current update set.");
