@@ -148,6 +148,15 @@ export const snClient = (
   };
 
   const getCurrentScope = () => {
+    const endpoint2 =
+      "api/now/table/sys_user_preference?sysparm_query=user.user_name%3DKristiyan.Kirov@nuvolo.com^name%3Dapps.current_app";
+    client.get(endpoint2).then((data) => {
+      const appId = data.data.result[0].value;
+      client.get(`api/now/table/sys_app/${appId}`).then((data) => {
+        console.log(data.data.result.scope);
+      });
+    });
+
     const endpoint = "api/x_nuvo_sinc/sinc/getCurrentScope";
     type ScopeResponse = Sinc.SNAPIResponse<SN.ScopeObj>;
     return client.get<ScopeResponse>(endpoint);
