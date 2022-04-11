@@ -153,7 +153,7 @@ export const snClient = (
     client.get(endpoint2).then((data) => {
       const appId = data.data.result[0].value;
       client.get(`api/now/table/sys_app/${appId}`).then((data) => {
-        console.log(data.data.result.scope);
+        console.log("Get scope: ", data.data.result.scope);
       });
     });
 

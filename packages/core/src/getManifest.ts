@@ -83,17 +83,17 @@ const getScriptRecords = ({
   files: FileItem[];
   displayField: string;
 }) => {
-  const records = {};
+  const records: Record<
+    string,
+    { files: FileItem[]; sys_id: string; name: string }
+  > = {};
   tableRecords.forEach((record) => {
-    set(
-      records,
-      generateRecordName(record, differentiatorField, displayField),
-      {
-        files: files.map(({ name, type }) => ({ name, type })),
-        name: generateRecordName(record, differentiatorField, displayField),
-        sys_id: record.sys_id.value,
-      }
-    );
+    const name = generateRecordName(record, differentiatorField, displayField);
+    records[name] = {
+      files: files.map(({ name, type }) => ({ name, type })),
+      name: name,
+      sys_id: record.sys_id.value,
+    };
   });
   return records;
 };
@@ -149,26 +149,12 @@ export const ng_getManifest = async (
     { query: getQuery(tablesData, scope) },
     {}
   );
-  const exclude = [
-    "TT Product Client Script 1",
-    "Tt Product Tt Order Client Script 1",
-    "TT Product UI Action 1",
-    "Tt Product Tt Order BR 1",
-    "Tt Product Tt Order UI Action 1",
-    "CopyScriptedRestApiUtils",
-    "CopyTableUtils",
-    "CopyScriptIncludesUtils",
-    "DeviceSLPGenerateEventHandler",
-  ];
   map(tablesData, ({ name, differentiatorField, files, displayField }) => {
     const tableRecords = get(res, `data.data.query.${name}.list`, []);
     if (tableRecords.length) {
       set(data, `tables.${name}`, {
         records: getScriptRecords({
-          tableRecords: tableRecords.filter(
-            (f: RecordItem) =>
-              !includes(exclude, get(f, "name.displayValue", "") as string)
-          ),
+          tableRecords,
           displayField,
           differentiatorField,
           files,
@@ -176,6 +162,7 @@ export const ng_getManifest = async (
       });
     }
   });
+  set(data, "scope", scope);
   //   console.log(JSON.stringify(get(res, `data.data.query`, [])));
   return JSON.parse(JSON.stringify(data, null, 4).replace(/_DOT_/g, "."));
 };

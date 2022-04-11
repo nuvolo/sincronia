@@ -89,13 +89,12 @@ export const syncManifest = async (
     const curManifest = await ConfigManager.getManifest();
     if (!curManifest) throw new Error("No manifest file loaded!");
     logger.info("Downloading fresh manifest...");
-    const client = defaultClient();
-    const config = ConfigManager.getConfig();
-    const newManifest = await unwrapSNResponse(
-      client.getManifest(curManifest.scope, config)
-    );
-    const ngManifest = await ng_getManifest(tableData, curManifest.scope);
-    console.log("New manifest", ngManifest);
+    // const client = defaultClient();
+    // const config = ConfigManager.getConfig();
+    // const newManifest = await unwrapSNResponse(
+    //   client.getManifest(curManifest.scope, config)
+    // );
+    const newManifest = await ng_getManifest(tableData, curManifest.scope);
 
     if (currentUpdateSetOnly) {
       logger.info("Downloading files only from the current update set.");
