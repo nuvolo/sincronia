@@ -16,6 +16,7 @@ import {
 import { logger } from "./Logger";
 import { aggregateErrorMessages, allSettled } from "./genericUtils";
 import { ng_getManifest, tableData } from "./getManifest";
+import { ng_getCurrentScope } from "./services/serviceNow";
 
 const processFilesInManRec = async (
   recPath: string,
@@ -479,7 +480,7 @@ export const swapScope = async (currentScope: string): Promise<SN.ScopeObj> => {
       "sys_id"
     );
     await swapServerScope(scopeId);
-    const scopeObj = await unwrapSNResponse(client.getCurrentScope());
+    const scopeObj = await ng_getCurrentScope();
     return scopeObj;
   } catch (e) {
     throw e;
@@ -547,8 +548,7 @@ export const checkScope = async (
   try {
     const man = ConfigManager.getManifest();
     if (man) {
-      const client = defaultClient();
-      const scopeObj = await unwrapSNResponse(client.getCurrentScope());
+      const scopeObj = await ng_getCurrentScope();
       if (scopeObj.scope === man.scope) {
         return {
           match: true,

@@ -1,5 +1,5 @@
 import { get, map, set, compact, forEach, includes } from "lodash";
-import { baseUrlGQL, connGQL } from "./connection";
+import { baseUrlGQL, connection } from "./services/connection";
 import fs from "fs";
 
 type FileItem = {
@@ -144,7 +144,7 @@ export const ng_getManifest = async (
       ]),
     };
   });
-  const res = await connGQL.post(
+  const res = await connection.post(
     baseUrlGQL,
     { query: getQuery(tablesData, scope) },
     {}
@@ -163,6 +163,6 @@ export const ng_getManifest = async (
     }
   });
   set(data, "scope", scope);
-  //   console.log(JSON.stringify(get(res, `data.data.query`, [])));
+  // console.log(JSON.stringify(get(res, `data.data.query`, [])));
   return JSON.parse(JSON.stringify(data, null, 4).replace(/_DOT_/g, "."));
 };
