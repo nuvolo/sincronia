@@ -1,36 +1,33 @@
 import { get, map, set, compact, forEach, includes } from "lodash";
 import { baseUrlGQL, connection } from "./services/connection";
 import fs from "fs";
+import {
+  TableData,
+  FileItem,
+  TableInfo,
+  RecordItem,
+  sincConfigDefault,
+} from "./configs/sinc-config.default";
+import { getGqlQuery } from "./utils/graphQL";
 
-type FileItem = {
-  name: string;
-  type: string;
+export const getSincConfig = (): TableData => {
+  const localConfig = JSON.parse(
+    fs.readFileSync("./sinc-conf.json", { encoding: "utf8" })
+  );
+  const config: TableData = {};
+  forEach(localConfig, (cnf, t) => {
+    if (cnf !== null) {
+      config[t] = cnf;
+    } else if (sincConfigDefault[t]) {
+      config[t] = sincConfigDefault[t];
+    } else {
+      console.log(`Missing configuration for ${t}`);
+    }
+  });
+  return config;
 };
 
-type TableItem = {
-  differentiatorField?: string | string[];
-  displayField?: string;
-  files?: FileItem[] | string[];
-};
-
-type TableData = Record<string, TableItem>;
-
-type TableInfo = Record<
-  string,
-  {
-    name: string;
-    files: FileItem[];
-    displayField: string;
-    differentiatorField: string | string[];
-    fields: string[];
-  }
->;
-
-type RecordItem = Record<string, { value: string; displayValue: string }>;
-
-export const tableData: TableData = JSON.parse(
-  fs.readFileSync("./scopes/sinc-conf.json", { encoding: "utf8" })
-);
+export const tableData = getSincConfig();
 
 export const generateRecordName = (
   record: RecordItem,
@@ -98,27 +95,24 @@ const getScriptRecords = ({
   return records;
 };
 
-const getQuery = (tables: TableInfo, scope: string): string => `{
-    query: GlideRecord_Query {
-        ${map(
-          tables,
-          (table) => `${table.name}: ${
-            table.name
-          }(queryConditions: "sys_scope.scope=${scope}", pagination: {limit: 10000, offset: 0}) {
-                list: _results {
-                   ${table.fields.join(
-                     "  { value, displayValue } "
-                   )} { value, displayValue }
-                }
-              }`
-        ).join(",")}
-     }
-   }`;
+const getTableDataQuery = (
+  tables: TableInfo,
+  scope: string
+): { query: string } =>
+  getGqlQuery(
+    map(tables, ({ name, fields }) => ({
+      table: name,
+      fields,
+      conditions: `sys_scope.scope=${scope}`,
+      pagination: { limit: 10000 },
+    }))
+  );
 
 export const ng_getManifest = async (
   tables: TableData,
   scope: string
 ): Promise<any> => {
+  console.log("Get manifest via GraphQL request");
   const data = {
     tables: {},
   };
@@ -146,7 +140,7 @@ export const ng_getManifest = async (
   });
   const res = await connection.post(
     baseUrlGQL,
-    { query: getQuery(tablesData, scope) },
+    getTableDataQuery(tablesData, scope),
     {}
   );
   map(tablesData, ({ name, differentiatorField, files, displayField }) => {
@@ -164,5 +158,7 @@ export const ng_getManifest = async (
   });
   set(data, "scope", scope);
   // console.log(JSON.stringify(get(res, `data.data.query`, [])));
-  return JSON.parse(JSON.stringify(data, null, 4).replace(/_DOT_/g, "."));
+  // console.log(JSON.stringify(data, null, 4));
+  // console.log(data);
+  return data;
 };
