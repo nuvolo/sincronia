@@ -147,6 +147,10 @@ export const snClient = (
     });
   };
 
+  /**
+   * Has NG
+   * @returns
+   */
   const getCurrentScope = () => {
     const endpoint = "api/x_nuvo_sinc/sinc/getCurrentScope";
     type ScopeResponse = Sinc.SNAPIResponse<SN.ScopeObj>;
@@ -209,9 +213,19 @@ export const snClient = (
   ) => {
     const endpoint = `api/x_nuvo_sinc/sinc/bulkDownload`;
     type TableMap = Sinc.SNAPIResponse<SN.TableMap>;
+    // console.log(JSON.stringify({ missingFiles, tableOptions }));
+    // console.log(JSON.stringify(missingFiles.sys_ui_action));
+
     return client.post<TableMap>(endpoint, { missingFiles, tableOptions });
   };
 
+  /**
+   * Has NG
+   * @param scope
+   * @param config
+   * @param withFiles
+   * @returns
+   */
   const getManifest = (
     scope: string,
     config: Sinc.Config,

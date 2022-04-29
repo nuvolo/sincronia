@@ -7,7 +7,7 @@ type SysParams = {
   sysparm_fields?: string[];
 };
 
-const constructEndpoint = (table: string, params: SysParams): string => {
+export const constructEndpoint = (table: string, params: SysParams): string => {
   const sysparm_query = get(params, "sysparm_query", {});
   const sysparm_fields = get(params, "sysparm_fields", []);
   const urlParams = [];
@@ -21,13 +21,14 @@ const constructEndpoint = (table: string, params: SysParams): string => {
         ).join("^")
     );
   }
-  if (!isEmpty(sysparm_fields.length)) {
+  if (!isEmpty(sysparm_fields)) {
     urlParams.push(`sysparm_fields=` + sysparm_fields?.join(","));
   }
   return `api/now/table/${table}?${urlParams.join("&")}`;
 };
 
 export const ng_getCurrentScope = async (): Promise<SN.ScopeObj> => {
+  console.log("Getting scope via REST request");
   const { SN_USER: username = "" } = process.env;
   const endpoint = constructEndpoint("sys_user_preference", {
     sysparm_query: {

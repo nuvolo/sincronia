@@ -17,6 +17,7 @@ import { logger } from "./Logger";
 import { aggregateErrorMessages, allSettled } from "./genericUtils";
 import { ng_getManifest, tableData } from "./getManifest";
 import { ng_getCurrentScope } from "./services/serviceNow";
+import { ng_getMissingFiles } from "./downloadFiles";
 
 const processFilesInManRec = async (
   recPath: string,
@@ -259,9 +260,10 @@ export const processMissingFiles = async (
     const missing = await findMissingFiles(newManifest);
     const { tableOptions = {} } = ConfigManager.getConfig();
     const client = defaultClient();
-    const filesToProcess = await unwrapSNResponse(
-      client.getMissingFiles(missing, tableOptions)
-    );
+    const filesToProcess = await ng_getMissingFiles(missing);
+    // const filesToProcess = await unwrapSNResponse(
+    //   client.getMissingFiles(missing, tableOptions)
+    // );
     await processTablesInManifest(filesToProcess, false);
   } catch (e) {
     throw e;
