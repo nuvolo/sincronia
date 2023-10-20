@@ -27,16 +27,16 @@ export const writeSNFileCurry = (checkExists: boolean) => async (
   file: SN.File,
   parentPath: string
 ): Promise<void> => {
-  const { name, type, content = "" } = file;
+  let { name, type, content = "" } = file;
   // content can sometimes be null
   if (!content) {
-    content === "";
+    content = "";
   }
   const write = async () => {
-    const fullPath = path.join(parentPath, `${name}.${type}`);
-    return await fsp.writeFile(fullPath, content);
-  };
-  if (checkExists) {
+      const fullPath = path.join(parentPath, `${name}.${type}`);
+      return await fsp.writeFile(fullPath, content);
+    };
+    if (checkExists) {
     const exists = await SNFileExists(parentPath)(file);
     if (!exists) {
       await write();

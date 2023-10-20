@@ -83,12 +83,12 @@ export const processManifest = async (
 
 export const syncManifest = async () => {
   try {
-    let curManifest = await ConfigManager.getManifest();
+    const curManifest = await ConfigManager.getManifest();
     if (!curManifest) throw new Error("No manifest file loaded!");
     logger.info("Downloading fresh manifest...");
     const client = defaultClient();
     const config = ConfigManager.getConfig();
-    const newManifest:any = await unwrapSNResponse(
+    const newManifest = await unwrapSNResponse(
       client.getManifest(curManifest.scope, config)
     );
 
