@@ -125,10 +125,13 @@ async function downloadApp(answers: Sinc.LoginAnswers, scope: string) {
   try {
     const client = defaultClient();
     const config = ConfigManager.getConfig();
-    const man = await unwrapSNResponse(client.getManifest(scope, config, true));
+    const man:any = await unwrapSNResponse(client.getManifest(scope, config, true));
     await AppUtils.processManifest(man);
   } catch (e) {
-    logger.error(e.toString());
+    let message
+    if (e instanceof Error) message = e.message
+    else message = String(e)
+    logger.error(message);
     throw new Error("Failed to download files!");
   }
 }

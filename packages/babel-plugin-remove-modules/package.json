@@ -4,7 +4,7 @@
   "description": "Babel plugin that removes imports and exports from code",
   "main": "./dist/index.js",
   "scripts": {
-    "prepare": "tsc"
+    "prepack": "tsc"
   },
   "repository": {
     "type": "git",
@@ -17,12 +17,12 @@
   },
   "homepage": "https://github.com/nuvolo/sincronia#readme",
   "dependencies": {
-    "@babel/core": "^7.5.5",
-    "@babel/types": "^7.5.5"
+    "@babel/core": "^7.23.2",
+    "@babel/types": "^7.23.0"
   },
   "devDependencies": {
     "@sincronia/types": "^0.4.2-alpha.3",
-    "@types/babel__core": "^7.1.2"
+    "@types/babel__core": "^7.20.2"
   },
   "publishConfig": {
     "access": "public"

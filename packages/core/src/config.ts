@@ -149,7 +149,10 @@ async function loadConfig(skipConfigPath = false): Promise<Sinc.Config> {
       return DEFAULT_CONFIG;
     }
   } catch (e) {
-    logger.warn(e);
+    let message
+    if (e instanceof Error) message = e.message
+    else message = String(e)
+    logger.warn(message);
     logger.warn("Couldn't find config file. Loading default...");
     return DEFAULT_CONFIG;
   }

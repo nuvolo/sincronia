@@ -4,7 +4,7 @@
   "description": "SASS plugin for Sincronia",
   "main": "./dist/index.js",
   "scripts": {
-    "prepare": "tsc"
+    "prepack": "tsc"
   },
   "files": [
     "dist"
@@ -23,11 +23,11 @@
   },
   "homepage": "https://github.com/nuvolo/sincronia#readme",
   "dependencies": {
-    "node-sass": "^4.14.0"
+    "node-sass": "^9.0.0"
   },
   "devDependencies": {
     "@sincronia/types": "^0.4.2-alpha.3",
-    "@types/node-sass": "^4.11.0"
+    "@types/node-sass": "^4.11.5"
   },
   "gitHead": "67b694054cf072be150b9bd4dc3d1b01f8e24ed9"
 }

@@ -47,7 +47,7 @@ Check out the [tutorial videos](https://www.youtube.com/watch?v=CqdppnM-FvM&list
 
 In order to use Sincronia, you will need:
 
-- [Node.js](https://nodejs.org/en/) version 12.0 or later
+- [Node.js](https://nodejs.org/en/) version 16.0 or later
 - **If you are on Windows** you will also need :
   - Windows subsystem for Linux installed (Ubuntu should work fine)
   - Preferably updated to version 1903+ (Previous versions untested/not working)

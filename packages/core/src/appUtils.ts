@@ -83,7 +83,7 @@ export const processManifest = async (
 
 export const syncManifest = async () => {
   try {
-    let curManifest = await ConfigManager.getManifest();
+    const curManifest = await ConfigManager.getManifest();
     if (!curManifest) throw new Error("No manifest file loaded!");
     logger.info("Downloading fresh manifest...");
     const client = defaultClient();
@@ -99,8 +99,11 @@ export const syncManifest = async () => {
     await processMissingFiles(newManifest);
     ConfigManager.updateManifest(newManifest);
   } catch (e) {
+    let message
+    if (e instanceof Error) message = e.message
+    else message = String(e)
     logger.error("Encountered error while refreshing! ❌");
-    logger.error(e.toString());
+    logger.error(message.toString());
   }
 };
 
@@ -324,7 +327,10 @@ const pushRec = async (
     );
     return processPushResponse(pushRes, recSummary);
   } catch (e) {
-    const errMsg = e.message || "Too many retries";
+    let message
+    if (e instanceof Error) message = e.message
+    else message = String(e)
+    const errMsg = message || "Too many retries";
     return { success: false, message: `${recSummary} : ${errMsg}` };
   }
 };
@@ -474,7 +480,10 @@ const swapServerScope = async (scopeId: string): Promise<void> => {
       await client.updateCurrentAppUserPref(scopeId, curAppUserPrefId);
     else await client.createCurrentAppUserPref(scopeId, userSysId);
   } catch (e) {
-    logger.error(e);
+    let message
+    if (e instanceof Error) message = e.message
+    else message = String(e)
+    logger.error(message);
     throw e;
   }
 };

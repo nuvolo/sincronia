@@ -13,7 +13,7 @@ const run: Sinc.PluginFunc = async function (
 ): Promise<Sinc.PluginResults> {
   const memFS = new memoryFS();
   let wpOptions: webpack.Configuration = {};
-  let configFile = await loadWebpackConfig();
+  const configFile = await loadWebpackConfig();
   //First, try to load configuration file
   if (configFile) {
     Object.assign(wpOptions, configFile);
@@ -32,15 +32,15 @@ const run: Sinc.PluginFunc = async function (
     path: "/",
     filename: "bundle.js",
   };
-  let compiler = webpack(wpOptions);
+  const compiler = webpack(wpOptions);
   compiler.outputFileSystem = memFS;
-  let compilePromise = new Promise<string>((resolve, reject) => {
+  const compilePromise = new Promise<string>((resolve, reject) => {
     compiler.run((err, stats) => {
       if (err) {
         reject(err);
         return;
       }
-      if (stats.hasErrors()) {
+      if (stats && stats.hasErrors()) {
         console.error(stats.toString("normal"));
         reject(new Error("Webpack failed to create the bundle."));
         return;
@@ -49,7 +49,7 @@ const run: Sinc.PluginFunc = async function (
     });
   });
   try {
-    let output = await compilePromise;
+    const output = await compilePromise;
     return {
       output,
       success: true,
@@ -58,15 +58,15 @@ const run: Sinc.PluginFunc = async function (
     throw new Error(`${e}`);
   }
   function getWebpackConfigPath() {
-    let pathChunks = context.filePath.split(path.sep);
+    const pathChunks = context.filePath.split(path.sep);
     pathChunks.pop();
     pathChunks.push("webpack.config.js");
     return path.sep + path.join(...pathChunks);
   }
   async function loadWebpackConfig() {
     try {
-      let configPath = getWebpackConfigPath();
-      let config: webpack.Configuration = (await import(configPath)).default;
+      const configPath = getWebpackConfigPath();
+      const config: webpack.Configuration = (await import(configPath)).default;
       return config;
     } catch (e) {
       return false;

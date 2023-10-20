@@ -1,22 +1,21 @@
 import { Sinc } from "@sincronia/types";
-import eslint from "eslint";
-
-const CLIEngine = eslint.CLIEngine;
+import { ESLint } from "eslint";
 
 const run: Sinc.PluginFunc = async function(
   context: Sinc.FileContext,
   content: string,
-  options: any
 ): Promise<Sinc.PluginResults> {
   try {
-    let output = content;
-    const cli = new CLIEngine({});
+    const output = content;
+    const linter = new ESLint({});
+    const results = await linter.lintFiles([context.filePath]);
+    const formatter = await linter.loadFormatter();
+    
+    const format_result = formatter.format(results);
+    const format_result_string = typeof format_result === 'string'? format_result: await format_result;
+    console.log(format_result_string);
 
-    const report = cli.executeOnFiles([context.filePath]);
-    const formatter = cli.getFormatter();
-    console.log(formatter(report.results));
-
-    let isSuccess = report.errorCount === 0;
+    const  isSuccess = results.every((r) => r.errorCount === 0 );
     if (!isSuccess) {
       throw new Error("ESLint errors in the code");
     }
