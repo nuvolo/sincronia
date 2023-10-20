@@ -4,12 +4,12 @@
   "description": "TypeScript plugin for Sincronia",
   "main": "./dist/index.js",
   "scripts": {
-    "prepare": "npx tsc"
+    "prepack": "npx tsc"
   },
   "author": "Multiple",
   "license": "GPL-3.0",
   "dependencies": {
-    "typescript": "^3.7.3"
+    "typescript": "^5.2.2"
   },
   "devDependencies": {
     "@sincronia/types": "^0.4.2-alpha.3"

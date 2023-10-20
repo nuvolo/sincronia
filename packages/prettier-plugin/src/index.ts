@@ -14,7 +14,7 @@ const run: Sinc.PluginFunc = async function(
     }
     opts = Object.assign(opts, options);
     if (content) {
-      output = prettier.format(content, opts);
+      output = await prettier.format(content, opts);
     }
     return {
       success: true,

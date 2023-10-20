@@ -4,7 +4,7 @@
   "description": "ServiceNow Sanitizer Plugin",
   "main": "./dist/index.js",
   "scripts": {
-    "prepare": "tsc"
+    "prepack": "tsc"
   },
   "repository": {
     "type": "git",
@@ -17,13 +17,13 @@
   },
   "homepage": "https://github.com/nuvolo/sincronia#readme",
   "dependencies": {
-    "@babel/core": "^7.5.5",
-    "@babel/types": "^7.5.5"
+    "@babel/core": "^7.23.2",
+    "@babel/types": "^7.23.0"
   },
   "devDependencies": {
     "@sincronia/types": "^0.4.2-alpha.3",
-    "@types/babel__core": "^7.1.2",
-    "typescript": "^3.5.3"
+    "@types/babel__core": "^7.20.2",
+    "typescript": "^5.2.2"
   },
   "files": [
     "dist"

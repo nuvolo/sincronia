@@ -4,7 +4,7 @@
   "description": "Babel Plugin for sincronia",
   "main": "./dist/index.js",
   "scripts": {
-    "prepare": "tsc"
+    "prepack": "tsc"
   },
   "repository": {
     "type": "git",
@@ -23,12 +23,12 @@
     "access": "public"
   },
   "dependencies": {
-    "@babel/core": "^7.5.5",
-    "@babel/types": "^7.5.5"
+    "@babel/core": "^7.23.2",
+    "@babel/types": "^7.23.0"
   },
   "devDependencies": {
     "@sincronia/types": "^0.4.2-alpha.3",
-    "@types/babel__core": "^7.1.2"
+    "@types/babel__core": "^7.20.2"
   },
   "gitHead": "67b694054cf072be150b9bd4dc3d1b01f8e24ed9"
 }

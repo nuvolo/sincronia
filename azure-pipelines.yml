@@ -13,7 +13,7 @@ steps:
 
 - script: |
     npm install -g typescript
-  displayName: 'install lerna'
+  displayName: 'install typescript'
 
 - script: |
     npm install

@@ -3,7 +3,10 @@ import * as t from "@babel/types";
 export default function() {
   const commentUsageTracker = new Set<string>();
   function genLocString(comment: t.Comment) {
-    return `c${comment.loc.start.column}l${comment.loc.start.line}`;
+    if(comment.loc){
+      return `c${comment.loc.start.column}l${comment.loc.start.line}`;
+    }
+    else throw new Error("Issues with comment.loc on babel plugin. Talk to a dev to resolve this.");
   }
   function getCommentTags(path: NodePath<t.ImportDeclaration>) {
     let node = path.node;
@@ -60,7 +63,9 @@ export default function() {
         let _imports = path.node.specifiers.reduce(
           (acc, cur) => {
             if (cur.type === "ImportSpecifier") {
+              if(cur.imported.type == "Identifier")
               acc.push(cur.imported.name);
+              else throw new Error("Wrong identifier type in babel plugin. Check with a dev.")
             }
             if (cur.type === "ImportDefaultSpecifier") {
               acc.push(cur.local.name);
